@@ -1,0 +1,27 @@
+{
+  "name": "star-cats-api",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node ./src/bin/www"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hario90/star-cats-api.git"
+  },
+  "author": "Lisa Harrylock",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/hario90/star-cats-api/issues"
+  },
+  "homepage": "https://github.com/hario90/star-cats-api#readme",
+  "dependencies": {
+    "cookie-parser": "~1.4.4",
+    "debug": "~2.6.9",
+    "express": "~4.16.1",
+    "http-errors": "~1.6.3",
+    "jade": "~1.11.0",
+    "morgan": "~1.9.1"
+  }
+}
