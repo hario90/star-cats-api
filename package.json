@@ -4,7 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node ./src/bin/www"
+    "dev": "yarn build-server-dev && node ./server/public/javascripts/app.js",
+    "build-server-dev": "webpack --env development --config webpack.node.config.js --progress",
+    "build-server-prod": "webpack --env production --config webpack.node.config.js",
+    "start": "yarn build-server-prod && node ./server/public/javascripts/app.js"
   },
   "repository": {
     "type": "git",
@@ -23,5 +26,18 @@
     "http-errors": "~1.6.3",
     "jade": "~1.11.0",
     "morgan": "~1.9.1"
+  },
+  "devDependencies": {
+    "@webpack-cli/serve": "^1.1.0",
+    "clean-webpack-plugin": "^3.0.0",
+    "css-loader": "^5.0.1",
+    "html-webpack-plugin": "^4.5.0",
+    "style-loader": "^2.0.0",
+    "ts-loader": "^8.0.11",
+    "typescript": "^4.1.2",
+    "webpack": "^5.10.0",
+    "webpack-cli": "3.3.12",
+    "webpack-dev-server": "^3.11.0",
+    "webpack-node-externals": "^2.5.2"
   }
 }
