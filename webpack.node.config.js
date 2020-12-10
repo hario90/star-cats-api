@@ -4,7 +4,7 @@ const nodeExternals = require('webpack-node-externals');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 
 module.exports = env => ({
-    entry: './src/bin/www.ts',
+    entry: './server/bin/www.ts',
     module: {
         rules: [
             {

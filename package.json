@@ -4,8 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "webpack --env production --config webpack.node.config.js",
-    "start": "node ./bin/app.js"
+    "build-ui": "webpack --env production --config webpack.config.js",
+    "build-server": "webpack --env production --config webpack.node.config.js",
+    "start": "node ./bin/app.js",
+    "dev": "yarn build-server && yarn start"
   },
   "repository": {
     "type": "git",
