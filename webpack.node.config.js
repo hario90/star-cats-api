@@ -19,8 +19,8 @@ module.exports = env => ({
         extensions: [ ".ts"]
     },
     output: {
-        filename: 'app.js',
-        path: path.resolve(__dirname, 'bin')
+        filename: 'server.js',
+        path: path.resolve(__dirname, 'dist')
     },
     mode: env === "development" ? "development" : "production",
     externalsPresets: { node: true }, // in order to ignore built-in modules like path, fs, etc.
@@ -28,7 +28,7 @@ module.exports = env => ({
     ...(env === "development" ? {
         devtool: "inline-source-map"
     } : {}),
-    plugins: [
-        new CleanWebpackPlugin(),
-    ]
+    // plugins: [
+    //     new CleanWebpackPlugin(),
+    // ]
 });
