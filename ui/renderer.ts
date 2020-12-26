@@ -7,13 +7,21 @@ import { randomBoolean, timeout } from "./util";
 
 export class Renderer {
   private components: Component[] = [];
-  private canvas: HTMLCanvasElement = (document.getElementById("game-space")  as HTMLCanvasElement) || document.createElement("canvas");
+  private canvas: HTMLCanvasElement = document.createElement("canvas");
   private context: CanvasRenderingContext2D | null;
   private ship: PlayerShip; 
   private background: Background;
   private asteroidGenerator: AsteroidGenerator;
 
   constructor() {
+    const appEl = document.getElementById("app");
+    this.canvas.height = document.body.clientHeight;
+    this.canvas.width = document.body.clientWidth;
+    
+    if (appEl) {
+      appEl.appendChild(this.canvas);
+    }
+    
     this.context = this.canvas.getContext("2d");
     if (!this.context) {
       throw new Error("no context");
