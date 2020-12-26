@@ -1,16 +1,13 @@
-var express = require('express');
-var path = require('path');
-var cookieParser = require('cookie-parser');
-var logger = require('morgan');
+import * as express from "express";
+import * as path from "path";
 
 var indexRouter = require('./routes/index');
 
 var app = express();
 
-app.use(logger('dev')); 
+// view engine setup
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
 app.use(express.static(path.join(__dirname)));
 
 app.use('/', indexRouter);
@@ -30,7 +27,10 @@ app.use(function(err: any, req: any, res: any, next:any) {
 
   // render the error page
   res.status(err.status || 500);
-  res.render('error');
+  res.json({
+    message: err.message,
+    error: err
+  });
 });
 
-module.exports = app;
+export { app };

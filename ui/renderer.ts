@@ -9,7 +9,7 @@ export class Renderer {
   private components: Component[] = [];
   private canvas: HTMLCanvasElement = (document.getElementById("game-space")  as HTMLCanvasElement) || document.createElement("canvas");
   private context: CanvasRenderingContext2D | null;
-  private ship: PlayerShip;
+  private ship: PlayerShip; 
   private background: Background;
   private asteroidGenerator: AsteroidGenerator;
 

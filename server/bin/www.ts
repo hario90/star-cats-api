@@ -1,16 +1,16 @@
+import * as http from 'http';
+import { app } from "../app";
+import { Socket } from 'socket.io-client';
 
 /**
  * Module dependencies.
  */
 
-var app = require('../app');
 var debug = require('debug')('src:server');
-var http = require('http');
 
 /**
  * Get port from environment and store in Express.
  */
-
 var port = normalizePort(process.env.PORT || '3000');
 app.set('port', port);
 
@@ -19,6 +19,12 @@ app.set('port', port);
  */
 
 var server = http.createServer(app);
+const io = require('socket.io')(server, {
+  cors: true
+});
+io.on('connection', (socket: Socket) => { 
+  socket.emit("hello", "world");
+});
 
 /**
  * Listen on provided port, on all network interfaces.
@@ -84,6 +90,6 @@ function onListening() {
   var addr = server.address();
   var bind = typeof addr === 'string'
     ? 'pipe ' + addr
-    : 'port ' + addr.port;
+    : 'port ' + addr?.port;
   debug('Listening on ' + bind);
 }
