@@ -6,7 +6,7 @@ import { io } from 'socket.io-client';
 const renderer = new Renderer();
 const port = PORT ? `:${PORT}` : "";
 const url = `${HOST || "localhost"}${port}`;
-const socket = io(`${PROTOCOL}://${url}`);
+const socket = io(`${PROTOCOL}://${url}`, { auth: {token: "lisa"}});
 
 (async () => {
   socket.on("hello", (arg: string) => {
