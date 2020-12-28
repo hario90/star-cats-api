@@ -21,8 +21,10 @@ app.set("port", port);
 var server = http.createServer(app);
 const io = require("socket.io")(server);
 io.use((socket: any, next: () => void) => {
-  const token = socket.handshake.auth.token;
-  console.log("token", token);
+  const nickName = socket.handshake.auth.name;
+  socket.join("default room"); // todo create more rooms to handle load?
+  console.log("nickName", nickName);
+  console.log("id", socket.handshake.auth.id);
   next();
 });
 io.on("connection", (socket: Socket) => { 

@@ -13,14 +13,10 @@ export class Renderer {
   private background: Background;
   private asteroidGenerator: AsteroidGenerator;
 
-  constructor() {
-    const appEl = document.getElementById("app");
+  constructor(appEl: HTMLDivElement) {
     this.canvas.height = document.body.clientHeight;
     this.canvas.width = document.body.clientWidth;
-    
-    if (appEl) {
-      appEl.appendChild(this.canvas);
-    }
+    appEl.appendChild(this.canvas);
     
     this.context = this.canvas.getContext("2d");
     if (!this.context) {
