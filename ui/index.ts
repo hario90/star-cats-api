@@ -14,17 +14,15 @@ if (!appEl) {
   const renderer = new Renderer(appEl);
   let socket: Socket | undefined;
 
-  (async () => {
-    const startGame = async (nickName: string) => {
-      socket = io(`${PROTOCOL}://${url}`, { auth: {name: nickName, id: uuidv4()}});
-      socket.on("hello", (arg: string) => {
-        console.log("received hello message with arg:", arg); // world
-      });
-      await renderer.pollUntilReady();
-      renderer.animate();
-    };
+  const startGame = async (nickName: string) => {
+    socket = io(`${PROTOCOL}://${url}`, { auth: {name: nickName, id: uuidv4()}});
+    socket.on("hello", (arg: string) => {
+      console.log("received hello message with arg:", arg); // world
+    });
+    await renderer.pollUntilReady();
+    renderer.animate();
+  };
 
-    createForm(appEl, startGame);
-  })();
+  createForm(appEl, startGame);
 }
 
