@@ -4,9 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build-ui": "webpack --env production --config webpack.config.js",
-    "build-server": "webpack --env production --config webpack.node.config.js",
-    "build": "yarn build-ui && yarn build-server",
+    "build-ui": "webpack --config webpack.config.js",
+    "build-server": "webpack --config webpack.node.config.js",
+    "compile": "yarn build-ui && yarn build-server",
     "start": "node ./dist/server.js",
     "dev": "yarn build-ui && nodemon --exec \"yarn build-server && node ./dist/server.js\" -e ts --watch server",
     "dev-ui": "webpack-dev-server --open"
@@ -22,12 +22,19 @@
   },
   "homepage": "https://github.com/hario90/star-cats-api#readme",
   "dependencies": {
-    "cookie-parser": "~1.4.4",
+    "@types/axios": "^0.14.0",
+    "axios": "^0.21.0",
     "debug": "~2.6.9",
+    "dotenv": "^8.2.0",
     "express": "~4.16.1",
-    "morgan": "~1.9.1"
+    "socket.io": "^3.0.4",
+    "socket.io-client": "^3.0.4",
+    "uuid": "^8.3.2"
   },
   "devDependencies": {
+    "@types/express": "^4.17.9",
+    "@types/express-session": "^1.17.3",
+    "@types/uuid": "^8.3.0",
     "clean-webpack-plugin": "^3.0.0",
     "css-loader": "^5.0.1",
     "file-loader": "^6.2.0",
