@@ -1,28 +1,28 @@
-import { v4 as uuidv4 } from 'uuid';
+import { io } from 'socket.io-client';
 import './style.css';
 import { Renderer } from "./renderer";
-import { io, Socket } from 'socket.io-client';
 import { createForm } from './form';
+import { SERVER_URL } from './constants';
+import { GameObject } from '../shared/types';
 
-const appEl = document.getElementById("app") as HTMLDivElement;
-const port = PORT ? `:${PORT}` : "";
-const url = `${HOST || "localhost"}${port}`;
+const appEl = (document.getElementById("app") as HTMLDivElement)
+ || document.createElement("div");
 
-if (!appEl) {
-  throw new Error("No app element found ")
-} else {
-  const renderer = new Renderer(appEl);
-  let socket: Socket | undefined;
 
-  const startGame = async (nickName: string) => {
-    socket = io(`${PROTOCOL}://${url}`, { auth: {name: nickName, id: uuidv4()}});
-    socket.on("hello", (arg: string) => {
-      console.log("received hello message with arg:", arg); // world
-    });
-    await renderer.pollUntilReady();
-    renderer.animate();
-  };
+const startGame = async (nickName: string) => {
+  const socket = io(SERVER_URL, {
+    auth: {
+      name: nickName,
+      canvasHeight: document.body.clientHeight,
+      canvasWidth: document.body.clientWidth,
+    },
+  });
+  socket.on("objects", (objects: GameObject[]) => {
+    console.log("received object that reached our frame", objects); // world
+  });
+  const renderer = new Renderer(appEl, socket);
+  await renderer.pollUntilReady();
+  renderer.animate();
+};
 
-  createForm(appEl, startGame);
-}
-
+createForm(appEl, startGame);

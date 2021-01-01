@@ -1,3 +1,4 @@
+import { Socket } from "socket.io-client";
 import { AsteroidGenerator } from "./asteroid-generator";
 import { Background } from "./background";
 import { BOARD_WIDTH, BOARD_HEIGHT } from "./constants";
@@ -12,8 +13,10 @@ export class Renderer {
   private ship: PlayerShip; 
   private background: Background;
   private asteroidGenerator: AsteroidGenerator;
+  private socket: Socket;
 
-  constructor(appEl: HTMLDivElement) {
+  constructor(appEl: HTMLDivElement, socket: Socket) {
+    this.socket = socket;
     this.canvas.height = document.body.clientHeight;
     this.canvas.width = document.body.clientWidth;
     appEl.appendChild(this.canvas);
@@ -119,6 +122,12 @@ export class Renderer {
     }
 
     const [shipX, shipY] = this.getNextPosition(this.ship);
+    this.socket.emit("shipMoved", {
+      x: shipX,
+      y: shipY,
+      degree: this.ship.deg,
+      showThrusters: this.ship.showThrusters
+    });
     this.ship.setPosition(shipX, shipY);
     this.ship.draw(this.context);
     const positions = new Map<string, Component[]>();
