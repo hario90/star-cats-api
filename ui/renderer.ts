@@ -10,24 +10,24 @@ export class Renderer {
   private components: Component[] = [];
   private canvas: HTMLCanvasElement = document.createElement("canvas");
   private context: CanvasRenderingContext2D | null;
-  private ship: PlayerShip; 
+  private ship: PlayerShip;
   private background: Background;
   private asteroidGenerator: AsteroidGenerator;
   private socket: Socket;
 
-  constructor(appEl: HTMLDivElement, socket: Socket) {
+  constructor(appEl: HTMLDivElement, socket: Socket, name: string) {
     this.socket = socket;
     this.canvas.height = document.body.clientHeight;
     this.canvas.width = document.body.clientWidth;
     appEl.appendChild(this.canvas);
-    
+
     this.context = this.canvas.getContext("2d");
     if (!this.context) {
       throw new Error("no context");
     }
     const canvasMidX =  Math.floor(this.canvas.width / 2);
     const canvasMidY = Math.floor(this.canvas.height / 2);
-    this.ship = new PlayerShip(canvasMidX, canvasMidY);
+    this.ship = new PlayerShip(canvasMidX, canvasMidY, name);
     this.asteroidGenerator = new AsteroidGenerator();
 
     this.draw = this.draw.bind(this);

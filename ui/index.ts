@@ -20,7 +20,7 @@ const startGame = async (nickName: string) => {
   socket.on("objects", (objects: GameObject[]) => {
     console.log("received object that reached our frame", objects); // world
   });
-  const renderer = new Renderer(appEl, socket);
+  const renderer = new Renderer(appEl, socket, nickName);
   await renderer.pollUntilReady();
   renderer.animate();
 };

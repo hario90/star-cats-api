@@ -29,7 +29,9 @@ const DOWN = "ArrowDown";
 const DEGREE_INCREMENT = 10;
 export const MAX_SPEED = 5;
 
+// TODO decide on where to place each ship initially
 export class PlayerShip implements Component {
+  public name: string;
   public x: number = 0;
   public y: number = 0;
   public deg: number = 0;
@@ -40,7 +42,8 @@ export class PlayerShip implements Component {
   private canvasMidY: number;
   public showThrusters = false;
 
-  constructor(canvasMidX: number, canvasMidY: number) {
+  constructor(canvasMidX: number, canvasMidY: number, name: string) {
+    this.name = name;
     this.canvasMidX = canvasMidX;
     this.canvasMidY = canvasMidY;
     this.x = canvasMidX - halfShipWidth;
@@ -96,6 +99,9 @@ export class PlayerShip implements Component {
     context.save();
     // always render ship at center of screen
     context.translate(this.canvasMidX, this.canvasMidY);
+    context.font = "14px Arial";
+    context.fillStyle = "white";
+    context.fillText(this.name, halfShipWidth, 0);
     context.rotate(this.deg * RAD);
     context.drawImage(this.img, srcLocation[0], srcLocation[1], 2 * halfShipWidth, 2 * halfShipHeight, 0 - halfShipWidth, 0 - halfShipHeight, 2 * halfShipWidth, 2 * halfShipHeight);
     context.restore();
@@ -129,5 +135,5 @@ export class PlayerShip implements Component {
         break;
     }
   }
-  
+
 }
