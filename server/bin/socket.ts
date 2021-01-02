@@ -32,7 +32,7 @@ export function createWebSocket(server: HttpServer) {
             let { nearby, changed, objectSet } = getNearbyObjects(socket.id, ship.x, ship.y, canvasHeight, canvasWidth, lastEmitted)
             lastEmitted = objectSet;
             if (changed) {
-            socket.emit("objects", nearby);
+              socket.emit("objects", nearby);
             }
         });
     });
