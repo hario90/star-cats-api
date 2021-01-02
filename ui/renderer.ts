@@ -12,6 +12,7 @@ export class Renderer {
   private context: CanvasRenderingContext2D | null;
   private ship: PlayerShip;
   private background: Background;
+  // TODO move this to server
   private asteroidGenerator: AsteroidGenerator;
   private socket: Socket;
 
@@ -25,11 +26,8 @@ export class Renderer {
     if (!this.context) {
       throw new Error("no context");
     }
-    const canvasMidX =  Math.floor(this.canvas.width / 2);
-    const canvasMidY = Math.floor(this.canvas.height / 2);
-    this.ship = new PlayerShip(canvasMidX, canvasMidY, name);
+    this.ship = new PlayerShip(Math.random() * BOARD_WIDTH, Math.random() * BOARD_HEIGHT, name);
     this.asteroidGenerator = new AsteroidGenerator();
-
     this.draw = this.draw.bind(this);
     this.animate = this.animate.bind(this);
     this.moveAndDraw = this.moveAndDraw.bind(this);
