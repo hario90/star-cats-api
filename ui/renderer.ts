@@ -1,8 +1,8 @@
 import { Socket } from "socket.io-client";
 import { AsteroidGenerator } from "./asteroid-generator";
-import { Background } from "./background";
+import { Background } from "./objects/background";
 import { BOARD_WIDTH, BOARD_HEIGHT } from "./constants";
-import { halfShipWidth, MAX_SPEED, PlayerShip, RAD } from "./player-ship";
+import { halfShipWidth, MAX_SPEED, PlayerShip, RAD } from "./objects/player-ship";
 import { Component } from "./types";
 import { randomBoolean, timeout } from "./util";
 
@@ -114,11 +114,13 @@ export class Renderer {
     }
     const canvasWidth = this.canvas.width;
     const canvasHeight = this.canvas.height;
+    const halfCanvasWidth = Math.floor(canvasWidth / 2);
+    const halfCanvasHeight = Math.floor(canvasHeight / 2);
     this.context.clearRect(0, 0, canvasWidth, canvasHeight);
 
     // draw background first
     if (this.background) {
-      this.background.draw(this.context, this.ship.x - (canvasWidth / 2), this.ship.y - (canvasHeight / 2), canvasWidth, canvasHeight);
+      this.background.draw(this.context, this.ship.x - halfCanvasWidth, this.ship.y - halfCanvasHeight, canvasWidth, canvasHeight);
     }
 
     const [shipX, shipY] = this.getNextPosition(this.ship);
@@ -129,14 +131,14 @@ export class Renderer {
       showThrusters: this.ship.showThrusters
     });
     this.ship.setPosition(shipX, shipY);
-    this.ship.draw(this.context);
+    this.ship.draw(this.context, shipX, shipY, halfCanvasWidth, halfCanvasHeight);
     const positions = new Map<string, Component[]>();
     positions.set(`${shipX},${shipY}`, [this.ship]);
     const collisions = new Set();
     for (const component of this.components) {
         const [nextX, nextY] = this.getNextPosition(component);
         component.setPosition(nextX, nextY);
-        component.draw(this.context);
+        component.draw(this.context, shipX, shipY, halfCanvasWidth, halfCanvasHeight);
         const key = `${nextX},${nextY}`;
         const matchingComponents = positions.get(key) || [];
         matchingComponents.push(component);

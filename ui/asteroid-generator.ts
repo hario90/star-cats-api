@@ -1,4 +1,4 @@
-import { Asteroid } from "./asteroid";
+import { Asteroid } from "./objects/asteroid";
 import { BOARD_WIDTH, BOARD_HEIGHT } from "./constants";
 
 const MAX_ASTEROID_SPEED = 15;

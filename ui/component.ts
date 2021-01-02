@@ -6,7 +6,7 @@ export interface ComponentProps {
   y: number;
 }
 
-export class ImageComponent implements Component {
+export abstract class ImageComponent {
   protected img: HTMLImageElement;
   protected x: number = 0;
   protected y: number = 0;
@@ -22,15 +22,6 @@ export class ImageComponent implements Component {
     this.img.onload = () => { this.loaded = true; };
     this.x = x;
     this.y = y;
-    this.draw = this.draw.bind(this);
-  }
-
-  draw(context: CanvasRenderingContext2D) {
-    if (!this.loaded) {
-      console.error("This image has not loaded yet");
-      return;
-    }
-    context.drawImage(this.img, this.x, this.y)
   }
 
   getPosition(): number[] {

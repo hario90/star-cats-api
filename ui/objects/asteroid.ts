@@ -1,5 +1,6 @@
-import { ImageComponent } from "./component";
-import asteroidImg from "../assets/asteroid.png"
+import { ImageComponent } from "../component";
+import asteroidImg from "../../assets/asteroid.png"
+import { getRelativePosition } from "../util";
 
 export const ASTEROID_HEIGHT = 32;
 export const ASTEROID_WIDTH = 32;
@@ -10,6 +11,7 @@ export interface AsteroidProps {
   deg: number,
   height: number,
   width: number,
+
 }
 
 export class Asteroid extends ImageComponent {
@@ -26,7 +28,7 @@ export class Asteroid extends ImageComponent {
     this.width = width;
   }
 
-  draw(context: CanvasRenderingContext2D) {
+  draw(context: CanvasRenderingContext2D, shipX: number, shipY: number, halfCanvasWidth: number, halfCanvasHeight: number) {
     if (!this.loaded) {
       console.error("This image has not loaded yet");
       return;
@@ -37,7 +39,8 @@ export class Asteroid extends ImageComponent {
       srcX = 32;
     }
     context.save();
-    context.translate(this.x - (this.width / 2), this.y - (this.height / 2));
+    const {x, y} = getRelativePosition(halfCanvasWidth, halfCanvasHeight, shipX, shipY, this.x, this.y);
+    context.translate(x - (this.width / 2), y - (this.height / 2));
     context.drawImage(this.img, srcX, srcY, ASTEROID_WIDTH, ASTEROID_HEIGHT, 0 - (this.width / 2), 0 - (this.height / 2), this.width, this.height);
     context.restore();
   }

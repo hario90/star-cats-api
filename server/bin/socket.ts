@@ -40,10 +40,10 @@ export function createWebSocket(server: HttpServer) {
 
 const getNearbyObjects = (id: string, x: number, y: number,
     canvasHeight: number, canvasWidth: number, prevObjects: Set<GameObject>): { nearby: GameObject[], changed: boolean, objectSet: Set<GameObject> } => {
-    const halfWidth = canvasWidth / 2
+    const halfWidth = Math.floor(canvasWidth / 2);
     const minX = x - halfWidth;
     const maxX = x + halfWidth;
-    const halfHeight = canvasHeight / 2;
+    const halfHeight = Math.floor(canvasHeight / 2);
     const minY = y - halfHeight;
     const maxY = y + halfHeight;
     const objects: GameObject[] = [];
