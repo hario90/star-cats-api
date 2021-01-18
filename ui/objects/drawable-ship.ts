@@ -1,6 +1,7 @@
 import { BattleShipFrame, Component } from "../types";
 import shipImg from "../../assets/ship.png";
 import { getRelativePosition } from "../util";
+import { Ship } from "../../server/objects/ship";
 
 export const halfShipWidth = 16;
 export const halfShipHeight = 15;
@@ -25,7 +26,17 @@ const speedToFrame = new Map([
 const DEGREE_OF_SHIP_NOSE_FROM_POS_X_AXIS = 90;
 export const MAX_SPEED = 5;
 
-export class Ship implements Component {
+export interface DrawableShipProps {
+  socketId: string;
+  name: string;
+  deg?: number;
+  speed?: number;
+  x: number;
+  y: number;
+}
+
+export class DrawableShip implements Component {
+  public socketId: string;
   public name: string;
   public x: number = 0;
   public y: number = 0;
@@ -33,12 +44,14 @@ export class Ship implements Component {
   public speed: number = 1;
   private img: HTMLImageElement;
   private loaded = false;
-  public showThrusters = false;
 
-  constructor(x: number, y: number, name: string) {
-    this.name = name;
-    this.x = x - halfShipWidth;
-    this.y = y - halfShipHeight;
+  constructor(ship: DrawableShipProps) {
+    this.socketId = ship.socketId;
+    this.name = ship.name;
+    this.x = ship.x - halfShipWidth;
+    this.y = ship.y - halfShipHeight;
+    this.deg = ship.deg || 0;
+    this.speed = ship.speed || 1;
     this.img = new Image();
     this.img.src = shipImg;
     this.img.onload = () => this.loaded = true;
@@ -100,5 +113,9 @@ export class Ship implements Component {
 
   isLoaded(): boolean {
     return this.loaded;
+  }
+
+  getSocketId(): string | undefined {
+    return this.socketId;
   }
 }

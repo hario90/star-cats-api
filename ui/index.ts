@@ -2,8 +2,8 @@ import { io } from 'socket.io-client';
 import './style.css';
 import { Renderer } from "./renderer";
 import { createForm } from './form';
-import { SERVER_URL } from './constants';
-import { GameObject } from '../shared/types';
+import { BOARD_HEIGHT, BOARD_WIDTH, SERVER_URL } from './constants';
+import { PlayerShip } from './objects/player-ship';
 
 const appEl = (document.getElementById("app") as HTMLDivElement)
  || document.createElement("div");
@@ -17,10 +17,9 @@ const startGame = async (nickName: string) => {
       canvasWidth: document.body.clientWidth,
     },
   });
-  socket.on("objects", (objects: GameObject[]) => {
-    console.log("received object that reached our frame", objects); // world
-  });
-  const renderer = new Renderer(appEl, socket, nickName);
+
+  const ship = new PlayerShip(Math.random() * BOARD_WIDTH, Math.random() * BOARD_HEIGHT, nickName, socket.id);
+  const renderer = new Renderer(appEl, socket, ship);
   await renderer.pollUntilReady();
   renderer.animate();
 };

@@ -1,4 +1,4 @@
-import { Ship } from "./ship";
+import { DrawableShip } from "./drawable-ship";
 
 export const halfShipWidth = 16;
 export const halfShipHeight = 15;
@@ -12,9 +12,14 @@ const DEGREE_INCREMENT = 10;
 export const MAX_SPEED = 5;
 
 // TODO decide on where to place each ship initially
-export class PlayerShip extends Ship {
-  constructor(canvasMidX: number, canvasMidY: number, name: string) {
-    super(canvasMidX, canvasMidY, name);
+export class PlayerShip extends DrawableShip {
+  constructor(x: number, y: number, name: string, socketId: string) {
+    super({
+      x,
+      y,
+      name,
+      socketId
+    });
     this.getPosition = this.getPosition.bind(this);
     this.handleKeydown = this.handleKeydown.bind(this);
   }
@@ -23,12 +28,12 @@ export class PlayerShip extends Ship {
     e.preventDefault();
     switch(e.key) {
       case UP:
-        this.showThrusters = true;
-        this.speed =  MAX_SPEED;
+        if (this.speed < MAX_SPEED) {
+          this.speed =  MAX_SPEED;
+        }
         break;
       case DOWN:
         if (this.speed > 1) {
-          this.showThrusters = false;
           this.speed--;
         }
         break;
