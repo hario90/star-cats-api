@@ -27,7 +27,7 @@ const DEGREE_OF_SHIP_NOSE_FROM_POS_X_AXIS = 90;
 export const MAX_SPEED = 5;
 
 export interface DrawableShipProps {
-  socketId: string;
+  userId: string;
   name: string;
   deg?: number;
   speed?: number;
@@ -36,7 +36,7 @@ export interface DrawableShipProps {
 }
 
 export class DrawableShip implements Component {
-  public socketId: string;
+  public userId: string;
   public name: string;
   public x: number = 0;
   public y: number = 0;
@@ -46,7 +46,7 @@ export class DrawableShip implements Component {
   private loaded = false;
 
   constructor(ship: DrawableShipProps) {
-    this.socketId = ship.socketId;
+    this.userId = ship.userId;
     this.name = ship.name;
     this.x = ship.x - halfShipWidth;
     this.y = ship.y - halfShipHeight;
@@ -115,7 +115,7 @@ export class DrawableShip implements Component {
     return this.loaded;
   }
 
-  getSocketId(): string | undefined {
-    return this.socketId;
+  getUserId(): string | undefined {
+    return this.name;
   }
 }

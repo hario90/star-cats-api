@@ -11,6 +11,7 @@ import { Ship } from "../server/objects/ship";
 import { Alerts } from "./objects/alerts";
 
 const ALERT_MESSAGE_DURATION = 8;
+const EMIT_THROTTLE = 500;
 
 export class Renderer {
   private components: Component[] = [];
@@ -22,20 +23,18 @@ export class Renderer {
   private asteroidGenerator: AsteroidGenerator;
   private socket: Socket;
   private ships: DrawableShip[] = [];
-  private halfCanvasWidth: number;
-  private halfCanvasHeight: number;
+  private halfCanvasWidth: number = 0;
+  private halfCanvasHeight: number = 0;
   private frameRate: number;
   private alerts: Alerts = new Alerts();
+  private lastShipMovedEmit: Date | null = null;
 
   constructor(appEl: HTMLDivElement, socket: Socket, ship: PlayerShip, frameRate: number = 50) {
     this.ship = ship;
     this.socket = socket;
     this.frameRate = frameRate;
 
-    this.canvas.height = document.body.clientHeight;
-    this.canvas.width = document.body.clientWidth;
-    this.halfCanvasWidth = Math.floor(this.canvas.width / 2);
-    this.halfCanvasHeight = Math.floor(this.canvas.height / 2);
+    this.setHeightWidth();
 
     appEl.appendChild(this.canvas);
 
@@ -49,6 +48,8 @@ export class Renderer {
     this.moveAndDraw = this.moveAndDraw.bind(this);
     this.getNextPosition = this.getNextPosition.bind(this);
     this.setShips = this.setShips.bind(this);
+    this.emit = this.emit.bind(this);
+    this.setHeightWidth = this.setHeightWidth.bind(this);
 
     // use another canvas to create and render the background
     // so that the background is bigger than the frame canvas
@@ -74,7 +75,7 @@ export class Renderer {
         message: `${nickname} has left the game`,
         expires,
       })
-    })
+    });
     socket.on(GameEventType.UserJoined, (nickname: string) => {
       const expires = new Date();
       expires.setSeconds(expires.getSeconds() + ALERT_MESSAGE_DURATION);
@@ -82,7 +83,15 @@ export class Renderer {
         message: `${nickname} has joined`,
         expires,
       });
-    })
+    });
+    window.addEventListener("resize", this.setHeightWidth);
+  }
+
+  setHeightWidth() {
+    this.canvas.height = document.body.clientHeight;
+    this.canvas.width = document.body.clientWidth;
+    this.halfCanvasWidth = Math.floor(this.canvas.width / 2);
+    this.halfCanvasHeight = Math.floor(this.canvas.height / 2);
   }
 
   setShips(ships: DrawableShip[]) {
@@ -149,6 +158,12 @@ export class Renderer {
     }
   }
 
+  emit(event: GameEventType, ...args: any[]) {
+    const now = new Date();
+    if (!this.lastShipMovedEmit || now.getTime() - this.lastShipMovedEmit.getTime() > EMIT_THROTTLE) {
+      this.socket.emit(event, ...args);
+    }
+  }
 
   draw() {
     if (!this.context) {
@@ -163,7 +178,7 @@ export class Renderer {
     this.alerts.draw(this.context, this.halfCanvasWidth, this.halfCanvasHeight);
 
     const [shipX, shipY] = this.getNextPosition(this.ship);
-    this.socket.emit(GameEventType.ShipMoved, {
+    this.emit(GameEventType.ShipMoved, {
       x: shipX,
       y: shipY,
       speed: this.ship.speed,
@@ -177,26 +192,22 @@ export class Renderer {
 
     for (const component of [...this.ships, ...this.components]) {
         // is it in the frame?
-        if (this.socket.id !== component.getSocketId() && component.getSocketId()) {
-          // console.log(component.getHeading());
-        }
-        if (this.isInFrame(component) && this.socket.id !== component.getSocketId()) {
-          component.draw(this.context, shipX, shipY, this.halfCanvasWidth, this.halfCanvasHeight);
+        if (this.ship.userId !== component.getUserId()) {
+          if (this.isInFrame(component)) {
+            component.draw(this.context, shipX, shipY, this.halfCanvasWidth, this.halfCanvasHeight);
+          }
+
+          const [x, y] = component.getPosition();
+          const key = `${x},${y}`;
+          const matchingComponents = positions.get(key) || [];
+          matchingComponents.push(component);
+          positions.set(key, matchingComponents);
+          if (matchingComponents.length > 1) {
+            collisions.add(key);
+          }
         }
 
-        const [x, y] = component.getPosition();
-        const key = `${x},${y}`;
-        const matchingComponents = positions.get(key) || [];
-        matchingComponents.push(component);
-        positions.set(key, matchingComponents);
-        if (matchingComponents.length > 1) {
-          collisions.add(key);
-        }
     }
-
-    // show alerts
-    this.context.font = "14px Arial";
-    this.context.fillStyle = "white";
   }
 
   isInFrame(component: Component) {

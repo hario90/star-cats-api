@@ -10,7 +10,7 @@ export interface Component {
   getHeight(): number;
   draw(context: CanvasRenderingContext2D, shipX: number, shipY: number, halfCanvasWidth: number, halfCanvasHeight: number): void;
   isLoaded(): boolean;
-  getSocketId(): string | undefined;
+  getUserId(): string | undefined;
 }
 
 export enum BattleShipFrame {

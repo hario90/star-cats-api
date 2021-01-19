@@ -37,7 +37,7 @@ export class Asteroid extends ImageComponent {
     context.restore();
   }
 
-  getSocketId(): string | undefined {
+  getUserId(): string | undefined {
     return undefined;
   }
 }

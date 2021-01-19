@@ -18,11 +18,12 @@ export interface GameObject extends PositionInfo {
 
 export interface IShip extends PositionInfo {
     name: string;
-    socketId: string; // guid from socket.id
+    userId: string;
 }
 
 export interface SocketAuth {
     name: string;
+    userId: string;
     canvasHeight: number;
     canvasWidth: number;
 }

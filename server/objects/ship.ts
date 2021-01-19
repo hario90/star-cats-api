@@ -7,13 +7,13 @@ export class Ship implements IShip, GameObject {
     public deg: number = 0;
     public speed: number = 1;
     public name: string;
-    public socketId: string;
+    public userId: string;
     public height = 16;
     public width = 16;
 
-    constructor(name: string, socketId: string) {
+    constructor(name: string, userId: string) {
         this.name = name;
-        this.socketId = socketId;
+        this.userId = userId;
     }
 
     move(positionInfo: PositionInfo) {

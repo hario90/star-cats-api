@@ -10,21 +10,20 @@ export function createWebSocket(server: HttpServer) {
     // TODO if this becomes a multi-room app, this will probably need to be roomToShipMap or maybe use a hash of room and ship id depending on how we use this structure
 
     io.use((socket: any, next: () => void) => {
-      const name = socket.handshake.auth.name;
-      const ship = new Ship(name, socket.id);
+      const { name, userId } = socket.handshake.auth;
+      const ship = new Ship(name, userId);
       ships.push(ship);
       socket.broadcast.emit(GameEventType.Ships, ships);
       socket.broadcast.emit(GameEventType.UserJoined, name);
-      console.log(`user ${name}, id ${socket.id} has joined`);
-      shipToIndex.set(socket.id, ships.length - 1);
+      console.log(`user ${name}, id ${userId} has joined`);
+      shipToIndex.set(userId, ships.length - 1);
       next();
     });
     io.on("connection", (socket: Socket) => {
-      console.log("connection")
-      const { name } = socket.handshake.auth as SocketAuth;
+      const { name, userId } = socket.handshake.auth as SocketAuth;
 
       socket.on(GameEventType.ShipMoved, (positionInfo: PositionInfo) => {
-        const index = shipToIndex.get(socket.id);
+        const index = shipToIndex.get(userId);
         if (index !== undefined && index > -1 && index < ships.length) {
           const ship = ships[index];
           ship.move(positionInfo);
@@ -32,8 +31,8 @@ export function createWebSocket(server: HttpServer) {
         socket.broadcast.emit(GameEventType.Ships, ships);
       });
       socket.on("disconnect", (reason: string) => {
-        console.log(`user ${name}, id ${socket.id} has disconnected. Reason: ${reason}`);
-        const index = shipToIndex.get(socket.id);
+        console.log(`user ${name}, id ${userId} has disconnected. Reason: ${reason}`);
+        const index = shipToIndex.get(userId);
         if (index !== undefined) {
           ships.splice(index, 1);
         }
