@@ -28,7 +28,7 @@ export const randomBoolean = () => Math.random() < 0.5;
 // to the player ship
 export const getRelativePosition = (halfCanvasWidth: number, halfCanvasHeight: number,
   shipX: number, shipY: number, objectX: number, objectY: number): {x: number; y: number} => {
-    const x = halfCanvasWidth - (shipX - objectX);
-    const y = halfCanvasHeight - (shipY - objectY);
+    const x = Math.round(halfCanvasWidth - (shipX - objectX));
+    const y = Math.round(halfCanvasHeight - (shipY - objectY));
     return {x, y};
 }

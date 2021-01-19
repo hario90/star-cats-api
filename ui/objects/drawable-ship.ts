@@ -48,8 +48,8 @@ export class DrawableShip implements Component {
   constructor(ship: DrawableShipProps) {
     this.userId = ship.userId;
     this.name = ship.name;
-    this.x = ship.x - halfShipWidth;
-    this.y = ship.y - halfShipHeight;
+    this.x = ship.x;
+    this.y = ship.y;
     this.deg = ship.deg || 0;
     this.speed = ship.speed || 1;
     this.img = new Image();
@@ -116,6 +116,6 @@ export class DrawableShip implements Component {
   }
 
   getUserId(): string | undefined {
-    return this.name;
+    return this.userId;
   }
 }
