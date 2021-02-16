@@ -1,7 +1,6 @@
-import { BattleShipFrame, Component } from "../types";
+import { BattleShipFrame, Drawable } from "../types";
 import shipImg from "../../assets/ship.png";
 import { getRelativePosition } from "../util";
-import { Ship } from "../../server/objects/ship";
 
 export const halfShipWidth = 16;
 export const halfShipHeight = 15;
@@ -35,17 +34,13 @@ export interface DrawableShipProps {
   y: number;
 }
 
-export class DrawableShip implements Component {
-  public userId: string;
+export class DrawableShip extends Drawable {
   public name: string;
-  public x: number = 0;
-  public y: number = 0;
-  public deg: number = 0;
   public speed: number = 1;
   private img: HTMLImageElement;
-  private loaded = false;
 
   constructor(ship: DrawableShipProps) {
+    super();
     this.userId = ship.userId;
     this.name = ship.name;
     this.x = ship.x;
@@ -56,23 +51,6 @@ export class DrawableShip implements Component {
     this.img.src = shipImg;
     this.img.onload = () => this.loaded = true;
     this.getPosition = this.getPosition.bind(this);
-  }
-
-  getPosition(): number[] {
-    return [this.x, this.y];
-  }
-
-  setPosition(x: number, y: number) {
-    this.x = x;
-    this.y = y;
-  }
-
-  getSpeed(): number {
-    return this.speed;
-  }
-
-  setSpeed(speed: number) {
-    this.speed = speed;
   }
 
   getWidth(): number {
@@ -87,7 +65,8 @@ export class DrawableShip implements Component {
     return this.deg - DEGREE_OF_SHIP_NOSE_FROM_POS_X_AXIS;
   }
 
-  draw(context: CanvasRenderingContext2D, shipX: number, shipY: number, halfCanvasWidth: number, halfCanvasHeight: number): void {
+  draw(context: CanvasRenderingContext2D, shipX: number, shipY: number,
+    halfCanvasWidth: number, halfCanvasHeight: number): void {
     if (!this.loaded) {
       console.error("Image has not loaded yet");
       return;
@@ -111,11 +90,4 @@ export class DrawableShip implements Component {
     context.restore();
   }
 
-  isLoaded(): boolean {
-    return this.loaded;
-  }
-
-  getUserId(): string | undefined {
-    return this.userId;
-  }
 }

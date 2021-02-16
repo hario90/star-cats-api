@@ -1,4 +1,4 @@
-import { BOARD_WIDTH, BOARD_HEIGHT } from "../constants";
+import { BOARD_WIDTH, BOARD_HEIGHT } from "../../shared/constants";
 
 export class Background {
   private img: HTMLImageElement;

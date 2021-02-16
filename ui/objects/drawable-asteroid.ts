@@ -1,14 +1,14 @@
 import { ImageComponent } from "../component";
 import asteroidImg from "../../assets/asteroid.png"
 import { getRelativePosition } from "../util";
-import { PositionInfo } from "../../shared/types";
+import { Asteroid } from "../../server/objects/asteroid";
 
 export const ASTEROID_HEIGHT = 32;
 export const ASTEROID_WIDTH = 32;
 
-export class Asteroid extends ImageComponent {
+export class DrawableAsteroid extends ImageComponent {
   private frame = 2;
-  constructor({x, y, speed, deg, height, width}: PositionInfo) {
+  constructor({x, y, speed, deg, height, width}: Asteroid) {
     super({
       src: asteroidImg,
       x,
@@ -37,7 +37,4 @@ export class Asteroid extends ImageComponent {
     context.restore();
   }
 
-  getUserId(): string | undefined {
-    return undefined;
-  }
 }

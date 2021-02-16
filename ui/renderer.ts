@@ -1,38 +1,35 @@
 import { Socket } from "socket.io-client";
-import { AsteroidGenerator } from "./asteroid-generator";
 import { Background } from "./objects/background";
-import { BOARD_WIDTH, BOARD_HEIGHT } from "./constants";
 import { halfShipWidth, PlayerShip, RAD } from "./objects/player-ship";
-import { Component } from "./types";
-import { randomBoolean, timeout } from "./util";
+import { Drawable } from "./types";
+import { timeout } from "./util";
 import { DrawableShip } from "./objects/drawable-ship";
 import { GameEventType } from "../shared/types";
 import { Ship } from "../server/objects/ship";
 import { Alerts } from "./objects/alerts";
+import { BOARD_WIDTH, BOARD_HEIGHT } from "../shared/constants";
+import { Asteroid } from "../server/objects/asteroid";
+import { DrawableAsteroid } from "./objects/drawable-asteroid";
 
 const ALERT_MESSAGE_DURATION = 8;
 const EMIT_THROTTLE = 500;
 
 export class Renderer {
-  private components: Component[] = [];
   private canvas: HTMLCanvasElement = document.createElement("canvas");
   private context: CanvasRenderingContext2D | null;
   private ship: PlayerShip;
   private background: Background;
-  // TODO move this to server
-  private asteroidGenerator: AsteroidGenerator;
   private socket: Socket;
   private ships: DrawableShip[] = [];
+  private asteroids: DrawableAsteroid[] = [];
   private halfCanvasWidth: number = 0;
   private halfCanvasHeight: number = 0;
-  private frameRate: number;
   private alerts: Alerts = new Alerts();
   private lastShipMovedEmit: Date | null = null;
 
-  constructor(appEl: HTMLDivElement, socket: Socket, ship: PlayerShip, frameRate: number = 50) {
+  constructor(appEl: HTMLDivElement, socket: Socket, ship: PlayerShip) {
     this.ship = ship;
     this.socket = socket;
-    this.frameRate = frameRate;
 
     this.setHeightWidth();
 
@@ -42,7 +39,6 @@ export class Renderer {
     if (!this.context) {
       throw new Error("no context");
     }
-    this.asteroidGenerator = new AsteroidGenerator();
     this.draw = this.draw.bind(this);
     this.animate = this.animate.bind(this);
     this.moveAndDraw = this.moveAndDraw.bind(this);
@@ -59,14 +55,10 @@ export class Renderer {
     if (backgroundCtx) {
       this.background.create(backgroundCtx, backgroundCanvas);
     }
-    for (let i = 0; i < 15; i++) {
-      this.addComponent(this.asteroidGenerator.random(false));
-    }
 
-    socket.on(GameEventType.Ships, (ships: Ship[]) => {
-      console.log("received ships", ships)
-      const drawableShips = ships.map((ship) => new DrawableShip(ship))
-      this.setShips(drawableShips);
+    socket.on(GameEventType.Ships, (ships: Ship[], asteroids: Asteroid[]) => {
+      this.ships =  ships.map((ship) => new DrawableShip(ship))
+      this.asteroids = asteroids.map((asteroid) => new DrawableAsteroid(asteroid));
     });
     socket.on(GameEventType.UserLeft, (nickname: string) => {
       const expires = new Date();
@@ -98,11 +90,11 @@ export class Renderer {
     this.ships = ships;
   }
 
-  addComponent(component: Component) {
-    this.components.push(component);
+  setAsteroids(asteroids: DrawableAsteroid[]) {
+    this.asteroids = asteroids;
   }
 
-  getNextPosition(component: Component): [number, number] {
+  getNextPosition<T extends Drawable>(component: T): [number, number] {
     const [x, y] = component.getPosition();
     const speed = component.getSpeed();
     let heading = component.getHeading();
@@ -144,18 +136,12 @@ export class Renderer {
   }
 
   async pollUntilReady() {
-    while (!this.background.isLoaded() || [...this.components, ...this.ships].map((c) => c.isLoaded()).some((loaded) => !loaded)) {
+    while (!this.background.isLoaded() || [...this.ships, ...this.asteroids].map((c) => c.isLoaded()).some((loaded) => !loaded)) {
       await timeout(1000)
     }
     // don't show canvas until everything is loaded
     this.canvas.className = "visible";
     document.addEventListener("keydown", this.ship.handleKeydown)
-  }
-
-  hurlAsteroids(num: number) {
-    for (let i = 0; i < num; i++) {
-      this.addComponent(this.asteroidGenerator.random(randomBoolean()));
-    }
   }
 
   emit(event: GameEventType, ...args: any[]) {
@@ -182,17 +168,18 @@ export class Renderer {
       x: shipX,
       y: shipY,
       speed: this.ship.speed,
-      deg: this.ship.deg,
+      deg: this.ship.deg, // todo
     });
     this.ship.setPosition(shipX, shipY);
     this.ship.draw(this.context, shipX, shipY, this.halfCanvasWidth, this.halfCanvasHeight);
-    const positions = new Map<string, Component[]>();
+    const positions = new Map<string, Array<DrawableShip | DrawableAsteroid>>();
     positions.set(`${shipX},${shipY}`, [this.ship]);
     const collisions = new Set();
 
-    for (const component of [...this.ships, ...this.components]) {
+    const components = [...this.ships, ...this.asteroids];
+    for (const component of components) {
         // is it in the frame?
-        if (this.ship.userId !== component.getUserId()) {
+        if (this.ship.getUserId() !== component.getUserId()) {
           if (this.isInFrame(component)) {
             component.draw(this.context, shipX, shipY, this.halfCanvasWidth, this.halfCanvasHeight);
           }
@@ -206,11 +193,10 @@ export class Renderer {
             collisions.add(key);
           }
         }
-
     }
   }
 
-  isInFrame(component: Component) {
+  isInFrame<T extends Drawable>(component: T) {
     const [x, y] = component.getPosition();
     const minX = x - this.halfCanvasWidth;
     const maxX = x + this.halfCanvasWidth;
@@ -228,7 +214,6 @@ export class Renderer {
 
   async moveAndDraw() {
     this.draw();
-    await timeout(this.frameRate);
     window.requestAnimationFrame(this.moveAndDraw);
   }
 }

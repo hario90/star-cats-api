@@ -1,5 +1,5 @@
+import { BOARD_WIDTH, BOARD_HEIGHT } from "../shared/constants";
 import { Asteroid } from "./objects/asteroid";
-import { BOARD_WIDTH, BOARD_HEIGHT } from "./constants";
 
 const MAX_ASTEROID_SPEED = 15;
 const MAX_ASTEROID_HEIGHT = 100;
@@ -15,8 +15,8 @@ export class AsteroidGenerator {
         const height = Math.random() * MAX_ASTEROID_HEIGHT;
         const width = height; // circular asteroids for now
         const deg = Math.random() * 360;
-        return new Asteroid({
-            x, y, speed, height, width, deg
-        });
+        return new Asteroid(
+            x, y, height, width, speed, deg
+        );
     }
 }

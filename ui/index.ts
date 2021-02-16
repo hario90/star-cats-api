@@ -3,8 +3,9 @@ import { v4 as uuid } from "uuid";
 import './style.css';
 import { Renderer } from "./renderer";
 import { createForm } from './form';
-import { BOARD_HEIGHT, BOARD_WIDTH, SERVER_URL } from './constants';
+import { BOARD_HEIGHT, BOARD_WIDTH } from '../shared/constants';
 import { PlayerShip } from './objects/player-ship';
+import { SERVER_URL } from './constants';
 
 const appEl = (document.getElementById("app") as HTMLDivElement)
  || document.createElement("div");
