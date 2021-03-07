@@ -1,6 +1,8 @@
-import { BattleShipFrame, Drawable } from "../types";
+import { BattleShipFrame } from "../types";
 import shipImg from "../../assets/ship.png";
 import { getRelativePosition } from "../util";
+import { Drawable } from "./drawable";
+import { Ship } from "../../server/objects/ship";
 
 export const halfShipWidth = 16;
 export const halfShipHeight = 15;
@@ -40,7 +42,7 @@ export class DrawableShip extends Drawable {
   private img: HTMLImageElement;
 
   constructor(ship: DrawableShipProps) {
-    super();
+    super(ship.userId);
     this.userId = ship.userId;
     this.name = ship.name;
     this.x = ship.x;
@@ -51,6 +53,13 @@ export class DrawableShip extends Drawable {
     this.img.src = shipImg;
     this.img.onload = () => this.loaded = true;
     this.getPosition = this.getPosition.bind(this);
+  }
+
+  public update(ship: Ship): void {
+    this.x = ship.x;
+    this.y = ship.y;
+    this.deg = ship.deg || 0;
+    this.speed = ship.speed || 1;
   }
 
   getWidth(): number {
