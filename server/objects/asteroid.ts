@@ -1,6 +1,7 @@
 import { GameObject, GameObjectType, PositionInfo } from "../../shared/types";
 
 export class Asteroid implements GameObject {
+    public id: string;
     public type: GameObjectType = GameObjectType.Asteroid;
     public x: number;
     public y: number;
@@ -9,7 +10,8 @@ export class Asteroid implements GameObject {
     public height = 16;
     public width = 16;
 
-    constructor(x: number, y: number, height: number, width: number, speed = 0, deg = 0) {
+    constructor(id: string, x: number, y: number, height: number, width: number, speed = 0, deg = 0) {
+        this.id = id;
         this.x = x;
         this.y = y;
         this.height = height;

@@ -8,7 +8,20 @@ export abstract class Drawable implements IDrawable {
     public deg: number = 0;
     public height: number = 0;
     public width: number = 0;
+    public id: string = "";
     public userId: string | undefined = undefined;
+
+    constructor(id: string) {
+        this.id = id;
+    }
+
+    getId(): string {
+        return this.id;
+    }
+
+    setId(id: string): void {
+        this.id = id;
+    }
 
     getPosition(): number[] {
         return [this.x, this.y];

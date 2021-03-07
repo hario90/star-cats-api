@@ -1,3 +1,5 @@
+import { v4 as uuid } from "uuid";
+
 import { BOARD_WIDTH, BOARD_HEIGHT } from "../shared/constants";
 import { Asteroid } from "./objects/asteroid";
 
@@ -16,7 +18,7 @@ export class AsteroidGenerator {
         const width = height; // circular asteroids for now
         const deg = Math.random() * 360;
         return new Asteroid(
-            x, y, height, width, speed, deg
+            uuid(), x, y, height, width, speed, deg
         );
     }
 }

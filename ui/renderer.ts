@@ -1,7 +1,6 @@
 import { Socket } from "socket.io-client";
 import { Background } from "./objects/background";
 import { halfShipWidth, PlayerShip, RAD } from "./objects/player-ship";
-import { Drawable } from "./types";
 import { timeout } from "./util";
 import { DrawableShip } from "./objects/drawable-ship";
 import { GameEventType } from "../shared/types";
@@ -10,6 +9,7 @@ import { Alerts } from "./objects/alerts";
 import { BOARD_WIDTH, BOARD_HEIGHT } from "../shared/constants";
 import { Asteroid } from "../server/objects/asteroid";
 import { DrawableAsteroid } from "./objects/drawable-asteroid";
+import { Drawable } from "./objects/drawable";
 
 const ALERT_MESSAGE_DURATION = 8;
 const EMIT_THROTTLE = 500;
@@ -20,8 +20,8 @@ export class Renderer {
   private ship: PlayerShip;
   private background: Background;
   private socket: Socket;
-  private ships: DrawableShip[] = [];
-  private asteroids: DrawableAsteroid[] = [];
+  private ships: Map<string, DrawableShip> = new Map();
+  private asteroids: Map<string, DrawableAsteroid> = new Map();
   private halfCanvasWidth: number = 0;
   private halfCanvasHeight: number = 0;
   private alerts: Alerts = new Alerts();
@@ -43,7 +43,6 @@ export class Renderer {
     this.animate = this.animate.bind(this);
     this.moveAndDraw = this.moveAndDraw.bind(this);
     this.getNextPosition = this.getNextPosition.bind(this);
-    this.setShips = this.setShips.bind(this);
     this.emit = this.emit.bind(this);
     this.setHeightWidth = this.setHeightWidth.bind(this);
 
@@ -57,8 +56,22 @@ export class Renderer {
     }
 
     socket.on(GameEventType.Ships, (ships: Ship[], asteroids: Asteroid[]) => {
-      this.ships =  ships.map((ship) => new DrawableShip(ship))
-      this.asteroids = asteroids.map((asteroid) => new DrawableAsteroid(asteroid));
+      for (const ship of ships) {
+        const mapShip = this.ships.get(ship.id);
+        if (mapShip) {
+          mapShip.update(ship);
+        } else {
+          this.ships.set(ship.id, new DrawableShip(ship));
+        }
+      }
+      for (const asteroid of asteroids) {
+        const mapAsteroid = this.asteroids.get(asteroid.id);
+        if (mapAsteroid) {
+          mapAsteroid.update(asteroid);
+        } else {
+          this.asteroids.set(asteroid.id, new DrawableAsteroid(asteroid));
+        }
+      }
     });
     socket.on(GameEventType.UserLeft, (nickname: string) => {
       const expires = new Date();
@@ -84,14 +97,6 @@ export class Renderer {
     this.canvas.width = document.body.clientWidth;
     this.halfCanvasWidth = Math.floor(this.canvas.width / 2);
     this.halfCanvasHeight = Math.floor(this.canvas.height / 2);
-  }
-
-  setShips(ships: DrawableShip[]) {
-    this.ships = ships;
-  }
-
-  setAsteroids(asteroids: DrawableAsteroid[]) {
-    this.asteroids = asteroids;
   }
 
   getNextPosition<T extends Drawable>(component: T): [number, number] {
@@ -136,7 +141,8 @@ export class Renderer {
   }
 
   async pollUntilReady() {
-    while (!this.background.isLoaded() || [...this.ships, ...this.asteroids].map((c) => c.isLoaded()).some((loaded) => !loaded)) {
+
+    while (!this.background.isLoaded() || [...this.ships.values(), ...this.asteroids.values()].map((c) => c.isLoaded()).some((loaded) => !loaded)) {
       await timeout(1000)
     }
     // don't show canvas until everything is loaded
@@ -172,28 +178,40 @@ export class Renderer {
     });
     this.ship.setPosition(shipX, shipY);
     this.ship.draw(this.context, shipX, shipY, this.halfCanvasWidth, this.halfCanvasHeight);
-    const positions = new Map<string, Array<DrawableShip | DrawableAsteroid>>();
-    positions.set(`${shipX},${shipY}`, [this.ship]);
-    const collisions = new Set();
+    // const positions = new Map<string, Array<DrawableShip | DrawableAsteroid>>();
+    // positions.set(`${shipX},${shipY}`, [this.ship]);
+    // const collisions = new Set();
 
-    const components = [...this.ships, ...this.asteroids];
-    for (const component of components) {
-        // is it in the frame?
-        if (this.ship.getUserId() !== component.getUserId()) {
-          if (this.isInFrame(component)) {
-            component.draw(this.context, shipX, shipY, this.halfCanvasWidth, this.halfCanvasHeight);
-          }
-
-          const [x, y] = component.getPosition();
-          const key = `${x},${y}`;
-          const matchingComponents = positions.get(key) || [];
-          matchingComponents.push(component);
-          positions.set(key, matchingComponents);
-          if (matchingComponents.length > 1) {
-            collisions.add(key);
-          }
+    for (const ship of this.ships.values()) {
+      if (this.ship.id !== ship.id) {
+        if (this.isInFrame(ship)) {
+          ship.draw(this.context, shipX, shipY, this.halfCanvasWidth, this.halfCanvasHeight);
         }
+      }
     }
+    for (const asteroid of this.asteroids.values()) {
+      if (this.isInFrame(asteroid)) {
+        asteroid.draw(this.context, shipX, shipY, this.halfCanvasWidth, this.halfCanvasHeight);
+      }
+    }
+    // const components = [...this.ships, ...this.asteroids];
+    // for (const component of components) {
+    //     // is it in the frame?
+    //     if (this.ship.id !== component.id) {
+    //       if (this.isInFrame(component)) {
+    //         component.draw(this.context, shipX, shipY, this.halfCanvasWidth, this.halfCanvasHeight);
+    //       }
+
+    //       // const [x, y] = component.getPosition();
+    //       // const key = `${x},${y}`;
+    //       // const matchingComponents = positions.get(key) || [];
+    //       // matchingComponents.push(component);
+    //       // positions.set(key, matchingComponents);
+    //       // if (matchingComponents.length > 1) {
+    //       //   collisions.add(key);
+    //       // }
+    //     }
+    // }
   }
 
   isInFrame<T extends Drawable>(component: T) {

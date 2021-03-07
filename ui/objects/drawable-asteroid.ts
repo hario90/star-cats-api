@@ -8,8 +8,9 @@ export const ASTEROID_WIDTH = 32;
 
 export class DrawableAsteroid extends ImageComponent {
   private frame = 2;
-  constructor({x, y, speed, deg, height, width}: Asteroid) {
+  constructor({id, x, y, speed, deg, height, width}: Asteroid) {
     super({
+      id,
       src: asteroidImg,
       x,
       y,
@@ -35,6 +36,15 @@ export class DrawableAsteroid extends ImageComponent {
     context.translate(x - (this.width / 2), y - (this.height / 2));
     context.drawImage(this.img, srcX, srcY, ASTEROID_WIDTH, ASTEROID_HEIGHT, 0 - (this.width / 2), 0 - (this.height / 2), this.width, this.height);
     context.restore();
+  }
+
+  public update({x, y, speed, deg, height, width}: Asteroid): void {
+    this.speed = speed;
+    this.deg = deg;
+    this.height = height;
+    this.width = width;
+    this.x = x;
+    this.y = y;
   }
 
 }

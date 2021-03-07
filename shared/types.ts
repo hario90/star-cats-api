@@ -13,6 +13,7 @@ export enum GameObjectType {
 }
 
 export interface GameObject extends PositionInfo {
+    id: string;
     type: GameObjectType;
 }
 

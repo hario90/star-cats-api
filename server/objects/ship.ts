@@ -1,6 +1,7 @@
 import { GameObject, GameObjectType, IShip, PositionInfo } from "../../shared/types";
 
 export class Ship implements IShip, GameObject {
+    public id: string;
     public type: GameObjectType = GameObjectType.Ship;
     public x: number = 50;
     public y: number = 50;
@@ -12,6 +13,7 @@ export class Ship implements IShip, GameObject {
     public width = 16;
 
     constructor(name: string, userId: string) {
+        this.id = userId;
         this.name = name;
         this.userId = userId;
     }
