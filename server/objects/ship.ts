@@ -1,4 +1,5 @@
-import { GameObject, GameObjectType, IShip, PositionInfo } from "../../shared/types";
+import { Socket } from "socket.io";
+import { GameEventType, GameObject, GameObjectType, IShip, PositionInfo } from "../../shared/types";
 
 export class Ship implements IShip, GameObject {
     public id: string;

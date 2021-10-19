@@ -3,7 +3,7 @@ import { Background } from "./objects/background";
 import { halfShipWidth, PlayerShip, RAD } from "./objects/player-ship";
 import { timeout } from "./util";
 import { DrawableShip } from "./objects/drawable-ship";
-import { GameEventType } from "../shared/types";
+import { GameEventType, PositionInfo } from "../shared/types";
 import { Ship } from "../server/objects/ship";
 import { Alerts } from "./objects/alerts";
 import { BOARD_WIDTH, BOARD_HEIGHT } from "../shared/constants";
@@ -26,7 +26,6 @@ export class Renderer {
   private alerts: Alerts = new Alerts();
 
   constructor(appEl: HTMLDivElement, socket: Socket, nickName: string) {
-    console.log("socketid", socket.id)
     this.ship = new PlayerShip(
       Math.random() * BOARD_WIDTH,
       Math.random() * BOARD_HEIGHT,
@@ -100,13 +99,34 @@ export class Renderer {
         }
       }
     });
-    socket.on(GameEventType.UserLeft, (message: string) => {
+
+    socket.on(GameEventType.ShipMoved, (ship: Ship) => {
+      const mapShip = this.ships.get(ship.id);
+      if (mapShip) {
+        mapShip.update(ship);
+      } else {
+        this.ships.set(ship.id, new DrawableShip({
+          ...ship,
+          onFinishedExploding: () => {
+            const expires = new Date();
+            expires.setSeconds(expires.getSeconds() + ALERT_MESSAGE_DURATION);
+            this.alerts.push({
+              message: `${ship.name} died!`,
+              expires
+            });
+          }
+        }));
+      }
+    });
+
+    socket.on(GameEventType.UserLeft, (userId: string, message: string) => {
       const expires = new Date();
       expires.setSeconds(expires.getSeconds() + ALERT_MESSAGE_DURATION);
       this.alerts.push({
         message,
         expires,
-      })
+      });
+      this.ships.delete(userId);
     });
     socket.on(GameEventType.UserJoined, (nickname: string) => {
       const expires = new Date();

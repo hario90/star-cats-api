@@ -141,6 +141,7 @@ export function createWebSocket(server: HttpServer) {
         if (index !== undefined && index > -1 && index < ships.length) {
           const ship = ships[index];
           ship.move(positionInfo);
+          socket.broadcast.emit(GameEventType.ShipMoved, ship);
           const shipSections: string[] = getSections(ship);
           const asteroidsToCheckForCollision = new Set<Asteroid>();
           for (const shipSectionKey of shipSections) {
@@ -158,7 +159,6 @@ export function createWebSocket(server: HttpServer) {
             // TODO remove ship from the game
           }
         }
-        socket.emit(GameEventType.Ships, ships, asteroids);
       });
       socket.on("disconnect", (reason: string) => {
         console.log(`user ${name}, id ${userId} has disconnected. Reason: ${reason}`);
@@ -166,13 +166,7 @@ export function createWebSocket(server: HttpServer) {
         if (index !== undefined) {
           ships.splice(index, 1);
         }
-        socket.broadcast.emit(GameEventType.UserLeft, `${name} has left the game`)
-        // user left
-        // ship took damage
-        // ship is dying
-        // ship exploded
-        //
-        socket.emit(GameEventType.Ships, ships, asteroids);
+        socket.broadcast.emit(GameEventType.UserLeft, userId, `${name} has left the game`)
       });
     });
 }
