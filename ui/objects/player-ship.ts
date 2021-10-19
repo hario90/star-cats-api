@@ -13,12 +13,13 @@ export const MAX_SPEED = 5;
 
 // TODO decide on where to place each ship initially
 export class PlayerShip extends DrawableShip {
-  constructor(x: number, y: number, name: string, userId: string) {
+  constructor(x: number, y: number, name: string, userId: string, onFinishedExploding: () => void) {
     super({
       x,
       y,
       name,
-      userId
+      userId,
+      onFinishedExploding
     });
     this.getPosition = this.getPosition.bind(this);
     this.handleKeydown = this.handleKeydown.bind(this);

@@ -5,9 +5,14 @@ export interface PositionInfo {
     speed: number;
     height: number;
     width: number;
+    minX: number;
+    minY: number;
+    maxX: number;
+    maxY: number;
 }
 
 export enum GameObjectType {
+    Unknown = "UNKNOWN",
     Ship = "SHIP",
     Asteroid = "ASTEROID",
 }

@@ -12,7 +12,6 @@ import { DrawableAsteroid } from "./objects/drawable-asteroid";
 import { Drawable } from "./objects/drawable";
 
 const ALERT_MESSAGE_DURATION = 8;
-const EMIT_THROTTLE = 500;
 
 export class Renderer {
   private canvas: HTMLCanvasElement = document.createElement("canvas");
@@ -25,10 +24,25 @@ export class Renderer {
   private halfCanvasWidth: number = 0;
   private halfCanvasHeight: number = 0;
   private alerts: Alerts = new Alerts();
-  private lastShipMovedEmit: Date | null = null;
 
-  constructor(appEl: HTMLDivElement, socket: Socket, ship: PlayerShip) {
-    this.ship = ship;
+  constructor(appEl: HTMLDivElement, socket: Socket, nickName: string) {
+    console.log("socketid", socket.id)
+    this.ship = new PlayerShip(
+      Math.random() * BOARD_WIDTH,
+      Math.random() * BOARD_HEIGHT,
+      nickName,
+      socket.id,
+      () => {
+        console.log("add alert")
+        const expires = new Date();
+        expires.setSeconds(expires.getSeconds() + ALERT_MESSAGE_DURATION);
+        this.alerts.push({
+          message: `You died!`,
+          expires
+        });
+      }
+    );
+
     this.socket = socket;
 
     this.setHeightWidth();
@@ -56,12 +70,25 @@ export class Renderer {
     }
 
     socket.on(GameEventType.Ships, (ships: Ship[], asteroids: Asteroid[]) => {
+      this.ship.id = socket.id;
       for (const ship of ships) {
         const mapShip = this.ships.get(ship.id);
-        if (mapShip) {
+        if (ship.id === this.ship.id) {
+          this.ship.update(ship);
+        } else if (mapShip) {
           mapShip.update(ship);
         } else {
-          this.ships.set(ship.id, new DrawableShip(ship));
+          this.ships.set(ship.id, new DrawableShip({
+            ...ship,
+            onFinishedExploding: () => {
+              const expires = new Date();
+              expires.setSeconds(expires.getSeconds() + ALERT_MESSAGE_DURATION);
+              this.alerts.push({
+                message: `${ship.name} died!`,
+                expires
+              });
+            }
+          }));
         }
       }
       for (const asteroid of asteroids) {
@@ -73,11 +100,11 @@ export class Renderer {
         }
       }
     });
-    socket.on(GameEventType.UserLeft, (nickname: string) => {
+    socket.on(GameEventType.UserLeft, (message: string) => {
       const expires = new Date();
       expires.setSeconds(expires.getSeconds() + ALERT_MESSAGE_DURATION);
       this.alerts.push({
-        message: `${nickname} has left the game`,
+        message,
         expires,
       })
     });
@@ -88,6 +115,25 @@ export class Renderer {
         message: `${nickname} has joined`,
         expires,
       });
+    });
+    socket.on(GameEventType.ShipExploded, (shipId: string) => {
+      if (this.ship.id === shipId) {
+        console.log("this ship exploded")
+        this.ship.explode();
+      } else {
+        const ship = this.ships.get(shipId);
+        if (ship) {
+          console.log("exploding ship")
+          ship.explode();
+        }
+      }
+    });
+    socket.on(GameEventType.ShipMoved, (ship: Ship) => {
+      const mapShip = this.ships.get(ship.id);
+      if (mapShip) {
+        mapShip.update(ship);
+      }
+
     });
     window.addEventListener("resize", this.setHeightWidth);
   }
@@ -151,10 +197,7 @@ export class Renderer {
   }
 
   emit(event: GameEventType, ...args: any[]) {
-    const now = new Date();
-    if (!this.lastShipMovedEmit || now.getTime() - this.lastShipMovedEmit.getTime() > EMIT_THROTTLE) {
-      this.socket.emit(event, ...args);
-    }
+    this.socket.emit(event, ...args);
   }
 
   draw() {
@@ -169,18 +212,22 @@ export class Renderer {
     }
     this.alerts.draw(this.context, this.halfCanvasWidth, this.halfCanvasHeight);
 
-    const [shipX, shipY] = this.getNextPosition(this.ship);
-    this.emit(GameEventType.ShipMoved, {
-      x: shipX,
-      y: shipY,
-      speed: this.ship.speed,
-      deg: this.ship.deg, // todo
-    });
-    this.ship.setPosition(shipX, shipY);
+    let shipX = this.ship.x;
+    let shipY = this.ship.y;
+    if (!this.ship.isDead) {
+      const [nextShipX, nextShipY] = this.getNextPosition(this.ship);
+      shipX = nextShipX;
+      shipY = nextShipY;
+      this.emit(GameEventType.ShipMoved, {
+        x: shipX,
+        y: shipY,
+        speed: this.ship.speed,
+        deg: this.ship.deg, // todo
+      });
+      this.ship.setPosition(shipX, shipY);
+    }
+
     this.ship.draw(this.context, shipX, shipY, this.halfCanvasWidth, this.halfCanvasHeight);
-    // const positions = new Map<string, Array<DrawableShip | DrawableAsteroid>>();
-    // positions.set(`${shipX},${shipY}`, [this.ship]);
-    // const collisions = new Set();
 
     for (const ship of this.ships.values()) {
       if (this.ship.id !== ship.id) {
@@ -194,24 +241,6 @@ export class Renderer {
         asteroid.draw(this.context, shipX, shipY, this.halfCanvasWidth, this.halfCanvasHeight);
       }
     }
-    // const components = [...this.ships, ...this.asteroids];
-    // for (const component of components) {
-    //     // is it in the frame?
-    //     if (this.ship.id !== component.id) {
-    //       if (this.isInFrame(component)) {
-    //         component.draw(this.context, shipX, shipY, this.halfCanvasWidth, this.halfCanvasHeight);
-    //       }
-
-    //       // const [x, y] = component.getPosition();
-    //       // const key = `${x},${y}`;
-    //       // const matchingComponents = positions.get(key) || [];
-    //       // matchingComponents.push(component);
-    //       // positions.set(key, matchingComponents);
-    //       // if (matchingComponents.length > 1) {
-    //       //   collisions.add(key);
-    //       // }
-    //     }
-    // }
   }
 
   isInFrame<T extends Drawable>(component: T) {

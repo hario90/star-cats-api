@@ -10,6 +10,7 @@ export abstract class Drawable implements IDrawable {
     public width: number = 0;
     public id: string = "";
     public userId: string | undefined = undefined;
+    public isDead: boolean | undefined = false;
 
     constructor(id: string) {
         this.id = id;

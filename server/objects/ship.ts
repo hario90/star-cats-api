@@ -25,4 +25,21 @@ export class Ship implements IShip, GameObject {
         this.deg = deg;
         this.speed = speed;
     }
+
+
+    get minX(): number {
+        return this.x - (0.5 * this.width);
+    }
+
+    get minY(): number {
+        return this.y - (0.5 * this.height);
+    }
+
+    get maxX(): number {
+        return this.x + (0.5 * this.width);
+    }
+
+    get maxY(): number {
+        return this.y + (0.5 * this.height);
+    }
 }
