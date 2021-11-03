@@ -3,13 +3,14 @@ import { Background } from "./objects/background";
 import { halfShipWidth, PlayerShip, RAD } from "./objects/player-ship";
 import { timeout } from "./util";
 import { DrawableShip } from "./objects/drawable-ship";
-import { GameEventType, PositionInfo } from "../shared/types";
+import { GameEventType, GameObjectType, PositionInfo } from "../shared/types";
 import { Ship } from "../server/objects/ship";
 import { Alerts } from "./objects/alerts";
 import { BOARD_WIDTH, BOARD_HEIGHT } from "../shared/constants";
 import { Asteroid } from "../server/objects/asteroid";
 import { DrawableAsteroid } from "./objects/drawable-asteroid";
 import { Drawable } from "./objects/drawable";
+import { createAsteroidSectionMap, getObjectSections, getSectionKey } from "../shared/util";
 
 const ALERT_MESSAGE_DURATION = 8;
 
@@ -24,6 +25,7 @@ export class Renderer {
   private halfCanvasWidth: number = 0;
   private halfCanvasHeight: number = 0;
   private alerts: Alerts = new Alerts();
+  private objectMap: Map<string, DrawableAsteroid[]> = new Map();
 
   constructor(appEl: HTMLDivElement, socket: Socket, nickName: string) {
     this.ship = new PlayerShip(
@@ -32,13 +34,9 @@ export class Renderer {
       nickName,
       socket.id,
       () => {
-        console.log("add alert")
         const expires = new Date();
         expires.setSeconds(expires.getSeconds() + ALERT_MESSAGE_DURATION);
-        this.alerts.push({
-          message: `You died!`,
-          expires
-        });
+        this.alerts.push('You died!');
       }
     );
 
@@ -68,34 +66,43 @@ export class Renderer {
       this.background.create(backgroundCtx, backgroundCanvas);
     }
 
+    socket.on(GameEventType.Announce, (message: string) => {
+      console.log("announce")
+      this.alerts.push(message)
+    })
+
     socket.on(GameEventType.Ships, (ships: Ship[], asteroids: Asteroid[]) => {
+      this.objectMap = createAsteroidSectionMap();
       this.ship.id = socket.id;
       for (const ship of ships) {
         const mapShip = this.ships.get(ship.id);
         if (ship.id === this.ship.id) {
-          this.ship.update(ship);
+          this.ship.update(ship, this.objectMap, socket);
         } else if (mapShip) {
-          mapShip.update(ship);
+          mapShip.update(ship, this.objectMap, socket);
         } else {
           this.ships.set(ship.id, new DrawableShip({
             ...ship,
             onFinishedExploding: () => {
-              const expires = new Date();
-              expires.setSeconds(expires.getSeconds() + ALERT_MESSAGE_DURATION);
-              this.alerts.push({
-                message: `${ship.name} died!`,
-                expires
-              });
+              this.alerts.push(`${ship.name} died!`);
             }
           }));
         }
       }
       for (const asteroid of asteroids) {
-        const mapAsteroid = this.asteroids.get(asteroid.id);
+        const asteroid2 = new DrawableAsteroid(asteroid);
+        const mapAsteroid = this.asteroids.get(asteroid2.id);
         if (mapAsteroid) {
           mapAsteroid.update(asteroid);
         } else {
-          this.asteroids.set(asteroid.id, new DrawableAsteroid(asteroid));
+          this.asteroids.set(asteroid2.id, new DrawableAsteroid(asteroid));
+        }
+        const sections: Array<[number, number]> = getObjectSections(asteroid2);
+        for (const [row, column] of sections) {
+          const key = getSectionKey(row, column);
+          const currObjects = this.objectMap.get(key) || [];
+          currObjects.push(asteroid2);
+          this.objectMap.set(key, currObjects);
         }
       }
     });
@@ -103,17 +110,14 @@ export class Renderer {
     socket.on(GameEventType.ShipMoved, (ship: Ship) => {
       const mapShip = this.ships.get(ship.id);
       if (mapShip) {
-        mapShip.update(ship);
+        mapShip.update(ship, this.objectMap, socket);
       } else {
         this.ships.set(ship.id, new DrawableShip({
           ...ship,
           onFinishedExploding: () => {
             const expires = new Date();
             expires.setSeconds(expires.getSeconds() + ALERT_MESSAGE_DURATION);
-            this.alerts.push({
-              message: `${ship.name} died!`,
-              expires
-            });
+            this.alerts.push(`${ship.name} died!`);
           }
         }));
       }
@@ -122,19 +126,13 @@ export class Renderer {
     socket.on(GameEventType.UserLeft, (userId: string, message: string) => {
       const expires = new Date();
       expires.setSeconds(expires.getSeconds() + ALERT_MESSAGE_DURATION);
-      this.alerts.push({
-        message,
-        expires,
-      });
+      this.alerts.push(message);
       this.ships.delete(userId);
     });
     socket.on(GameEventType.UserJoined, (nickname: string) => {
       const expires = new Date();
       expires.setSeconds(expires.getSeconds() + ALERT_MESSAGE_DURATION);
-      this.alerts.push({
-        message: `${nickname} has joined`,
-        expires,
-      });
+      this.alerts.push(`${nickname} has joined`);
     });
     socket.on(GameEventType.ShipExploded, (shipId: string) => {
       if (this.ship.id === shipId) {
@@ -151,7 +149,7 @@ export class Renderer {
     socket.on(GameEventType.ShipMoved, (ship: Ship) => {
       const mapShip = this.ships.get(ship.id);
       if (mapShip) {
-        mapShip.update(ship);
+        mapShip.update(ship, this.objectMap, socket);
       }
 
     });
@@ -241,10 +239,18 @@ export class Renderer {
       this.emit(GameEventType.ShipMoved, {
         x: shipX,
         y: shipY,
+        width: this.ship.width,
+        height: this.ship.height,
         speed: this.ship.speed,
         deg: this.ship.deg, // todo
       });
-      this.ship.setPosition(shipX, shipY);
+      this.ship.update(
+        {
+          ...this.ship,
+          type: GameObjectType.Ship,
+          x: shipX,
+          y: shipY,
+          minX: this.ship.minX, maxX: this.ship.maxX, minY: this.ship.minY, maxY: this.ship.maxY}, this.objectMap, this.socket);
     }
 
     this.ship.draw(this.context, shipX, shipY, this.halfCanvasWidth, this.halfCanvasHeight);

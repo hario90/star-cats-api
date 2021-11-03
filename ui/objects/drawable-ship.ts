@@ -4,9 +4,13 @@ import shipImg from "../../assets/ship.png";
 import { getRelativePosition } from "../util";
 import { Drawable } from "./drawable";
 import { Ship } from "../../server/objects/ship";
+import { halfShipHeight, halfShipWidth } from "../../shared/constants";
+import { GameEventType, GameObject, PositionInfo } from "../../shared/types";
+import { getSections, hasCollided } from "../../shared/util";
+import { Asteroid } from "../../server/objects/asteroid";
+import { Socket } from "socket.io-client";
+import { DrawableAsteroid } from "./drawable-asteroid";
 
-export const halfShipWidth = 16;
-export const halfShipHeight = 15;
 export const RAD = Math.PI / 180;
 
 const frameToLocation = new Map([
@@ -66,6 +70,8 @@ export class DrawableShip extends Drawable {
   private explosionIndex = -1; // if not exploding. otherwise 0 to 13.
   private explosionLoaded = false;
   private onFinishedExploding: () => void;
+  public distance: number = 0; // todo remove
+  public radius = 0;
 
   constructor(ship: DrawableShipProps) {
     super(ship.userId);
@@ -73,6 +79,9 @@ export class DrawableShip extends Drawable {
     this.name = ship.name;
     this.x = ship.x;
     this.y = ship.y;
+    this.width = 2 * halfShipWidth;
+    this.radius = halfShipWidth;
+    this.height = 2 * halfShipHeight;
     this.deg = ship.deg || 0;
     this.speed = ship.speed || 1;
     this.shipImg = new Image();
@@ -89,11 +98,29 @@ export class DrawableShip extends Drawable {
     this.isLoaded = this.isLoaded.bind(this);
   }
 
-  public update(ship: Ship): void {
-    this.x = ship.x;
-    this.y = ship.y;
+  public update<T extends GameObject>(ship: T, objectMap: Map<string, DrawableAsteroid[]>, socket: Socket): void {
+    this.x = ship.x ?? this.x;
+    this.y = ship.y ?? this.y;
     this.deg = ship.deg || 0;
     this.speed = ship.speed || 1;
+
+    // check if it has collided
+    const shipSections: string[] = getSections(ship);
+    const asteroidsToCheckForCollision = new Set<GameObject>();
+    for (const shipSectionKey of shipSections) {
+      const objects = objectMap.get(shipSectionKey) || [];
+      // no asteroids logged but there should be.
+      for (const obj of objects) {
+        asteroidsToCheckForCollision.add(obj.toGameObject());
+      }
+    }
+
+    // A ship crashed into an asteroid!
+    if (hasCollided(ship, Array.from(asteroidsToCheckForCollision))) {
+      socket.emit(GameEventType.ShipExploded, ship.id)
+      this.explode();
+      // TODO remove ship from the game
+    }
   }
 
   getWidth(): number {
@@ -132,7 +159,7 @@ export class DrawableShip extends Drawable {
     context.fillStyle = "white";
 
     if (!this.isDead) {
-      context.fillText(this.name, halfShipWidth, 0);
+      context.fillText(this.name + " " + this.distance, halfShipWidth, 0);
     }
 
     context.rotate(this.deg * RAD);
@@ -154,9 +181,13 @@ export class DrawableShip extends Drawable {
         throw new Error(`Something is wrong with the frameToLocation map`);
       }
       context.drawImage(this.shipImg, srcLocation[0], srcLocation[1], 2 * halfShipWidth, 2 * halfShipHeight, 0 - halfShipWidth, 0 - halfShipHeight, 2 * halfShipWidth, 2 * halfShipHeight);
+      context.beginPath()
+      context.arc(0, 0, this.radius, 0, Math.PI * 2, false)
+      context.strokeStyle = "yellow"
+      context.stroke()
+      context.closePath()
     }
 
     context.restore();
   }
-
 }

@@ -35,6 +35,7 @@ export interface SocketAuth {
 }
 
 export enum GameEventType {
+    Announce = "ANNOUNCE",
     Ships = "SHIPS",
     ShipMoved = "SHIP_MOVED",
     UserLeft = "USER_LEFT",

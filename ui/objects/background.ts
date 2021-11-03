@@ -33,6 +33,20 @@ export class Background {
         context.fillRect(x, y, starDiameter, starDiameter);
       }
     }
+    // const gridWidth = 20;
+    // for (let i = 0; i < BOARD_WIDTH; i += gridWidth) {
+    //   context.beginPath();
+    //   context.strokeStyle =  "white"
+    //   context.moveTo(i, 0);
+    //   context.lineTo(i, BOARD_HEIGHT);
+    //   context.stroke();
+    // }
+    // for (let i = 0; i < BOARD_HEIGHT; i += gridWidth) {
+    //   context.beginPath();
+    //   context.moveTo(0, i);
+    //   context.lineTo(BOARD_WIDTH, i);
+    //   context.stroke();
+    // }
   }
 
   create(context: CanvasRenderingContext2D, canvas: HTMLCanvasElement) {

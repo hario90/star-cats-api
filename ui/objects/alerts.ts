@@ -2,10 +2,14 @@ import { Alert } from "../types";
 
 const fontSize = 14;
 const padding = fontSize;
+const ALERT_MESSAGE_DURATION = 8;
 export class Alerts {
     private alerts: Alert[] = [];
-    push(alert: Alert) {
-        this.alerts.push(alert);
+    push(message: string, expires?: Date) {
+        const defaultExpires = new Date();
+        defaultExpires.setSeconds(defaultExpires.getSeconds() + ALERT_MESSAGE_DURATION);
+        expires = expires ?? defaultExpires;
+        this.alerts.push({message, expires});
     }
 
     draw(context: CanvasRenderingContext2D, halfCanvasWidth: number, halfCanvasHeight: number) {

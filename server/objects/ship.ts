@@ -1,5 +1,6 @@
-import { Socket } from "socket.io";
-import { GameEventType, GameObject, GameObjectType, IShip, PositionInfo } from "../../shared/types";
+import { halfShipHeight, halfShipWidth } from "../../shared/constants";
+import { GameObject, GameObjectType, IShip, PositionInfo } from "../../shared/types";
+
 
 export class Ship implements IShip, GameObject {
     public id: string;
@@ -10,8 +11,8 @@ export class Ship implements IShip, GameObject {
     public speed: number = 1;
     public name: string;
     public userId: string;
-    public height = 16;
-    public width = 16;
+    public height = 2 * halfShipHeight;
+    public width = 2 * halfShipWidth;
 
     constructor(name: string, userId: string) {
         this.id = userId;
@@ -26,7 +27,6 @@ export class Ship implements IShip, GameObject {
         this.deg = deg;
         this.speed = speed;
     }
-
 
     get minX(): number {
         return this.x - (0.5 * this.width);

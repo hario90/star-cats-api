@@ -1,4 +1,6 @@
-export interface IDrawable {
+import { GameObject } from "../shared/types";
+
+export interface IDrawable extends GameObject{
   getPosition(): number[];
   setPosition(x: number, y: number): void;
   getSpeed(): number;
