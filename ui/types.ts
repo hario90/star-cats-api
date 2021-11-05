@@ -24,3 +24,8 @@ export interface Alert {
   message: string;
   expires: Date;
 }
+
+export interface Stats {
+  points: number;
+  lives: number;
+}

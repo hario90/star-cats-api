@@ -11,6 +11,7 @@ import { Asteroid } from "../server/objects/asteroid";
 import { DrawableAsteroid } from "./objects/drawable-asteroid";
 import { Drawable } from "./objects/drawable";
 import { createAsteroidSectionMap, getObjectSections, getSectionKey } from "../shared/util";
+import { drawStats } from "./objects/stats";
 
 const ALERT_MESSAGE_DURATION = 8;
 
@@ -267,6 +268,11 @@ export class Renderer {
         asteroid.draw(this.context, shipX, shipY, this.halfCanvasWidth, this.halfCanvasHeight);
       }
     }
+
+    drawStats(this.context, this.halfCanvasWidth, {
+      points: this.ship.points,
+      lives: this.ship.numLives
+    })
   }
 
   isInFrame<T extends Drawable>(component: T) {
