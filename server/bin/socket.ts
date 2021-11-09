@@ -8,9 +8,11 @@ import { Ship } from "../objects/ship";
 function createInitialObjects() {
   const asteroids = [];
   const asteroidGenerator = new AsteroidGenerator();
-  for (let i = 0; i < 15; i++) {
-    const asteroid = asteroidGenerator.random(false);
-    asteroids.push(asteroid);
+  for (let i = 0; i < 100; i++) {
+    const asteroid = asteroidGenerator.random(false, asteroids);
+    if (asteroid) {
+      asteroids.push(asteroid);
+    }
   }
   return {asteroids};
 }

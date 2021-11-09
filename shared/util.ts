@@ -59,7 +59,7 @@ export function getSections<T extends GameObject>(positionInfo: T): string[] {
 export const getSectionKey = (row: number, col: number) => `${row},${col}`;
 
 // This is used for determining if an asteroid overlaps with a section of the grid
-function isOverlappingWithSection<T extends WithBoundries>(o1: T, o2:T): boolean {
+export function isOverlappingWithSection<T extends WithBoundries>(o1: T, o2:T): boolean {
   const {minX: minX1, maxX: maxX1, minY: minY1, maxY: maxY1} = o1;
   const {minX: minX2, maxX: maxX2, minY: minY2, maxY: maxY2} = o2;
   const o2XMinIsWithinXBoundOfO1 = minX1 <= minX2 && maxX1 >= minX2;

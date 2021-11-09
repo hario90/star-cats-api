@@ -12,8 +12,6 @@ const startGame = async (nickName: string) => {
   const socket = io(SERVER_URL, {
     auth: {
       name: nickName,
-      canvasHeight: document.body.clientHeight,
-      canvasWidth: document.body.clientWidth,
     },
     transports: ["websocket"]
   });
