@@ -36,8 +36,7 @@ export class DrawableAsteroid extends ImageComponent {
     }
     context.save();
     const {x, y} = getRelativePosition(halfCanvasWidth, halfCanvasHeight, shipX, shipY, this.x, this.y);
-    context.translate(x - (this.width / 2), y - (this.height / 2));
-    context.drawImage(this.img, srcX, srcY, ASTEROID_WIDTH, ASTEROID_HEIGHT, 0 - (this.width / 2), 0 - (this.height / 2), this.width, this.height);
+    context.drawImage(this.img, srcX, srcY, ASTEROID_WIDTH, ASTEROID_HEIGHT, x - this.radius, y - this.radius, this.width, this.height);
     context.restore();
   }
 

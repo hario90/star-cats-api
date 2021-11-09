@@ -4,8 +4,8 @@ import { GameObject, PositionInfo } from "./types";
 
 export const NUM_COLUMNS = 8;
 export const NUM_ROWS = 8;
-const ROW_THICKNESS = BOARD_HEIGHT / NUM_ROWS;
-const COL_THICKNESS = BOARD_WIDTH / NUM_COLUMNS;
+export const ROW_THICKNESS = BOARD_HEIGHT / NUM_ROWS;
+export const COL_THICKNESS = BOARD_WIDTH / NUM_COLUMNS;
 
 interface WithBoundries {
     minX: number;
@@ -58,14 +58,16 @@ export function getSections<T extends GameObject>(positionInfo: T): string[] {
   type Coordinate = [number, number];
 export const getSectionKey = (row: number, col: number) => `${row},${col}`;
 
-function isOverlappingHelper<T extends WithBoundries>(o1: T, o2: T): boolean {
+// This is used for determining if an asteroid overlaps with a section of the grid
+function isOverlappingWithSection<T extends WithBoundries>(o1: T, o2:T): boolean {
   const {minX: minX1, maxX: maxX1, minY: minY1, maxY: maxY1} = o1;
   const {minX: minX2, maxX: maxX2, minY: minY2, maxY: maxY2} = o2;
-  return ((minX1 <= maxX2 && minX1 >= minX2) && (minY1 >= minY2 && minY1 <= maxY2));
-}
+  const o2XMinIsWithinXBoundOfO1 = minX1 <= minX2 && maxX1 >= minX2;
+  const o2XMaxIsWithinXBoundsOfO1 = minX1 <= maxX2 && maxX1 >= maxX2;
+  const o2YMinIsWithinYBoundsOfO1 = minY1 <= minY2 && maxY1 >= minY2;
+  const o2YMaxIsWithinYBoundsOfO1 = minY1 <= maxY2 && maxY1 >= maxY2;
 
-function isOverlappingWithSection<T extends WithBoundries>(o1: T, o2:T): boolean {
-  return isOverlappingHelper(o1, o2) || isOverlappingHelper(o2, o1);
+  return (o2XMinIsWithinXBoundOfO1 || o2XMaxIsWithinXBoundsOfO1) && (o2YMinIsWithinYBoundsOfO1 || o2YMaxIsWithinYBoundsOfO1);
 }
 
 // determine which sections of the game board the object falls in

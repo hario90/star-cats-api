@@ -1,4 +1,5 @@
 import { BOARD_WIDTH, BOARD_HEIGHT } from "../../shared/constants";
+import { COL_THICKNESS, ROW_THICKNESS } from "../../shared/util";
 
 export class Background {
   private img: HTMLImageElement;
@@ -33,15 +34,14 @@ export class Background {
         context.fillRect(x, y, starDiameter, starDiameter);
       }
     }
-    // const gridWidth = 20;
-    // for (let i = 0; i < BOARD_WIDTH; i += gridWidth) {
+    // for (let i = 0; i < BOARD_WIDTH; i += COL_THICKNESS) {
     //   context.beginPath();
     //   context.strokeStyle =  "white"
     //   context.moveTo(i, 0);
     //   context.lineTo(i, BOARD_HEIGHT);
     //   context.stroke();
     // }
-    // for (let i = 0; i < BOARD_HEIGHT; i += gridWidth) {
+    // for (let i = 0; i < BOARD_HEIGHT; i += ROW_THICKNESS) {
     //   context.beginPath();
     //   context.moveTo(0, i);
     //   context.lineTo(BOARD_WIDTH, i);

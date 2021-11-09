@@ -3,11 +3,9 @@ import explosionImg from "../../assets/explosion.png";
 import shipImg from "../../assets/ship.png";
 import { getRelativePosition } from "../util";
 import { Drawable } from "./drawable";
-import { Ship } from "../../server/objects/ship";
 import { halfShipHeight, halfShipWidth } from "../../shared/constants";
 import { GameEventType, GameObject, PositionInfo } from "../../shared/types";
 import { getSections, hasCollided } from "../../shared/util";
-import { Asteroid } from "../../server/objects/asteroid";
 import { Socket } from "socket.io-client";
 import { DrawableAsteroid } from "./drawable-asteroid";
 
@@ -29,23 +27,23 @@ const speedToFrame = new Map([
   [5, BattleShipFrame.THRUST_HI],
 ]);
 
-const explosionWidth = 128;
-const halfExplosionWidth = explosionWidth / 2;
-const explosionLocations = [
+const EXPLOSION_WIDTH = 128;
+const HALF_EXPLOSION_WIDTH = EXPLOSION_WIDTH / 2;
+const EXPLOSION_LOCATIONS = [
   [0, 0],
-  [explosionWidth, 0],
-  [2*explosionWidth, 0],
-  [3*explosionWidth, 0],
-  [0, explosionWidth],
-  [explosionWidth, explosionWidth],
-  [2*explosionWidth, explosionWidth],
-  [3*explosionWidth, explosionWidth],
-  [0, 2*explosionWidth],
-  [explosionWidth, 2*explosionWidth],
-  [2*explosionWidth, 2*explosionWidth],
-  [3*explosionWidth, 2*explosionWidth],
-  [0, 3*explosionWidth],
-  [explosionWidth, 3*explosionWidth]
+  [EXPLOSION_WIDTH, 0],
+  [2*EXPLOSION_WIDTH, 0],
+  [3*EXPLOSION_WIDTH, 0],
+  [0, EXPLOSION_WIDTH],
+  [EXPLOSION_WIDTH, EXPLOSION_WIDTH],
+  [2*EXPLOSION_WIDTH, EXPLOSION_WIDTH],
+  [3*EXPLOSION_WIDTH, EXPLOSION_WIDTH],
+  [0, 2*EXPLOSION_WIDTH],
+  [EXPLOSION_WIDTH, 2*EXPLOSION_WIDTH],
+  [2*EXPLOSION_WIDTH, 2*EXPLOSION_WIDTH],
+  [3*EXPLOSION_WIDTH, 2*EXPLOSION_WIDTH],
+  [0, 3*EXPLOSION_WIDTH],
+  [EXPLOSION_WIDTH, 3*EXPLOSION_WIDTH]
 ];
 
 const DEGREE_OF_SHIP_NOSE_FROM_POS_X_AXIS = 90;
@@ -61,16 +59,26 @@ export interface DrawableShipProps {
   onFinishedExploding: () => void;
 }
 
+const MAX_NUM_LIVES = 5;
+const SHOW_SHIP_INTERVAL = 14;
+const HIDE_SHIP_INTERVAL = 10;
+const MAX_BLINKS = 6;
 export class DrawableShip extends Drawable {
-  public name: string;
-  public isDead = false;
-  public speed: number = 1;
   private shipImg: HTMLImageElement;
   private explosionImg: HTMLImageElement;
   private explosionIndex = -1; // if not exploding. otherwise 0 to 13.
   private explosionLoaded = false;
   private onFinishedExploding: () => void;
-  public distance: number = 0; // todo remove
+
+  public name: string;
+  public numLives: number = MAX_NUM_LIVES;
+  public points = 0;
+  private blinkCount = MAX_BLINKS;
+  private blinkIntervalCount = 0;
+  public isComingBackToLife = false;
+  private showShip = true;
+  public isDead = false;
+  public speed: number = 1;
   public radius = 0;
 
   constructor(ship: DrawableShipProps) {
@@ -119,7 +127,6 @@ export class DrawableShip extends Drawable {
     if (hasCollided(ship, Array.from(asteroidsToCheckForCollision))) {
       socket.emit(GameEventType.ShipExploded, ship.id)
       this.explode();
-      // TODO remove ship from the game
     }
   }
 
@@ -138,6 +145,57 @@ export class DrawableShip extends Drawable {
   explode() {
     this.isDead = true;
     this.explosionIndex = 0;
+    this.numLives--;
+    // TODO if numLives <= 0, show "Game Over"
+  }
+
+  get isExploding() {
+    return this.explosionIndex > -1 && this.explosionIndex < EXPLOSION_LOCATIONS.length
+  }
+
+  private drawExplosion(context: CanvasRenderingContext2D) {
+    const location = EXPLOSION_LOCATIONS[Math.floor(this.explosionIndex / 2)];
+    context.drawImage(this.explosionImg, location[0], location[1], EXPLOSION_WIDTH, EXPLOSION_WIDTH, 0 - HALF_EXPLOSION_WIDTH, 0-HALF_EXPLOSION_WIDTH, EXPLOSION_WIDTH, EXPLOSION_WIDTH);
+    this.explosionIndex++;
+
+    if (this.explosionIndex >= EXPLOSION_LOCATIONS.length) {
+      this.onFinishedExploding();
+      this.startComingBackToLifeAnimation();
+    }
+  }
+
+  private comeToLife() {
+    this.isComingBackToLife = false;
+    this.isDead = false;
+    this.showShip = true;
+    this.blinkIntervalCount = HIDE_SHIP_INTERVAL;
+    this.blinkCount = MAX_BLINKS;
+  }
+
+  private startComingBackToLifeAnimation() {
+    if (this.numLives > 0) {
+      this.isComingBackToLife = true;
+      this.showShip = false;
+      this.blinkIntervalCount = HIDE_SHIP_INTERVAL
+    }
+
+    this.x = 50;
+    this.y = 50;
+    this.speed = 1;
+    this.radius = 0;
+  }
+
+  private handleComingBackToLifeAnimation() {
+    this.blinkIntervalCount--;
+
+    if (this.blinkIntervalCount <= 0) {
+      this.blinkCount--;
+      this.showShip = !this.showShip;
+      this.blinkIntervalCount = this.showShip ? SHOW_SHIP_INTERVAL : HIDE_SHIP_INTERVAL;
+      if (this.blinkCount <= 0) {
+        this.comeToLife();
+      }
+    }
   }
 
   isLoaded() {
@@ -159,20 +217,14 @@ export class DrawableShip extends Drawable {
     context.fillStyle = "white";
 
     if (!this.isDead) {
-      context.fillText(this.name + " " + this.distance, halfShipWidth, 0);
+      context.fillText(this.name, halfShipWidth, 0);
     }
 
-    context.rotate(this.deg * RAD);
-    if (this.explosionIndex > -1 && this.explosionIndex < explosionLocations.length) {
-      const location = explosionLocations[Math.floor(this.explosionIndex / 2)];
-      context.drawImage(this.explosionImg, location[0], location[1], explosionWidth, explosionWidth, 0 - halfExplosionWidth, 0-halfExplosionWidth, explosionWidth, explosionWidth);
-      this.explosionIndex++;
+    if (this.isExploding) {
+      this.drawExplosion(context);
 
-      if (this.explosionIndex >= explosionLocations.length) {
-        this.onFinishedExploding();
-      }
-
-    } else if (!this.isDead) {
+    } else if (!this.isDead || this.isComingBackToLife) {
+      context.rotate(this.deg * RAD);
       const frame = speedToFrame.get(this.speed) || BattleShipFrame.NORMAL;
       const srcLocation = frameToLocation.get(frame);
       if (!srcLocation) {
@@ -180,12 +232,19 @@ export class DrawableShip extends Drawable {
       } else if (srcLocation.length < 2) {
         throw new Error(`Something is wrong with the frameToLocation map`);
       }
-      context.drawImage(this.shipImg, srcLocation[0], srcLocation[1], 2 * halfShipWidth, 2 * halfShipHeight, 0 - halfShipWidth, 0 - halfShipHeight, 2 * halfShipWidth, 2 * halfShipHeight);
-      context.beginPath()
-      context.arc(0, 0, this.radius, 0, Math.PI * 2, false)
-      context.strokeStyle = "yellow"
-      context.stroke()
-      context.closePath()
+
+      if (!this.isDead || (this.isComingBackToLife && this.showShip)) {
+        context.drawImage(this.shipImg, srcLocation[0], srcLocation[1], 2 * halfShipWidth, 2 * halfShipHeight, 0 - halfShipWidth, 0 - halfShipHeight, 2 * halfShipWidth, 2 * halfShipHeight);
+        context.beginPath()
+        context.arc(0, 0, this.radius, 0, Math.PI * 2, false)
+        context.strokeStyle = "yellow"
+        context.stroke()
+        context.closePath()
+      }
+
+      if (this.isComingBackToLife) {
+        this.handleComingBackToLifeAnimation()
+      }
     }
 
     context.restore();
