@@ -43,4 +43,8 @@ export class Asteroid implements GameObject {
     get maxY(): number {
         return this.y + (0.5 * this.height);
     }
+
+    getRadius(): number {
+        return Math.floor(this.width / 2);
+    }
 }

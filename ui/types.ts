@@ -10,6 +10,8 @@ export interface IDrawable extends GameObject{
   draw(context: CanvasRenderingContext2D, shipX: number, shipY: number, halfCanvasWidth: number, halfCanvasHeight: number): void;
   isLoaded(): boolean;
   getUserId(): string | undefined;
+  getNextPosition(): [number, number]
+  
 }
 
 export enum BattleShipFrame {

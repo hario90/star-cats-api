@@ -54,7 +54,6 @@ export class Renderer {
     this.draw = this.draw.bind(this);
     this.animate = this.animate.bind(this);
     this.moveAndDraw = this.moveAndDraw.bind(this);
-    this.getNextPosition = this.getNextPosition.bind(this);
     this.emit = this.emit.bind(this);
     this.setHeightWidth = this.setHeightWidth.bind(this);
 
@@ -164,47 +163,6 @@ export class Renderer {
     this.halfCanvasHeight = Math.floor(this.canvas.height / 2);
   }
 
-  getNextPosition<T extends Drawable>(component: T): [number, number] {
-    const [x, y] = component.getPosition();
-    const speed = component.getSpeed();
-    let heading = component.getHeading();
-    if (heading < 0) {
-      heading = 360 + heading;
-    }
-    let deg = heading;
-    // not being super exact here. using halfShipWidth in both cases for simplicity
-    const minX = halfShipWidth;
-    const maxX = BOARD_WIDTH - component.getWidth();
-    const minY = component.getWidth();
-    const maxY = BOARD_HEIGHT - component.getWidth();
-    if (heading < 90) {
-      const adjacent = Math.cos(deg * RAD) * speed;
-      const opposite = Math.sin(deg * RAD) * speed;
-      return [Math.min(x + adjacent, maxX), Math.min(y + opposite, maxY)];
-    } else if (heading === 90) {
-      return [x, Math.min(y + speed, maxY)];
-    } else if (heading < 180) {
-      deg = 180 - heading;
-      const adjacent = Math.cos(deg * RAD) * speed;
-      const opposite = Math.sin(deg * RAD) * speed;
-      return [Math.max(x - adjacent, minX), Math.min(y + opposite, maxY)];
-    } else if (heading === 180) {
-      return [Math.max(x - speed, minX), y];
-    } else if (heading < 270) {
-      deg = heading - 180;
-      const adjacent = Math.cos(deg * RAD) * speed;
-      const opposite = Math.sin(deg * RAD) * speed;
-      return [Math.max(x - adjacent, minX), Math.max(y - opposite, minY)];
-    } else if (heading === 270) {
-      return [x, Math.max(y - speed, minY)];
-    } else {
-      deg = 360 - heading;
-      const adjacent = Math.cos(deg * RAD) * speed;
-      const opposite = Math.sin(deg * RAD) * speed;
-      return [Math.min(x + adjacent, maxX), Math.max(y - opposite, minY)]
-    }
-  }
-
   async pollUntilReady() {
 
     while (!this.background.isLoaded() || [...this.ships.values(), ...this.asteroids.values()].map((c) => c.isLoaded()).some((loaded) => !loaded)) {
@@ -234,7 +192,7 @@ export class Renderer {
     let shipX = this.ship.x;
     let shipY = this.ship.y;
     if (!this.ship.isDead) {
-      const [nextShipX, nextShipY] = this.getNextPosition(this.ship);
+      const [nextShipX, nextShipY] = this.ship.getNextPosition();
       shipX = nextShipX;
       shipY = nextShipY;
       this.emit(GameEventType.ShipMoved, {
@@ -251,7 +209,12 @@ export class Renderer {
           type: GameObjectType.Ship,
           x: shipX,
           y: shipY,
-          minX: this.ship.minX, maxX: this.ship.maxX, minY: this.ship.minY, maxY: this.ship.maxY}, this.objectMap, this.socket);
+          minX: this.ship.minX,
+          maxX: this.ship.maxX,
+          minY: this.ship.minY,
+          maxY: this.ship.maxY,
+          getRadius: () => Math.floor(this.ship.width / 2)
+        }, this.objectMap, this.socket);
     }
 
     this.ship.draw(this.context, shipX, shipY, this.halfCanvasWidth, this.halfCanvasHeight);

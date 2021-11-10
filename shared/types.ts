@@ -9,6 +9,7 @@ export interface PositionInfo {
     minY: number;
     maxX: number;
     maxY: number;
+    getRadius(): number;
 }
 
 export enum GameObjectType {

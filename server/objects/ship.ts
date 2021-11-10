@@ -43,4 +43,8 @@ export class Ship implements IShip, GameObject {
     get maxY(): number {
         return this.y + (0.5 * this.height);
     }
+
+    getRadius() {
+        return Math.floor(this.width / 2);
+    }
 }

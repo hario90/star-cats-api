@@ -62,7 +62,8 @@ export class DrawableAsteroid extends ImageComponent {
       minX: this.minX,
       minY: this.minY,
       maxX: this.maxX,
-      maxY: this.maxY
+      maxY: this.maxY,
+      getRadius: () => this.radius
     };
   }
 }
