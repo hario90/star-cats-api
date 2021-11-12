@@ -1,8 +1,9 @@
 import { Server as HttpServer } from "http";
 import { Server, Socket } from "socket.io";
-import { GameEventType, PositionInfo, SocketAuth } from "../../shared/types";
+import { GameEventType, GameObjectType, PositionInfo, SocketAuth } from "../../shared/types";
 import { AsteroidGenerator } from "../asteroid-generator";
-import { Ship } from "../objects/ship";
+import { Ship } from "../../shared/objects/ship";
+import { halfShipHeight, halfShipWidth } from "../../shared/constants";
 
 
 function createInitialObjects() {
@@ -32,9 +33,20 @@ export function createWebSocket(server: HttpServer) {
     io.use((socket: any, next: () => void) => {
       const { name } = socket.handshake.auth;
       const userId = socket.id;
-      const ship = new Ship(name, userId);
+      const ship = new Ship({
+        // todo
+        x: 50,
+        y: 50,
+        speed: 1,
+        deg: 0,
+        height: 2 * halfShipHeight,
+        width: 2 * halfShipWidth,
+        id: userId,
+        type: GameObjectType.Ship,
+        name,
+      });
       ships.push(ship);
-      socket.emit(GameEventType.Ships, ships, asteroids);
+      socket.emit(GameEventType.Ships, ships.map(s => s.toJSON()), asteroids.map(a => a.toJSON()));
       socket.broadcast.emit(GameEventType.UserJoined, name);
       console.log(`user ${name}, id ${userId} has joined`);
       shipToIndex.set(userId, ships.length - 1);
@@ -49,7 +61,7 @@ export function createWebSocket(server: HttpServer) {
         if (index !== undefined && index > -1 && index < ships.length) {
           const ship = ships[index];
           ship.move(positionInfo);
-          socket.broadcast.emit(GameEventType.ShipMoved, ship);
+          socket.broadcast.emit(GameEventType.ShipMoved, ship.toJSON());
         }
       });
       socket.on("disconnect", (reason: string) => {

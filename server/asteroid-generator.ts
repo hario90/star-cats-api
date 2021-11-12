@@ -2,7 +2,7 @@ import { v4 as uuid } from "uuid";
 
 import { BOARD_WIDTH, BOARD_HEIGHT, halfShipHeight } from "../shared/constants";
 import { isOverlappingWithSection } from "../shared/util";
-import { Asteroid } from "./objects/asteroid";
+import { Asteroid } from "../shared/objects/asteroid";
 
 const MAX_ASTEROID_SPEED = 15;
 const MAX_ASTEROID_HEIGHT = 100;

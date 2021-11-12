@@ -1,15 +1,14 @@
+import { GameObjectProps } from "../../shared/objects/game-object";
 import { Drawable } from "./drawable";
 
+export interface DrawableLaserBeamProps extends GameObjectProps {
+    color?: string
+}
+
 export class DrawableLaserBeam extends Drawable {
-    
-    constructor(id: string, x: number, y: number, speed: number, deg: number, width = 5, height = 50) {
-        super(id);
-        this.x = x;
-        this.y = y;
-        this.speed = speed;
-        this.deg = deg;
-        this.width = width;
-        this.height = height;
+
+    constructor({color, ...rest}: DrawableLaserBeamProps) {
+        super({...rest});
     }
 
     draw(context: CanvasRenderingContext2D, shipX: number, shipY: number, halfCanvasWidth: number, halfCanvasHeight: number): void {

@@ -1,8 +1,8 @@
 import { ImageComponent } from "../component";
 import asteroidImg from "../../assets/asteroid.png"
 import { getRelativePosition } from "../util";
-import { Asteroid } from "../../server/objects/asteroid";
-import { GameObject } from "../../shared/types";
+import { Asteroid } from "../../shared/objects/asteroid";
+import { GameObject } from "../../shared/objects/game-object";
 
 export const ASTEROID_HEIGHT = 32;
 export const ASTEROID_WIDTH = 32;
@@ -10,18 +10,11 @@ export const ASTEROID_WIDTH = 32;
 export class DrawableAsteroid extends ImageComponent {
   private frame = 2;
   public radius = 0;
-  constructor({id, x, y, speed, deg, height, width}: Asteroid) {
+  constructor(asteroid: Asteroid) {
     super({
-      id,
+      ...asteroid,
       src: asteroidImg,
-      x,
-      y,
     });
-    this.speed = speed;
-    this.deg = deg;
-    this.height = height;
-    this.width = width;
-    this.radius = Math.floor(this.width / 2)
   }
 
   draw(context: CanvasRenderingContext2D, shipX: number, shipY: number, halfCanvasWidth: number, halfCanvasHeight: number) {
@@ -47,23 +40,5 @@ export class DrawableAsteroid extends ImageComponent {
     this.width = width;
     this.x = x;
     this.y = y;
-  }
-
-  public toGameObject(): GameObject {
-    return {
-      id: this.id,
-      type: this.type,
-      x: this.x,
-      y: this.y,
-      deg: this.deg,
-      speed: this.speed,
-      height: this.height,
-      width: this.width,
-      minX: this.minX,
-      minY: this.minY,
-      maxX: this.maxX,
-      maxY: this.maxY,
-      getRadius: () => this.radius
-    };
   }
 }

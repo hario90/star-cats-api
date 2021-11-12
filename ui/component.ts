@@ -1,21 +1,18 @@
+import { GameObjectProps } from "../shared/objects/game-object";
 import { Drawable } from "./objects/drawable";
 
-export interface ComponentProps {
-  id: string;
+export interface ComponentProps extends GameObjectProps {
   src: string;
-  x: number;
-  y: number;
 }
 
+// TODO remove class
 export abstract class ImageComponent extends Drawable {
   protected img: HTMLImageElement;
 
-  constructor({ id, src, x, y }: ComponentProps) {
-    super(id);
+  constructor({ src, ...rest }: ComponentProps) {
+    super({...rest});
     this.img = new Image();
     this.img.src = src;
     this.img.onload = () => { this.loaded = true; };
-    this.x = x;
-    this.y = y;
   }
 }

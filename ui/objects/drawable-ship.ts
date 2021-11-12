@@ -4,10 +4,11 @@ import shipImg from "../../assets/ship.png";
 import { getRelativePosition } from "../util";
 import { Drawable } from "./drawable";
 import { halfShipHeight, halfShipWidth } from "../../shared/constants";
-import { GameEventType, GameObject, PositionInfo } from "../../shared/types";
+import { GameEventType, GameObjectType } from "../../shared/types";
 import { getSections, hasCollided } from "../../shared/util";
 import { Socket } from "socket.io-client";
 import { DrawableAsteroid } from "./drawable-asteroid";
+import { GameObject } from "../../shared/objects/game-object";
 
 export const RAD = Math.PI / 180;
 
@@ -81,21 +82,24 @@ export class DrawableShip extends Drawable {
   public speed: number = 1;
   public radius = 0;
 
-  constructor(ship: DrawableShipProps) {
-    super(ship.userId);
-    this.userId = ship.userId;
-    this.name = ship.name;
-    this.x = ship.x;
-    this.y = ship.y;
-    this.width = 2 * halfShipWidth;
-    this.radius = halfShipWidth;
-    this.height = 2 * halfShipHeight;
-    this.deg = ship.deg || 0;
-    this.speed = ship.speed || 1;
+  constructor({userId, x, y, deg, speed, name, onFinishedExploding}: DrawableShipProps) {
+    super({
+      x,
+      y,
+      deg: deg ?? 0,
+      id: userId,
+      type: GameObjectType.Ship,
+      speed: speed ?? 1,
+      height: 2 * halfShipHeight,
+      width: 2 * halfShipWidth
+    });
+    this.userId = userId;
+    this.name = name;
+
     this.shipImg = new Image();
     this.shipImg.src = shipImg;
     this.shipImg.onload = () => this.loaded = true;
-    this.onFinishedExploding = ship.onFinishedExploding;
+    this.onFinishedExploding = onFinishedExploding;
 
     this.explosionImg = new Image();
     this.explosionImg.src = explosionImg;
@@ -119,7 +123,8 @@ export class DrawableShip extends Drawable {
       const objects = objectMap.get(shipSectionKey) || [];
       // no asteroids logged but there should be.
       for (const obj of objects) {
-        asteroidsToCheckForCollision.add(obj.toGameObject());
+        // TODO: .toJSON shouldn't be necessary
+        asteroidsToCheckForCollision.add(obj.toJSON());
       }
     }
 

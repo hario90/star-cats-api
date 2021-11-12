@@ -1,17 +1,17 @@
 import { Socket } from "socket.io-client";
 import { Background } from "./objects/background";
-import { halfShipWidth, PlayerShip, RAD } from "./objects/player-ship";
+import { PlayerShip } from "./objects/player-ship";
 import { timeout } from "./util";
 import { DrawableShip } from "./objects/drawable-ship";
-import { GameEventType, GameObjectType, PositionInfo } from "../shared/types";
-import { Ship } from "../server/objects/ship";
+import { GameEventType, GameObjectType } from "../shared/types";
+import { Ship } from "../shared/objects/ship";
 import { Alerts } from "./objects/alerts";
 import { BOARD_WIDTH, BOARD_HEIGHT } from "../shared/constants";
-import { Asteroid } from "../server/objects/asteroid";
+import { Asteroid } from "../shared/objects/asteroid";
 import { DrawableAsteroid } from "./objects/drawable-asteroid";
-import { Drawable } from "./objects/drawable";
 import { createAsteroidSectionMap, getObjectSections, getSectionKey } from "../shared/util";
 import { drawStats } from "./objects/stats";
+import { DrawableLaserBeam } from "./objects/drawable-laser-beam";
 
 const ALERT_MESSAGE_DURATION = 8;
 
@@ -23,6 +23,7 @@ export class Renderer {
   private socket: Socket;
   private ships: Map<string, DrawableShip> = new Map();
   private asteroids: Map<string, DrawableAsteroid> = new Map();
+  private laserBeams: Map<string, DrawableLaserBeam> = new Map();
   private halfCanvasWidth: number = 0;
   private halfCanvasHeight: number = 0;
   private alerts: Alerts = new Alerts();
@@ -38,7 +39,8 @@ export class Renderer {
         const expires = new Date();
         expires.setSeconds(expires.getSeconds() + ALERT_MESSAGE_DURATION);
         this.alerts.push('You died!');
-      }
+      },
+      socket,
     );
 
     this.socket = socket;
@@ -205,15 +207,9 @@ export class Renderer {
       });
       this.ship.update(
         {
-          ...this.ship,
-          type: GameObjectType.Ship,
+          ...this.ship.toJSON(),
           x: shipX,
           y: shipY,
-          minX: this.ship.minX,
-          maxX: this.ship.maxX,
-          minY: this.ship.minY,
-          maxY: this.ship.maxY,
-          getRadius: () => Math.floor(this.ship.width / 2)
         }, this.objectMap, this.socket);
     }
 
@@ -221,14 +217,19 @@ export class Renderer {
 
     for (const ship of this.ships.values()) {
       if (this.ship.id !== ship.id) {
-        if (this.isInFrame(ship)) {
+        if (ship.isInFrame(this.halfCanvasWidth, this.halfCanvasHeight)) {
           ship.draw(this.context, shipX, shipY, this.halfCanvasWidth, this.halfCanvasHeight);
         }
       }
     }
     for (const asteroid of this.asteroids.values()) {
-      if (this.isInFrame(asteroid)) {
+      if (asteroid.isInFrame(this.halfCanvasWidth, this.halfCanvasHeight)) {
         asteroid.draw(this.context, shipX, shipY, this.halfCanvasWidth, this.halfCanvasHeight);
+      }
+    }
+    for (const laserBeam of this.laserBeams.values()) {
+      if (laserBeam.isInFrame(this.halfCanvasWidth, this.halfCanvasHeight)) {
+        laserBeam.draw(this.context, shipX, shipY, this.halfCanvasWidth, this.halfCanvasHeight);
       }
     }
 
@@ -236,15 +237,6 @@ export class Renderer {
       points: this.ship.points,
       lives: this.ship.numLives
     })
-  }
-
-  isInFrame<T extends Drawable>(component: T) {
-    const [x, y] = component.getPosition();
-    const minX = x - this.halfCanvasWidth;
-    const maxX = x + this.halfCanvasWidth;
-    const minY = y - this.halfCanvasHeight;
-    const maxY = y + this.halfCanvasHeight;
-    return x >= minX && x <= maxX && y >= minY && y <= maxY;
   }
 
   animate() {

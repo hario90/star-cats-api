@@ -1,6 +1,7 @@
 import { DrawableAsteroid } from "../ui/objects/drawable-asteroid";
 import { BOARD_HEIGHT, BOARD_WIDTH } from "./constants";
-import { GameObject, PositionInfo } from "./types";
+import { GameObject } from "./objects/game-object";
+import { PositionInfo } from "./types";
 
 export const NUM_COLUMNS = 8;
 export const NUM_ROWS = 8;

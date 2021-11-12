@@ -1,6 +1,6 @@
-import { GameObject } from "../shared/types";
+import { IGameObject } from "../shared/types";
 
-export interface IDrawable extends GameObject{
+export interface IDrawable extends IGameObject{
   getPosition(): number[];
   setPosition(x: number, y: number): void;
   getSpeed(): number;
@@ -10,8 +10,8 @@ export interface IDrawable extends GameObject{
   draw(context: CanvasRenderingContext2D, shipX: number, shipY: number, halfCanvasWidth: number, halfCanvasHeight: number): void;
   isLoaded(): boolean;
   getUserId(): string | undefined;
-  getNextPosition(): [number, number]
-  
+  getNextPosition(): [number, number];
+  isInFrame(canvasWidth: number, canvasHeight: number): boolean;
 }
 
 export enum BattleShipFrame {

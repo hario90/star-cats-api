@@ -1,10 +1,4 @@
-export interface PositionInfo {
-    x: number;
-    y: number;
-    deg: number;
-    speed: number;
-    height: number;
-    width: number;
+export interface PositionInfo extends PositionInfoDTO {
     minX: number;
     minY: number;
     maxX: number;
@@ -12,20 +6,34 @@ export interface PositionInfo {
     getRadius(): number;
 }
 
+export interface PositionInfoDTO {
+    x: number;
+    y: number;
+    deg: number;
+    speed: number;
+    height: number;
+    width: number;
+}
+
 export enum GameObjectType {
     Unknown = "UNKNOWN",
     Ship = "SHIP",
     Asteroid = "ASTEROID",
+    LaserBeam = "LASER_BEAM"
 }
 
-export interface GameObject extends PositionInfo {
+export interface IGameObject extends PositionInfo {
     id: string;
     type: GameObjectType;
 }
 
-export interface IShip extends PositionInfo {
+export interface ShipDTO extends PositionInfoDTO {
     name: string;
     userId: string;
+}
+
+export interface LaserBeamDTO extends PositionInfoDTO {
+    color?: string;
 }
 
 export interface SocketAuth {
@@ -43,4 +51,5 @@ export enum GameEventType {
     UserJoined = "USER_JOINED",
     ShipDamage = "SHIP_DAMAGE",
     ShipExploded = "SHIP_EXPLODED",
+    EmitLaserBeam = "EMIT_LASER_BEAM"
 }

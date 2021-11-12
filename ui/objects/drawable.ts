@@ -1,23 +1,15 @@
-import { BOARD_HEIGHT, BOARD_WIDTH, halfShipWidth } from "../../shared/constants";
-import { GameObjectType } from "../../shared/types";
-import { IDrawable } from "../types";
+import { BOARD_HEIGHT, BOARD_WIDTH } from "../../shared/constants";
+import { GameObject, GameObjectProps } from "../../shared/objects/game-object";
 import { RAD } from "./drawable-ship";
 
-export abstract class Drawable implements IDrawable {
-    public x: number = 0;
-    public y: number = 0;
-    public type: GameObjectType = GameObjectType.Unknown;
+export abstract class Drawable extends GameObject {
     public loaded: boolean = false;
-    public speed: number = 0;
-    public deg: number = 0;
-    public height: number = 0;
-    public width: number = 0;
-    public id: string = "";
+    // todo why are these here?
     public userId: string | undefined = undefined;
     public isDead: boolean | undefined = false;
 
-    constructor(id: string) {
-        this.id = id;
+    constructor(props: GameObjectProps) {
+        super(props);
     }
 
     getId(): string {
@@ -67,27 +59,14 @@ export abstract class Drawable implements IDrawable {
         return Math.round(this.width / 2);
     }
 
-  get minX(): number {
-    return this.x - (0.5 * this.width);
-  }
 
-  get minY(): number {
-      return this.y - (0.5 * this.height);
-  }
-
-  get maxX(): number {
-      return this.x + (0.5 * this.width);
-  }
-
-  get maxY(): number {
-      return this.y + (0.5 * this.height);
-  }
 
   abstract draw(context: CanvasRenderingContext2D, shipX: number, shipY: number, halfCanvasWidth: number, halfCanvasHeight: number): void;
 
-  getNextPosition(): [number, number] {
+  // Pass in speed if we want a different hypotenuse
+  getNextPosition(speed?: number): [number, number] {
     const [x, y] = this.getPosition();
-    const speed = this.getSpeed();
+    speed = speed ?? this.getSpeed();
     let heading = this.getHeading();
     if (heading < 0) {
       heading = 360 + heading;
@@ -123,5 +102,14 @@ export abstract class Drawable implements IDrawable {
       const opposite = Math.sin(deg * RAD) * speed;
       return [Math.min(x + adjacent, maxX), Math.max(y - opposite, minY)]
     }
+  }
+
+  isInFrame(halfCanvasWidth: number, halfCanvasHeight: number): boolean {
+    const [x, y] = this.getPosition();
+    const minX = x - halfCanvasWidth;
+    const maxX = x + halfCanvasWidth;
+    const minY = y - halfCanvasHeight;
+    const maxY = y + halfCanvasHeight;
+    return x >= minX && x <= maxX && y >= minY && y <= maxY;
   }
 }
