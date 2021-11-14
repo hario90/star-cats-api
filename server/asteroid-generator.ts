@@ -23,7 +23,7 @@ export class AsteroidGenerator {
         return asteroid.minX >= 0 && asteroid.maxX <= BOARD_WIDTH && asteroid.minY >= 0 && asteroid.maxY <= BOARD_HEIGHT;
     }
 
-    isOverlappingWithOtherAsteroids(asteroid: Asteroid, others: Asteroid[]): boolean {
+    isOverlappingWithOtherAsteroids(asteroid: Asteroid, others: Iterable<Asteroid>): boolean {
         let isOverlapping = false;
         for (const other of others) {
             if (isOverlappingWithSection(asteroid, other)) {
@@ -34,11 +34,11 @@ export class AsteroidGenerator {
         return isOverlapping;
     }
 
-    isValid(asteroid: Asteroid, others: Asteroid[]): boolean {
+    isValid(asteroid: Asteroid, others: Iterable<Asteroid>): boolean {
         return this.isInbounds(asteroid) && !this.isOverlappingWithOtherAsteroids(asteroid, others);
     }
 
-    random(isMoving: boolean, otherAsteroids: Asteroid[]): Asteroid | undefined {
+    random(isMoving: boolean, otherAsteroids: Iterable<Asteroid>): Asteroid | undefined {
         let x = this.getRandomX();
         let y = this.getRandomY();
         const speed = isMoving ? Math.random() * MAX_ASTEROID_SPEED : 0;

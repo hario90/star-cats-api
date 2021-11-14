@@ -1,6 +1,6 @@
 import { GameObjectType, IGameObject, PositionInfoDTO } from "../types";
 
-export interface GameObjectProps extends PositionInfoDTO {
+export interface GameObjectDTO extends PositionInfoDTO {
     id: string;
     type: GameObjectType;
 }
@@ -19,7 +19,7 @@ export abstract class GameObject implements IGameObject{
     width: number;
     radius: number;
 
-    constructor({id, type, x, y, deg, speed, height, width}: GameObjectProps) {
+    constructor({id, type, x, y, deg, speed, height, width}: GameObjectDTO) {
         this.id = id;
         this.type = type;
         this.x = x;
@@ -47,6 +47,14 @@ export abstract class GameObject implements IGameObject{
         return this.y + (0.5 * this.height);
     }
 
+    move(positionInfo: GameObjectDTO) {
+      const { x, y, deg, speed } = positionInfo;
+      this.x = x;
+      this.y = y;
+      this.deg = deg;
+      this.speed = speed;
+    }
+
     // https://github.com/Microsoft/TypeScript/issues/16858
     // capture the getters this way
     toJSON() {
@@ -66,6 +74,13 @@ export abstract class GameObject implements IGameObject{
             }
           });
 
-        return jsonObj;
+        return {
+          ...jsonObj,
+          minX: this.minX,
+          minY: this.minY,
+          maxX: this.maxX,
+          maxY: this.maxY,
+          radius: this.radius
+        };
     }
 }

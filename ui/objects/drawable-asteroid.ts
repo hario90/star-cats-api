@@ -3,6 +3,7 @@ import asteroidImg from "../../assets/asteroid.png"
 import { getRelativePosition } from "../util";
 import { Asteroid } from "../../shared/objects/asteroid";
 import { GameObject } from "../../shared/objects/game-object";
+import { Socket } from "socket.io-client";
 
 export const ASTEROID_HEIGHT = 32;
 export const ASTEROID_WIDTH = 32;
@@ -33,12 +34,30 @@ export class DrawableAsteroid extends ImageComponent {
     context.restore();
   }
 
-  public update({x, y, speed, deg, height, width}: Asteroid): void {
+  public update<T extends GameObject>({x, y, speed, deg, height, width}: T, objectMap: Map<string, DrawableAsteroid[]>, socket: Socket): void {
     this.speed = speed;
     this.deg = deg;
     this.height = height;
     this.width = width;
     this.x = x;
     this.y = y;
+
+  //   // check if it has collided
+  //   const shipSections: string[] = getSections(ship);
+  //   const asteroidsToCheckForCollision = new Set<GameObject>();
+  //   for (const shipSectionKey of shipSections) {
+  //     const objects = objectMap.get(shipSectionKey) || [];
+  //     // no asteroids logged but there should be.
+  //     for (const obj of objects) {
+  //       // TODO: .toJSON shouldn't be necessary
+  //       asteroidsToCheckForCollision.add(obj.toJSON());
+  //     }
+  //   }
+
+  //   // A ship crashed into an asteroid!
+  //   if (hasCollided(ship, Array.from(asteroidsToCheckForCollision))) {
+  //     socket.emit(GameEventType.ShipExploded, ship.id)
+  //     this.explode();
+  //   }
   }
 }

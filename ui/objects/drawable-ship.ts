@@ -110,7 +110,9 @@ export class DrawableShip extends Drawable {
     this.isLoaded = this.isLoaded.bind(this);
   }
 
-  public update<T extends GameObject>(ship: T, objectMap: Map<string, DrawableAsteroid[]>, socket: Socket): void {
+  // First arg is the ship representing this object
+  // Second arg are all the objects
+  public update<T extends GameObject>(ship: T, sectionToAsteroids: Map<string, DrawableAsteroid[]>, socket: Socket): void {
     this.x = ship.x ?? this.x;
     this.y = ship.y ?? this.y;
     this.deg = ship.deg || 0;
@@ -120,7 +122,7 @@ export class DrawableShip extends Drawable {
     const shipSections: string[] = getSections(ship);
     const asteroidsToCheckForCollision = new Set<GameObject>();
     for (const shipSectionKey of shipSections) {
-      const objects = objectMap.get(shipSectionKey) || [];
+      const objects = sectionToAsteroids.get(shipSectionKey) || [];
       // no asteroids logged but there should be.
       for (const obj of objects) {
         // TODO: .toJSON shouldn't be necessary

@@ -33,6 +33,7 @@ export interface ShipDTO extends PositionInfoDTO {
 }
 
 export interface LaserBeamDTO extends PositionInfoDTO {
+    id: string;
     color?: string;
 }
 
@@ -46,7 +47,7 @@ export interface SocketAuth {
 export enum GameEventType {
     Announce = "ANNOUNCE",
     Ships = "SHIPS",
-    ShipMoved = "SHIP_MOVED",
+    GameObjectMoved = "SHIP_MOVED",
     UserLeft = "USER_LEFT",
     UserJoined = "USER_JOINED",
     ShipDamage = "SHIP_DAMAGE",

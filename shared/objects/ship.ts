@@ -1,8 +1,8 @@
 import { halfShipHeight, halfShipWidth } from "../constants";
-import { GameObjectType, PositionInfo } from "../types";
-import { GameObject, GameObjectProps } from "./game-object";
+import { GameObjectType } from "../types";
+import { GameObject, GameObjectDTO } from "./game-object";
 
-export interface ShipProps extends GameObjectProps {
+export interface ShipProps extends GameObjectDTO {
     name: string;
 }
 
@@ -14,13 +14,5 @@ export class Ship extends GameObject {
         super({id, x, y, deg, speed, height, width, type: GameObjectType.Ship});
         this.name = name;
         this.userId = id;
-    }
-
-    move(positionInfo: PositionInfo) {
-        const { x, y, deg, speed } = positionInfo;
-        this.x = x;
-        this.y = y;
-        this.deg = deg;
-        this.speed = speed;
     }
 }

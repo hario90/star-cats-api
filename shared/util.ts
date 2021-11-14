@@ -1,3 +1,4 @@
+import { Drawable } from "../ui/objects/drawable";
 import { DrawableAsteroid } from "../ui/objects/drawable-asteroid";
 import { BOARD_HEIGHT, BOARD_WIDTH } from "./constants";
 import { GameObject } from "./objects/game-object";
@@ -95,8 +96,8 @@ export function getObjectSections<T extends GameObject>(o: T): Coordinate[] {
   return sections;
 }
 
-export function createAsteroidSectionMap(): Map<string, DrawableAsteroid[]> {
-    const objectMap = new Map<string, DrawableAsteroid[]>();
+export function createAsteroidSectionMap<T extends Drawable> (): Map<string, T[]> {
+    const objectMap = new Map<string, T[]>();
     for (let i = 0; i < NUM_ROWS; i++) {
       for (let j = 0; j < NUM_COLUMNS; j++) {
         const key = getSectionKey(i, j);
