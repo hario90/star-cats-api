@@ -23,7 +23,6 @@ export function hasCollided<T extends GameObject>(ship: T, objects: T[]): boolea
 // Assume each object can be represented as circles so that degree doesn't matter
 export function isOverlapping<T extends PositionInfo>(o1: T, o2:T): boolean {
     const dist = distanceBetweenObjects(o1, o2);
-    console.log(dist)
     return dist <= 0
 }
 
