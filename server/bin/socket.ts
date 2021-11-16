@@ -12,7 +12,7 @@ import { LaserBeam } from "../../shared/objects/laser-beam";
 function createInitialObjects() {
   const asteroids = new Map<string, Asteroid>();
   const asteroidGenerator = new AsteroidGenerator();
-  for (let i = 0; i < 100; i++) {
+  for (let i = 0; i < 15; i++) {
     const asteroid = asteroidGenerator.random(false, asteroids.values());
     if (asteroid) {
       asteroids.set(asteroid.id, asteroid);
