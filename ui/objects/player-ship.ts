@@ -32,14 +32,14 @@ export class PlayerShip extends DrawableShip {
   }
 
   shoot() {
-    console.log("shoot")
     const [x, y] = this.getNextPosition(Math.round(this.height / 2))
     const laserBeam: LaserBeamDTO = {
       x,
       y,
-      deg: this.deg,
-      speed: 10,
-      height: 50,
+      // deg represents the angle going clockwise down from the positive x-axis
+      deg: this.deg - 90,
+      speed: 20,
+      height: 30,
       width: 10,
       id: uuid(),
     }
@@ -47,7 +47,6 @@ export class PlayerShip extends DrawableShip {
   }
 
   handleKeydown(e: KeyboardEvent) {
-    console.log(e.key)
     switch(e.key) {
       case UP:
         e.preventDefault();

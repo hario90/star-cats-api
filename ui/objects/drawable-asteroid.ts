@@ -10,7 +10,6 @@ export const ASTEROID_WIDTH = 32;
 
 export class DrawableAsteroid extends ImageComponent {
   private frame = 2;
-  public radius = 0;
   constructor(asteroid: Asteroid) {
     super({
       ...asteroid,

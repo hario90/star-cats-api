@@ -102,7 +102,7 @@ export class Renderer {
         if (mapAsteroid) {
           mapAsteroid.update(asteroid, this.sectionToAsteroids, this.socket);
         } else {
-          this.asteroids.set(asteroid2.id, new DrawableAsteroid(asteroid));
+          this.asteroids.set(asteroid2.id, asteroid2);
         }
         const sections: Array<[number, number]> = getObjectSections(asteroid2);
         for (const [row, column] of sections) {
@@ -114,6 +114,12 @@ export class Renderer {
       }
       for (const laserBeamDTO of laserBeams) {
         const laserBeam = new DrawableLaserBeam(laserBeamDTO);
+        const mapLaserBeam = this.laserBeams.get(laserBeam.id);
+        if (mapLaserBeam) {
+          mapLaserBeam.update(laserBeam, this.sectionToAsteroids, this.socket);
+        } else {
+          this.laserBeams.set(laserBeam.id, laserBeam)
+        }
       }
     });
 
@@ -186,6 +192,25 @@ export class Renderer {
     this.socket.emit(event, ...args);
   }
 
+  getObjectNextPositionAndEmit<T extends Drawable>(context: CanvasRenderingContext2D, gameObject: T): [number, number] {
+    let x = gameObject.x;
+    let y = gameObject.y;
+
+    if (!gameObject.isDead) {
+      const [nextShipX, nextShipY] = gameObject.getNextPosition();
+      x = nextShipX;
+      y = nextShipY;
+      this.emit(GameEventType.GameObjectMoved, gameObject.toJSON());
+      gameObject.update(
+        {
+          ...gameObject.toJSON(),
+          x,
+          y,
+        }, this.sectionToAsteroids, this.socket);
+    }
+    return [x, y];
+  }
+
   draw() {
     if (!this.context) {
       return;
@@ -198,28 +223,9 @@ export class Renderer {
     }
     this.alerts.draw(this.context, this.halfCanvasWidth, this.halfCanvasHeight);
 
-    let shipX = this.ship.x;
-    let shipY = this.ship.y;
-    if (!this.ship.isDead) {
-      const [nextShipX, nextShipY] = this.ship.getNextPosition();
-      shipX = nextShipX;
-      shipY = nextShipY;
-      this.emit(GameEventType.GameObjectMoved, {
-        x: shipX,
-        y: shipY,
-        width: this.ship.width,
-        height: this.ship.height,
-        speed: this.ship.speed,
-        deg: this.ship.deg, // todo
-      });
-      this.ship.update(
-        {
-          ...this.ship.toJSON(),
-          x: shipX,
-          y: shipY,
-        }, this.sectionToAsteroids, this.socket);
-    }
-
+    const [x, y] = this.getObjectNextPositionAndEmit(this.context, this.ship);
+    const shipX = x;
+    const shipY = y;
     this.ship.draw(this.context, shipX, shipY, this.halfCanvasWidth, this.halfCanvasHeight);
 
     for (const ship of this.ships.values()) {
@@ -236,6 +242,7 @@ export class Renderer {
     }
     for (const laserBeam of this.laserBeams.values()) {
       if (laserBeam.isInFrame(this.halfCanvasWidth, this.halfCanvasHeight)) {
+        this.getObjectNextPositionAndEmit(this.context, laserBeam);
         laserBeam.draw(this.context, shipX, shipY, this.halfCanvasWidth, this.halfCanvasHeight);
       }
     }
