@@ -27,15 +27,26 @@ export interface IGameObject extends PositionInfo {
     type: GameObjectType;
 }
 
-export interface ShipDTO extends PositionInfoDTO {
-    name: string;
-    userId: string;
+export interface GameObjectDTO extends PositionInfoDTO {
+    id: string;
+    type: GameObjectType;
 }
 
-export interface LaserBeamDTO extends PositionInfoDTO {
-    id: string;
+export interface ShipDTO extends GameObjectDTO {
+    name: string;
+}
+
+export interface LaserBeamDTO extends GameObjectDTO {
     color?: string;
 }
+
+export interface AsteroidDTO extends GameObjectDTO {
+    color?: string;
+}
+
+export const isShipDTO = (obj: GameObjectDTO): obj is ShipDTO => obj.type === GameObjectType.Ship;
+export const isLaserBeamDTO = (obj: GameObjectDTO): obj is LaserBeamDTO => obj.type === GameObjectType.LaserBeam;
+export const isAsteroidDTO = (obj: GameObjectDTO): obj is AsteroidDTO => obj.type === GameObjectType.Asteroid
 
 export interface SocketAuth {
     name: string;
@@ -46,8 +57,10 @@ export interface SocketAuth {
 
 export enum GameEventType {
     Announce = "ANNOUNCE",
-    Ships = "SHIPS",
-    GameObjectMoved = "SHIP_MOVED",
+    GetInitialObjects = "GET_INITIAL_OBJECTS",
+    ShipMoved = "SHIP_MOVED",
+    AsteroidMoved = "ASTEROID_MOVED",
+    LaserMoved = "LASER_MOVED",
     UserLeft = "USER_LEFT",
     UserJoined = "USER_JOINED",
     ShipDamage = "SHIP_DAMAGE",

@@ -1,9 +1,9 @@
 import { Socket } from "socket.io-client";
-import { GameObject } from "../../shared/objects/game-object";
-import { GameObjectType, LaserBeamDTO } from "../../shared/types";
+import { GameObjectDTO, GameObjectType, LaserBeamDTO } from "../../shared/types";
 import { getRelativePosition } from "../util";
 import { Drawable } from "./drawable";
 import { DrawableAsteroid } from "./drawable-asteroid";
+import { DrawableShip } from "./drawable-ship";
 
 export class DrawableLaserBeam extends Drawable {
     constructor({color, ...rest}: LaserBeamDTO) {
@@ -21,7 +21,7 @@ export class DrawableLaserBeam extends Drawable {
         context.stroke();
     }
 
-    update<T extends GameObject>(obj: T, sectionToAsteroids: Map<string, DrawableAsteroid[]>, socket: Socket): void {
+    update<T extends GameObjectDTO>(obj: T, sectionToAsteroids: Map<string, DrawableAsteroid[]>, sectionToShips: Map<string, DrawableShip[]>, sectionToLaserBeams: Map<string, DrawableLaserBeam[]>, socket: Socket): void {
         this.x = obj.x ?? this.x;
         this.y = obj.y ?? this.y;
         this.deg = obj.deg || 0;

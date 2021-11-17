@@ -1,8 +1,10 @@
 import { Socket } from "socket.io-client";
 import { BOARD_HEIGHT, BOARD_WIDTH } from "../../shared/constants";
-import { GameObject, GameObjectDTO } from "../../shared/objects/game-object";
+import { GameObject } from "../../shared/objects/game-object";
+import { GameObjectDTO } from "../../shared/types";
 import { DrawableAsteroid } from "./drawable-asteroid";
-import { RAD } from "./drawable-ship";
+import { DrawableLaserBeam } from "./drawable-laser-beam";
+import { DrawableShip, RAD } from "./drawable-ship";
 
 export abstract class Drawable extends GameObject {
     public loaded: boolean = false;
@@ -14,7 +16,7 @@ export abstract class Drawable extends GameObject {
         super(props);
     }
 
-    abstract update<T extends GameObject>(ship: T, sectionToAsteroids: Map<string, DrawableAsteroid[]>, socket: Socket): void;
+    abstract update<T extends GameObject>(ship: T, sectionToAsteroids: Map<string, DrawableAsteroid[]>, ships: Map<string, DrawableShip[]>, laserBeams: Map<string, DrawableLaserBeam[]>, socket: Socket): void;
 
     getId(): string {
         return this.id;

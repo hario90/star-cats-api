@@ -3,13 +3,13 @@ import { Background } from "./objects/background";
 import { PlayerShip } from "./objects/player-ship";
 import { timeout } from "./util";
 import { DrawableShip } from "./objects/drawable-ship";
-import { GameEventType, LaserBeamDTO } from "../shared/types";
+import { AsteroidDTO, GameEventType, GameObjectDTO, GameObjectType, isAsteroidDTO, isLaserBeamDTO, isShipDTO, LaserBeamDTO, ShipDTO } from "../shared/types";
 import { Ship } from "../shared/objects/ship";
 import { Alerts } from "./objects/alerts";
 import { BOARD_WIDTH, BOARD_HEIGHT } from "../shared/constants";
 import { Asteroid } from "../shared/objects/asteroid";
 import { DrawableAsteroid } from "./objects/drawable-asteroid";
-import { createAsteroidSectionMap, getObjectSections, getSectionKey } from "../shared/util";
+import { createSectionToObjectsMap, getObjectSections, getSectionKey } from "../shared/util";
 import { drawStats } from "./objects/stats";
 import { DrawableLaserBeam } from "./objects/drawable-laser-beam";
 import { Drawable } from "./objects/drawable";
@@ -30,6 +30,7 @@ export class Renderer {
   private alerts: Alerts = new Alerts();
   private sectionToAsteroids: Map<string, DrawableAsteroid[]> = new Map();
   private sectionToLaserBeams: Map<string, DrawableLaserBeam[]> = new Map();
+  private sectionToShips: Map<string, DrawableShip[]> = new Map();
 
   constructor(appEl: HTMLDivElement, socket: Socket, nickName: string) {
     this.ship = new PlayerShip(
@@ -78,18 +79,23 @@ export class Renderer {
       this.alerts.push(message)
     })
 
-    socket.on(GameEventType.Ships, (ships: Ship[], asteroids: Asteroid[], laserBeams: LaserBeamDTO[]) => {
-      this.sectionToAsteroids = createAsteroidSectionMap<DrawableAsteroid>();
+    socket.on(GameEventType.GetInitialObjects, (ships: Ship[], asteroids: Asteroid[], laserBeams: LaserBeamDTO[]) => {
+      this.sectionToAsteroids = createSectionToObjectsMap<DrawableAsteroid>();
+      this.sectionToLaserBeams = createSectionToObjectsMap<DrawableLaserBeam>();
       this.ship.id = socket.id;
       for (const ship of ships) {
+
+        // todo shouldn't be necessary to update map on initial load
         const mapShip = this.ships.get(ship.id);
         if (ship.id === this.ship.id) {
-          this.ship.update(ship, this.sectionToAsteroids, socket);
+          this.ship.update(ship, this.sectionToAsteroids, this.sectionToShips, this.sectionToLaserBeams, socket);
         } else if (mapShip) {
-          mapShip.update(ship, this.sectionToAsteroids, socket);
+          mapShip.update(ship, this.sectionToAsteroids, this.sectionToShips, this.sectionToLaserBeams, socket);
         } else {
           this.ships.set(ship.id, new DrawableShip({
             ...ship,
+            x: ship.x,
+            y: ship.y,
             onFinishedExploding: () => {
               this.alerts.push(`${ship.name} died!`);
             }
@@ -100,7 +106,7 @@ export class Renderer {
         const asteroid2 = new DrawableAsteroid(asteroid);
         const mapAsteroid = this.asteroids.get(asteroid2.id);
         if (mapAsteroid) {
-          mapAsteroid.update(asteroid, this.sectionToAsteroids, this.socket);
+          mapAsteroid.update(asteroid, this.sectionToAsteroids, this.sectionToShips, this.sectionToLaserBeams, this.socket);
         } else {
           this.asteroids.set(asteroid2.id, asteroid2);
         }
@@ -116,26 +122,51 @@ export class Renderer {
         const laserBeam = new DrawableLaserBeam(laserBeamDTO);
         const mapLaserBeam = this.laserBeams.get(laserBeam.id);
         if (mapLaserBeam) {
-          mapLaserBeam.update(laserBeam, this.sectionToAsteroids, this.socket);
+          mapLaserBeam.update(laserBeam, this.sectionToAsteroids, this.sectionToShips, this.sectionToLaserBeams, this.socket);
         } else {
           this.laserBeams.set(laserBeam.id, laserBeam)
+        }
+        const sections: Array<[number, number]> = getObjectSections(laserBeam);
+        for (const [row, column] of sections) {
+          const key = getSectionKey(row, column);
+          const currObjects = this.sectionToLaserBeams.get(key) || [];
+          currObjects.push(laserBeam);
+          this.sectionToLaserBeams.set(key, currObjects);
         }
       }
     });
 
-    socket.on(GameEventType.GameObjectMoved, (ship: Ship) => {
-      const mapShip = this.ships.get(ship.id);
+    socket.on(GameEventType.ShipMoved, (object: ShipDTO) => {
+      const mapShip = this.ships.get(object.id);
       if (mapShip) {
-        mapShip.update(ship, this.sectionToAsteroids, socket);
+        mapShip.update(object, this.sectionToAsteroids, this.sectionToShips, this.sectionToLaserBeams, socket);
       } else {
-        this.ships.set(ship.id, new DrawableShip({
-          ...ship,
-          onFinishedExploding: () => {
+        this.ships.set(object.id, new DrawableShip({
+          ...object,
+          onFinishedExploding: (name: string) => {
             const expires = new Date();
             expires.setSeconds(expires.getSeconds() + ALERT_MESSAGE_DURATION);
-            this.alerts.push(`${ship.name} died!`);
+            this.alerts.push(`${name} died!`);
           }
         }));
+      }
+    });
+
+    socket.on(GameEventType.LaserMoved, (object: LaserBeamDTO) => {
+      const mapLaserBeam = this.laserBeams.get(object.id);
+      if (mapLaserBeam) {
+        mapLaserBeam.update(object, this.sectionToAsteroids, this.sectionToShips, this.sectionToLaserBeams, socket);
+      } else {
+        this.laserBeams.set(object.id, new DrawableLaserBeam(object));
+      }
+    });
+
+    socket.on(GameEventType.AsteroidMoved, (object: AsteroidDTO) => {
+      const mapAsteroid = this.asteroids.get(object.id);
+      if (mapAsteroid) {
+        mapAsteroid.update(object, this.sectionToAsteroids, this.sectionToShips, this.sectionToLaserBeams, socket);
+      } else {
+        this.laserBeams.set(object.id, new DrawableAsteroid(object));
       }
     });
 
@@ -152,20 +183,30 @@ export class Renderer {
     });
     socket.on(GameEventType.ShipExploded, (shipId: string) => {
       if (this.ship.id === shipId) {
-        console.log("this ship exploded")
         this.ship.explode();
       } else {
         const ship = this.ships.get(shipId);
         if (ship) {
-          console.log("exploding ship")
           ship.explode();
         }
       }
     });
-    socket.on(GameEventType.GameObjectMoved, (ship: Ship) => {
-      const mapShip = this.ships.get(ship.id);
-      if (mapShip) {
-        mapShip.update(ship, this.sectionToAsteroids, socket);
+    socket.on(GameEventType.ShipMoved, (obj: GameObjectDTO) => {
+      if (isShipDTO(obj)) {
+        const mapShip = this.ships.get(obj.id);
+        if (mapShip) {
+          mapShip.update(obj, this.sectionToAsteroids, this.sectionToShips, this.sectionToLaserBeams, socket);
+        }
+      } else if (isAsteroidDTO(obj)) {
+        const mapAsteroid = this.asteroids.get(obj.id);
+        if (mapAsteroid) {
+          mapAsteroid.update(obj, this.sectionToAsteroids, this.sectionToShips, this.sectionToLaserBeams, socket);
+        }
+      } else if (isLaserBeamDTO(obj)) {
+        const mapLaserBeam = this.laserBeams.get(obj.id);
+        if (mapLaserBeam) {
+          mapLaserBeam.update(obj, this.sectionToAsteroids, this.sectionToShips, this.sectionToLaserBeams, socket);
+        }
       }
     });
     window.addEventListener("resize", this.setHeightWidth);
@@ -195,18 +236,24 @@ export class Renderer {
   getObjectNextPositionAndEmit<T extends Drawable>(context: CanvasRenderingContext2D, gameObject: T): [number, number] {
     let x = gameObject.x;
     let y = gameObject.y;
+    let emitType = GameEventType.ShipMoved;
+    if (gameObject.type === GameObjectType.Asteroid) {
+      emitType = GameEventType.AsteroidMoved;
+    } else if (gameObject.type === GameObjectType.LaserBeam) {
+      emitType = GameEventType.LaserMoved;
+    }
 
     if (!gameObject.isDead) {
       const [nextShipX, nextShipY] = gameObject.getNextPosition();
       x = nextShipX;
       y = nextShipY;
-      this.emit(GameEventType.GameObjectMoved, gameObject.toJSON());
+      this.emit(emitType, gameObject.toJSON());
       gameObject.update(
         {
           ...gameObject.toJSON(),
           x,
           y,
-        }, this.sectionToAsteroids, this.socket);
+        }, this.sectionToAsteroids, this.sectionToShips, this.sectionToLaserBeams, this.socket);
     }
     return [x, y];
   }
@@ -241,8 +288,8 @@ export class Renderer {
       }
     }
     for (const laserBeam of this.laserBeams.values()) {
+      this.getObjectNextPositionAndEmit(this.context, laserBeam);
       if (laserBeam.isInFrame(this.halfCanvasWidth, this.halfCanvasHeight)) {
-        this.getObjectNextPositionAndEmit(this.context, laserBeam);
         laserBeam.draw(this.context, shipX, shipY, this.halfCanvasWidth, this.halfCanvasHeight);
       }
     }

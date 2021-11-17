@@ -1,11 +1,13 @@
-import { GameObjectType, IGameObject, PositionInfoDTO } from "../types";
+import { GameObjectDTO, GameObjectType, IGameObject } from "../types";
+import { Coordinate, getSectionKey } from "../util";
 
-export interface GameObjectDTO extends PositionInfoDTO {
-    id: string;
-    type: GameObjectType;
+export interface GameObjectProps extends GameObjectDTO {
+  sections: Set<Coordinate>;
 }
-
-export abstract class GameObject implements IGameObject{
+// each object keeps track of their sections as they are moved.
+// to determine collision, first we check to see if they occupy the same section.
+// if they do, check if they overlap.
+export abstract class GameObject implements IGameObject {
     id: string;
     type: GameObjectType = GameObjectType.Unknown;
     getRadius(): number {
@@ -18,6 +20,7 @@ export abstract class GameObject implements IGameObject{
     height: number;
     width: number;
     radius: number;
+    sections: Set<Coordinate> = new Set();
 
     constructor({id, type, x, y, deg, speed, height, width}: GameObjectDTO) {
         this.id = id;

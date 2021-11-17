@@ -1,10 +1,10 @@
 import { Server as HttpServer } from "http";
 import { Server, Socket } from "socket.io";
-import { GameEventType, GameObjectType, LaserBeamDTO, PositionInfo, SocketAuth } from "../../shared/types";
+import { AsteroidDTO, GameEventType, GameObjectType, LaserBeamDTO, ShipDTO, SocketAuth } from "../../shared/types";
 import { AsteroidGenerator } from "../asteroid-generator";
 import { Ship } from "../../shared/objects/ship";
 import { halfShipHeight, halfShipWidth } from "../../shared/constants";
-import { GameObject, GameObjectDTO } from "../../shared/objects/game-object";
+import { GameObject } from "../../shared/objects/game-object";
 import { Asteroid } from "../../shared/objects/asteroid";
 import { LaserBeam } from "../../shared/objects/laser-beam";
 
@@ -46,6 +46,7 @@ export function createWebSocket(server: HttpServer) {
       const userId = socket.id;
       const ship = new Ship({
         // todo
+        type: GameObjectType.Ship,
         x: 50,
         y: 50,
         speed: 1,
@@ -53,11 +54,10 @@ export function createWebSocket(server: HttpServer) {
         height: 2 * halfShipHeight,
         width: 2 * halfShipWidth,
         id: userId,
-        type: GameObjectType.Ship,
         name,
       });
       ships.set(userId, ship);
-      socket.emit(GameEventType.Ships, mapToJSONList(ships), mapToJSONList(asteroids), mapToJSONList(laserBeams));
+      socket.emit(GameEventType.GetInitialObjects, mapToJSONList(ships), mapToJSONList(asteroids), mapToJSONList(laserBeams));
       socket.broadcast.emit(GameEventType.UserJoined, name);
       console.log(`user ${name}, id ${userId} has joined`);
       next();
@@ -66,21 +66,31 @@ export function createWebSocket(server: HttpServer) {
       const { name } = socket.handshake.auth as SocketAuth;
       const userId = socket.id;
 
-      socket.on(GameEventType.GameObjectMoved, (obj: GameObjectDTO) => {
+      socket.on(GameEventType.ShipMoved, (obj: ShipDTO) => {
         const matchingShip = ships.get(obj.id);
-        const matchingLaserBeam = laserBeams.get(obj.id);
-        const matchingAsteroid = asteroids.get(obj.id);
         if (matchingShip) {
           matchingShip.move(obj);
-          socket.broadcast.emit(GameEventType.GameObjectMoved, matchingShip.toJSON());
-        } else if (matchingLaserBeam) {
-          matchingLaserBeam.move(obj);
-          socket.broadcast.emit(GameEventType.GameObjectMoved, matchingLaserBeam.toJSON());
-        } else if (matchingAsteroid) {
-          matchingAsteroid.move(obj);
-          socket.broadcast.emit(GameEventType.GameObjectMoved, matchingAsteroid.toJSON());
+          socket.broadcast.emit(GameEventType.ShipMoved, matchingShip.toJSON());
         }
       });
+      socket.on(GameEventType.LaserMoved, (obj: LaserBeamDTO) => {
+        const matchingLaserBeam = laserBeams.get(obj.id);
+        if (matchingLaserBeam) {
+          matchingLaserBeam.move(obj);
+          socket.broadcast.emit(GameEventType.LaserMoved, matchingLaserBeam.toJSON());
+        } else {
+          laserBeams.set(obj.id, new LaserBeam(obj));
+        }
+      })
+      socket.on(GameEventType.AsteroidMoved, (obj: AsteroidDTO) => {
+        const matchingAsteroid = asteroids.get(obj.id);
+        if (matchingAsteroid) {
+          matchingAsteroid.move(obj);
+          socket.broadcast.emit(GameEventType.AsteroidMoved, matchingAsteroid.toJSON());
+        } else {
+          asteroids.set(obj.id, new Asteroid(obj));
+        }
+      })
       socket.on(GameEventType.EmitLaserBeam, (laserBeam: LaserBeamDTO) => {
         laserBeams.set(laserBeam.id, new LaserBeam(laserBeam));
       });

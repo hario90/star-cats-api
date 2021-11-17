@@ -1,20 +1,23 @@
 import { ImageComponent } from "../component";
 import asteroidImg from "../../assets/asteroid.png"
 import { getRelativePosition } from "../util";
-import { Asteroid } from "../../shared/objects/asteroid";
-import { GameObject } from "../../shared/objects/game-object";
 import { Socket } from "socket.io-client";
+import { AsteroidDTO, GameObjectDTO } from "../../shared/types";
+import { DrawableShip } from "./drawable-ship";
+import { getSectionsSet } from "../../shared/util";
+import { DrawableLaserBeam } from "./drawable-laser-beam";
 
 export const ASTEROID_HEIGHT = 32;
 export const ASTEROID_WIDTH = 32;
 
 export class DrawableAsteroid extends ImageComponent {
   private frame = 2;
-  constructor(asteroid: Asteroid) {
+  constructor(asteroid: AsteroidDTO) {
     super({
       ...asteroid,
       src: asteroidImg,
     });
+    this.sections = getSectionsSet(this);
   }
 
   draw(context: CanvasRenderingContext2D, shipX: number, shipY: number, halfCanvasWidth: number, halfCanvasHeight: number) {
@@ -33,7 +36,7 @@ export class DrawableAsteroid extends ImageComponent {
     context.restore();
   }
 
-  public update<T extends GameObject>({x, y, speed, deg, height, width}: T, objectMap: Map<string, DrawableAsteroid[]>, socket: Socket): void {
+  public update<T extends GameObjectDTO>({x, y, speed, deg, height, width}: T, sectionToAsteroids: Map<string, DrawableAsteroid[]>, sectionToShips: Map<string, DrawableShip[]>, sectionToLaserBeams: Map<string, DrawableLaserBeam[]>, socket: Socket): void {
     this.speed = speed;
     this.deg = deg;
     this.height = height;

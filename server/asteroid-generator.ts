@@ -3,6 +3,7 @@ import { v4 as uuid } from "uuid";
 import { BOARD_WIDTH, BOARD_HEIGHT, halfShipHeight } from "../shared/constants";
 import { isOverlappingWithSection } from "../shared/util";
 import { Asteroid } from "../shared/objects/asteroid";
+import { GameObjectType } from "../shared/types";
 
 const MAX_ASTEROID_SPEED = 15;
 const MAX_ASTEROID_HEIGHT = 100;
@@ -48,12 +49,12 @@ export class AsteroidGenerator {
 
         let tries = 10;
         let asteroid = new Asteroid(
-            id, x, y, height, width, speed, 0
+            {id, x, y, height, width, speed, deg: 0, type: GameObjectType.Asteroid}
         );
         while (tries > 0 && !this.isValid(asteroid, otherAsteroids)) {
             x = this.getRandomX();
             y = this.getRandomY();
-            asteroid = new Asteroid(id, x, y, height, width, speed, 0);
+            asteroid = new Asteroid({id, x, y, height, width, speed, deg: 0, type: GameObjectType.Asteroid});
             tries--;
         }
         return this.isValid(asteroid, otherAsteroids) ? asteroid : undefined;

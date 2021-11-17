@@ -1,5 +1,5 @@
 import { v4 as uuid } from "uuid";
-import { LaserBeamDTO } from "../../shared/types";
+import { GameObjectType, LaserBeamDTO } from "../../shared/types";
 import { DrawableShip } from "./drawable-ship";
 
 export const halfShipWidth = 16;
@@ -17,12 +17,12 @@ export const MAX_SPEED = 5;
 // TODO decide on where to place each ship initially
 export class PlayerShip extends DrawableShip {
   private onShoot: (laserBeam: LaserBeamDTO) => void;
-  constructor(x: number, y: number, name: string, userId: string, onFinishedExploding: () => void, onShoot: (laserBeam: LaserBeamDTO) => void) {
+  constructor(x: number, y: number, name: string, id: string, onFinishedExploding: () => void, onShoot: (laserBeam: LaserBeamDTO) => void) {
     super({
       x,
       y,
       name,
-      userId,
+      id,
       onFinishedExploding
     });
     this.getPosition = this.getPosition.bind(this);
@@ -36,6 +36,7 @@ export class PlayerShip extends DrawableShip {
     const laserBeam: LaserBeamDTO = {
       x,
       y,
+      type: GameObjectType.LaserBeam,
       // deg represents the angle going clockwise down from the positive x-axis
       deg: this.deg - 90,
       speed: 20,

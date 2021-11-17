@@ -36,6 +36,26 @@ export function distanceBetweenObjects<T extends PositionInfo>(o1: T, o2: T): nu
     return distanceFromCenters - (radius1 + radius2)
 }
 
+export function getSectionsSet<T extends GameObject>(positionInfo: T): Set<Coordinate> {
+  const sections = new Set<Coordinate>();
+  // exclude sections where the max x is less than or equal to the min x of input
+  // exclude sections where the max y is less than or equal to the min y of the input
+  for (let row = 0; row < NUM_ROWS; row++) {
+    for (let col = 0; col < NUM_COLUMNS; col++) {
+      const section = {
+        minX: col * COL_THICKNESS,
+        maxX: (1 + col) * COL_THICKNESS,
+        minY: row * ROW_THICKNESS,
+        maxY: (1 + row) * ROW_THICKNESS,
+      }
+      if (isOverlappingWithSection(section, positionInfo)) {
+        sections.add([row, col]);
+      }
+    }
+  }
+  return sections;
+}
+
 export function getSections<T extends GameObject>(positionInfo: T): string[] {
     const sections = [];
     // exclude sections where the max x is less than or equal to the min x of input
@@ -56,7 +76,7 @@ export function getSections<T extends GameObject>(positionInfo: T): string[] {
     return sections;
   }
 
-  type Coordinate = [number, number];
+export type Coordinate = [number, number];
 export const getSectionKey = (row: number, col: number) => `${row},${col}`;
 
 // This is used for determining if an asteroid overlaps with a section of the grid
@@ -95,7 +115,7 @@ export function getObjectSections<T extends GameObject>(o: T): Coordinate[] {
   return sections;
 }
 
-export function createAsteroidSectionMap<T extends Drawable> (): Map<string, T[]> {
+export function createSectionToObjectsMap<T extends Drawable> (): Map<string, T[]> {
     const objectMap = new Map<string, T[]>();
     for (let i = 0; i < NUM_ROWS; i++) {
       for (let j = 0; j < NUM_COLUMNS; j++) {

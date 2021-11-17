@@ -4,11 +4,12 @@ import shipImg from "../../assets/ship.png";
 import { getRelativePosition } from "../util";
 import { Drawable } from "./drawable";
 import { halfShipHeight, halfShipWidth } from "../../shared/constants";
-import { GameEventType, GameObjectType } from "../../shared/types";
-import { getSections, hasCollided } from "../../shared/util";
+import { GameEventType, GameObjectDTO, GameObjectType, ShipDTO } from "../../shared/types";
+import { getSections, getSectionsSet, hasCollided } from "../../shared/util";
 import { Socket } from "socket.io-client";
 import { DrawableAsteroid } from "./drawable-asteroid";
 import { GameObject } from "../../shared/objects/game-object";
+import { DrawableLaserBeam } from "./drawable-laser-beam";
 
 export const RAD = Math.PI / 180;
 
@@ -51,13 +52,13 @@ const DEGREE_OF_SHIP_NOSE_FROM_POS_X_AXIS = 90;
 export const MAX_SPEED = 5;
 
 export interface DrawableShipProps {
-  userId: string;
+  id: string;
   name: string;
   deg?: number;
   speed?: number;
   x: number;
   y: number;
-  onFinishedExploding: () => void;
+  onFinishedExploding: (name: string) => void;
 }
 
 const MAX_NUM_LIVES = 5;
@@ -69,7 +70,7 @@ export class DrawableShip extends Drawable {
   private explosionImg: HTMLImageElement;
   private explosionIndex = -1; // if not exploding. otherwise 0 to 13.
   private explosionLoaded = false;
-  private onFinishedExploding: () => void;
+  private onFinishedExploding: (name: string) => void;
 
   public name: string;
   public numLives: number = MAX_NUM_LIVES;
@@ -82,18 +83,17 @@ export class DrawableShip extends Drawable {
   public speed: number = 1;
   public radius = 0;
 
-  constructor({userId, x, y, deg, speed, name, onFinishedExploding}: DrawableShipProps) {
+  constructor({id, x, y, deg, speed, name, onFinishedExploding}: DrawableShipProps) {
     super({
       x,
       y,
       deg: deg ?? 0,
-      id: userId,
+      id,
       type: GameObjectType.Ship,
       speed: speed ?? 1,
       height: 2 * halfShipHeight,
       width: 2 * halfShipWidth
     });
-    this.userId = userId;
     this.name = name;
 
     this.shipImg = new Image();
@@ -105,6 +105,8 @@ export class DrawableShip extends Drawable {
     this.explosionImg.src = explosionImg;
     this.explosionImg.onload = () => this.explosionLoaded = true;
 
+    this.sections = getSectionsSet(this);
+
     this.getPosition = this.getPosition.bind(this);
     this.explode = this.explode.bind(this);
     this.isLoaded = this.isLoaded.bind(this);
@@ -112,14 +114,14 @@ export class DrawableShip extends Drawable {
 
   // First arg is the ship representing this object
   // Second arg are all the objects
-  public update<T extends GameObject>(ship: T, sectionToAsteroids: Map<string, DrawableAsteroid[]>, socket: Socket): void {
+  public update<T extends GameObjectDTO>(ship: T, sectionToAsteroids: Map<string, DrawableAsteroid[]>, ships: Map<string, DrawableShip[]>, laserBeams: Map<string, DrawableLaserBeam[]>, socket: Socket): void {
     this.x = ship.x ?? this.x;
     this.y = ship.y ?? this.y;
     this.deg = ship.deg || 0;
     this.speed = ship.speed || 1;
 
     // check if it has collided
-    const shipSections: string[] = getSections(ship);
+    const shipSections: string[] = getSections(this);
     const asteroidsToCheckForCollision = new Set<GameObject>();
     for (const shipSectionKey of shipSections) {
       const objects = sectionToAsteroids.get(shipSectionKey) || [];
@@ -131,7 +133,7 @@ export class DrawableShip extends Drawable {
     }
 
     // A ship crashed into an asteroid!
-    if (hasCollided(ship, Array.from(asteroidsToCheckForCollision))) {
+    if (hasCollided(this, Array.from(asteroidsToCheckForCollision))) {
       socket.emit(GameEventType.ShipExploded, ship.id)
       this.explode();
     }
@@ -166,7 +168,7 @@ export class DrawableShip extends Drawable {
     this.explosionIndex++;
 
     if (this.explosionIndex >= EXPLOSION_LOCATIONS.length) {
-      this.onFinishedExploding();
+      this.onFinishedExploding(this.name);
       this.startComingBackToLifeAnimation();
     }
   }
