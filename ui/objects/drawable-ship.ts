@@ -135,7 +135,6 @@ export class DrawableShip extends Drawable {
 
     this.sections = currSections;
 
-    console.log("sections size", this.sections.size)
     if (this.sections.size > 4) {
       throw new Error("Too many sections")
     }
@@ -162,7 +161,6 @@ export class DrawableShip extends Drawable {
         asteroidsToCheckForCollision.add(obj.toJSON());
       }
     }
-    console.log(asteroidsToCheckForCollision.size);
     // A ship crashed into an asteroid!
     if (hasCollided(this, Array.from(asteroidsToCheckForCollision))) {
       this.explode(socket);

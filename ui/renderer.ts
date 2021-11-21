@@ -6,10 +6,9 @@ import { DrawableShip } from "./objects/drawable-ship";
 import { AsteroidDTO, GameEventType, GameObjectDTO, GameObjectType, isAsteroidDTO, isLaserBeamDTO, isShipDTO, LaserBeamDTO, ShipDTO } from "../shared/types";
 import { Ship } from "../shared/objects/ship";
 import { Alerts } from "./objects/alerts";
-import { BOARD_WIDTH, BOARD_HEIGHT } from "../shared/constants";
 import { Asteroid } from "../shared/objects/asteroid";
 import { DrawableAsteroid } from "./objects/drawable-asteroid";
-import { createSectionToObjectsMap, getObjectSections, getSectionKey } from "../shared/util";
+import { createSectionToObjectsMap, getSectionKey } from "../shared/util";
 import { drawStats } from "./objects/stats";
 import { DrawableLaserBeam } from "./objects/drawable-laser-beam";
 import { Drawable } from "./objects/drawable";
@@ -64,6 +63,7 @@ export class Renderer {
     this.moveAndDraw = this.moveAndDraw.bind(this);
     this.emit = this.emit.bind(this);
     this.setHeightWidth = this.setHeightWidth.bind(this);
+    this.onAsteroidFinishedExploding = this.onAsteroidFinishedExploding.bind(this);
 
     // use another canvas to create and render the background
     // so that the background is bigger than the frame canvas
@@ -110,7 +110,7 @@ export class Renderer {
       for (const asteroid of asteroids) {
         const asteroid2 = new DrawableAsteroid({
           ...asteroid,
-          onFinishedExploding: (id: string) => console.log("todo: add gem to screen")
+          onFinishedExploding: this.onAsteroidFinishedExploding,
         });
         this.asteroids.set(asteroid2.id, asteroid2);
         for (const [key] of asteroid2.sections) {
@@ -162,7 +162,7 @@ export class Renderer {
       } else {
         this.asteroids.set(object.id, new DrawableAsteroid({
           ...object,
-          onFinishedExploding: (id: string) => console.log("todo: add gem to screen")
+          onFinishedExploding: this.onAsteroidFinishedExploding,
         }));
       }
     });
@@ -232,6 +232,17 @@ export class Renderer {
 
   emit(event: GameEventType, ...args: any[]) {
     this.socket.emit(event, ...args);
+  }
+
+  onAsteroidFinishedExploding(asteroid: DrawableAsteroid) {
+    for (const [key] of asteroid.sections) {
+      const asteroidsInSection = this.sectionToAsteroids.get(key);
+      if (asteroidsInSection) {
+        asteroidsInSection.delete(asteroid);
+      }
+   }
+
+   this.asteroids.delete(asteroid.id);
   }
 
   getObjectNextPositionAndEmit<T extends Drawable>(context: CanvasRenderingContext2D, gameObject: T): [number, number] {

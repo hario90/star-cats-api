@@ -13,7 +13,7 @@ export const ASTEROID_HEIGHT = 32;
 export const ASTEROID_WIDTH = 32;
 
 export interface DrawableAsteroidProps extends AsteroidDTO {
-  onFinishedExploding: (id: string) => void;
+  onFinishedExploding: (self: DrawableAsteroid) => void;
 }
 
 export class DrawableAsteroid extends ImageComponent {
@@ -21,7 +21,7 @@ export class DrawableAsteroid extends ImageComponent {
   private explosionImg: HTMLImageElement;
   private explosionIndex = -1; // if not exploding. otherwise 0 to 13.
   private explosionLoaded = false;
-  private onFinishedExploding: (name: string) => void;
+  private onFinishedExploding: (self: DrawableAsteroid) => void;
   public sections: Map<string, ISection>;
 
   constructor(asteroid: DrawableAsteroidProps) {
@@ -36,6 +36,7 @@ export class DrawableAsteroid extends ImageComponent {
 
     this.sections = getSectionsMap(this);
     this.explode = this.explode.bind(this);
+    this.drawExplosion = this.drawExplosion.bind(this);
   }
 
   explode(socket: Socket) {
@@ -49,13 +50,17 @@ export class DrawableAsteroid extends ImageComponent {
   }
 
   private drawExplosion(context: CanvasRenderingContext2D) {
-    const location = EXPLOSION_LOCATIONS[Math.floor(this.explosionIndex / 2)];
+    const location = EXPLOSION_LOCATIONS[this.getThrottledExplosionIndex()];
     context.drawImage(this.explosionImg, location[0], location[1], EXPLOSION_WIDTH, EXPLOSION_WIDTH, 0 - HALF_EXPLOSION_WIDTH, 0-HALF_EXPLOSION_WIDTH, EXPLOSION_WIDTH, EXPLOSION_WIDTH);
     this.explosionIndex++;
 
-    if (this.explosionIndex >= EXPLOSION_LOCATIONS.length) {
-      this.onFinishedExploding(this.id);
+    if (this.getThrottledExplosionIndex() >= EXPLOSION_LOCATIONS.length) {
+      this.onFinishedExploding(this);
     }
+  }
+
+  private getThrottledExplosionIndex() {
+    return Math.floor(this.explosionIndex / 2);
   }
 
   draw(context: CanvasRenderingContext2D, shipX: number, shipY: number, halfCanvasWidth: number, halfCanvasHeight: number) {
@@ -67,9 +72,9 @@ export class DrawableAsteroid extends ImageComponent {
     context.save();
     const {x, y} = getRelativePosition(halfCanvasWidth, halfCanvasHeight, shipX, shipY, this.x, this.y);
     context.translate(x, y);
-    if (this.isDead) {
+    if (this.isDead && this.getThrottledExplosionIndex() < EXPLOSION_LOCATIONS.length) {
       this.drawExplosion(context);
-    } else {
+    } else if (!this.isDead) {
       let srcX = 0;
       let srcY = 0;
       if (this.frame === 2) {

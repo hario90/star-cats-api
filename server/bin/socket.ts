@@ -95,6 +95,12 @@ export function createWebSocket(server: HttpServer) {
         laserBeams.set(laserBeam.id, new LaserBeam(laserBeam));
         socket.broadcast.emit(GameEventType.LaserMoved, laserBeam);
       });
+      socket.on(GameEventType.ShipExploded, (id) => {
+        ships.delete(id);
+      });
+      socket.on(GameEventType.AsteroidExploded, (id) => {
+        asteroids.delete(id);
+      });
       socket.on("disconnect", (reason: string) => {
         console.log(`user ${name}, id ${userId} has disconnected. Reason: ${reason}`);
         ships.delete(userId);
