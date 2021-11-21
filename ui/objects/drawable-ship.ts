@@ -179,8 +179,8 @@ export class DrawableShip extends Drawable {
     return this.deg - DEGREE_OF_SHIP_NOSE_FROM_POS_X_AXIS;
   }
 
-  explode(socket: Socket) {
-    socket.emit(GameEventType.ShipExploded, this.id)
+  explode(socket: Socket, laserBeamId?: string) {
+    socket.emit(GameEventType.ShipExploded, this.id, laserBeamId)
     this.isDead = true;
     this.explosionIndex = 0;
     this.numLives--;

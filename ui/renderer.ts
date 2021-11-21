@@ -245,6 +245,12 @@ export class Renderer {
    this.asteroids.delete(asteroid.id);
   }
 
+  onLaserBeamCollided(laserBeam: DrawableLaserBeam) {
+    const laserBeamsInSection = this.sectionToLaserBeams.get(laserBeam.section.key);
+    laserBeamsInSection?.delete(laserBeam);
+    this.laserBeams.delete(laserBeam.id);
+  }
+
   getObjectNextPositionAndEmit<T extends Drawable>(context: CanvasRenderingContext2D, gameObject: T): [number, number] {
     let x = gameObject.x;
     let y = gameObject.y;

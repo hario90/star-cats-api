@@ -5,9 +5,10 @@ import { getRelativePosition } from "../util";
 import { Drawable } from "./drawable";
 import { DrawableAsteroid } from "./drawable-asteroid";
 import { DrawableShip } from "./drawable-ship";
+import { Section } from "./section";
 
 export class DrawableLaserBeam extends Drawable {
-    public section: ISection;
+    public section: Section;
     constructor({color, ...rest}: LaserBeamDTO) {
         super({...rest, type:GameObjectType.LaserBeam});
         this.radius = 0;
@@ -15,30 +16,9 @@ export class DrawableLaserBeam extends Drawable {
     }
 
     getSection() {
-        let row = 0;
-        let col = 0;
-        let minX = 0;
-        let maxX = COL_THICKNESS;
-        let minY = 0;
-        let maxY = ROW_THICKNESS;
-        while (maxX < this.x && col < NUM_COLUMNS) {
-            col++;
-            minX += COL_THICKNESS;
-            maxX += COL_THICKNESS;
-        }
-        while (maxY < this.y && row < NUM_ROWS) {
-            row++;
-            minY += ROW_THICKNESS;
-            maxY += ROW_THICKNESS;
-        }
-        return {
-            row,
-            col,
-            minX,
-            maxX,
-            minY,
-            maxY
-        };
+        const row = Math.floor(this.y / ROW_THICKNESS);
+        const col = Math.floor(this.x / COL_THICKNESS);
+        return new Section(row, col)
     }
 
     getEndpoint() {
@@ -53,14 +33,16 @@ export class DrawableLaserBeam extends Drawable {
     }
 
     draw(context: CanvasRenderingContext2D, shipX: number, shipY: number, halfCanvasWidth: number, halfCanvasHeight: number): void {
-        const [endX, endY] = this.getEndpoint();
-        const {x, y} = getRelativePosition(halfCanvasWidth, halfCanvasHeight, shipX, shipY, this.x, this.y);
-        const {x: relativeEndX, y: relativeEndY} = getRelativePosition(halfCanvasWidth, halfCanvasHeight, shipX, shipY, endX, endY);
-        context.strokeStyle = "#03fcdf";
-        context.beginPath();
-        context.moveTo(x, y);
-        context.lineTo(relativeEndX, relativeEndY);
-        context.stroke();
+        if (!this.isDead) {
+            const [endX, endY] = this.getEndpoint();
+            const {x, y} = getRelativePosition(halfCanvasWidth, halfCanvasHeight, shipX, shipY, this.x, this.y);
+            const {x: relativeEndX, y: relativeEndY} = getRelativePosition(halfCanvasWidth, halfCanvasHeight, shipX, shipY, endX, endY);
+            context.strokeStyle = "#03fcdf";
+            context.beginPath();
+            context.moveTo(x, y);
+            context.lineTo(relativeEndX, relativeEndY);
+            context.stroke();
+        }
     }
 
     update<T extends GameObjectDTO>(obj: T, sectionToAsteroids: Map<string, Set<DrawableAsteroid>>, sectionToShips: Map<string, Set<DrawableShip>>, sectionToLaserBeams: Map<string, Set<DrawableLaserBeam>>, socket: Socket): void {
@@ -83,13 +65,17 @@ export class DrawableLaserBeam extends Drawable {
         const shipsInMySection = sectionToShips.get(sectionKey) || new Set();
         for (const ship of shipsInMySection) {
             if (distanceBetweenObjects(ship, this) <= 0) {
-                ship.explode(socket);
+                ship.explode(socket, this.id);
+                this.isDead = true;
+                break;
             }
         }
         const asteroidsInMySection = sectionToAsteroids.get(sectionKey) || new Set();
         for (const asteroid of asteroidsInMySection) {
             if (distanceBetweenObjects(asteroid, this) <= 0) {
-                asteroid.explode(socket);
+                asteroid.explode(socket, this.id);
+                this.isDead = true;
+                break;
             }
         }
     }

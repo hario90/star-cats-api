@@ -39,8 +39,8 @@ export class DrawableAsteroid extends ImageComponent {
     this.drawExplosion = this.drawExplosion.bind(this);
   }
 
-  explode(socket: Socket) {
-    socket.emit(GameEventType.AsteroidExploded, this.id);
+  explode(socket: Socket, laserBeamId: string) {
+    socket.emit(GameEventType.AsteroidExploded, this.id, laserBeamId);
     this.isDead = true;
     this.explosionIndex = 0;
   }
