@@ -1,4 +1,4 @@
-import { GameObjectDTO, GameObjectType, IGameObject } from "../types";
+import { GameObjectDTO, GameObjectType, IGameObject, ISection } from "../types";
 import { Coordinate, getSectionKey } from "../util";
 
 export interface GameObjectProps extends GameObjectDTO {
@@ -20,7 +20,6 @@ export abstract class GameObject implements IGameObject {
     height: number;
     width: number;
     radius: number;
-    sections: Set<Coordinate> = new Set();
 
     constructor({id, type, x, y, deg, speed, height, width}: GameObjectDTO) {
         this.id = id;

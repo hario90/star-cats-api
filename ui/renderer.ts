@@ -28,14 +28,14 @@ export class Renderer {
   private halfCanvasWidth: number = 0;
   private halfCanvasHeight: number = 0;
   private alerts: Alerts = new Alerts();
-  private sectionToAsteroids: Map<string, DrawableAsteroid[]> = new Map();
-  private sectionToLaserBeams: Map<string, DrawableLaserBeam[]> = new Map();
-  private sectionToShips: Map<string, DrawableShip[]> = new Map();
+  private sectionToAsteroids: Map<string, Set<DrawableAsteroid>> = new Map();
+  private sectionToLaserBeams: Map<string, Set<DrawableLaserBeam>> = new Map();
+  private sectionToShips: Map<string, Set<DrawableShip>> = new Map();
 
-  constructor(appEl: HTMLDivElement, socket: Socket, nickName: string) {
+  constructor(appEl: HTMLDivElement, socket: Socket, nickName: string, x: number, y: number) {
     this.ship = new PlayerShip(
-      Math.random() * BOARD_WIDTH,
-      Math.random() * BOARD_HEIGHT,
+      x,
+      y,
       nickName,
       socket.id,
       () => {
@@ -79,60 +79,54 @@ export class Renderer {
       this.alerts.push(message)
     })
 
+    const updateSectionToShips = (drawableShip: DrawableShip) => {
+      for (const [key] of drawableShip.sections) {
+        const shipsInSection = this.sectionToShips.get(key) || new Set();
+        shipsInSection.add(drawableShip);
+        this.sectionToShips.set(key, shipsInSection);
+      }
+    };
+
     socket.on(GameEventType.GetInitialObjects, (ships: Ship[], asteroids: Asteroid[], laserBeams: LaserBeamDTO[]) => {
       this.sectionToAsteroids = createSectionToObjectsMap<DrawableAsteroid>();
       this.sectionToLaserBeams = createSectionToObjectsMap<DrawableLaserBeam>();
       this.ship.id = socket.id;
+      updateSectionToShips(this.ship);
       for (const ship of ships) {
-
-        // todo shouldn't be necessary to update map on initial load
-        const mapShip = this.ships.get(ship.id);
-        if (ship.id === this.ship.id) {
-          this.ship.update(ship, this.sectionToAsteroids, this.sectionToShips, this.sectionToLaserBeams, socket);
-        } else if (mapShip) {
-          mapShip.update(ship, this.sectionToAsteroids, this.sectionToShips, this.sectionToLaserBeams, socket);
-        } else {
-          this.ships.set(ship.id, new DrawableShip({
+        if (ship.id !== this.ship.id) {
+          const drawableShip = new DrawableShip({
             ...ship,
             x: ship.x,
             y: ship.y,
             onFinishedExploding: () => {
               this.alerts.push(`${ship.name} died!`);
             }
-          }));
+          });
+          this.ships.set(ship.id, drawableShip);
+          updateSectionToShips(drawableShip);
         }
       }
+      console.log(this.sectionToShips);
       for (const asteroid of asteroids) {
-        const asteroid2 = new DrawableAsteroid(asteroid);
-        const mapAsteroid = this.asteroids.get(asteroid2.id);
-        if (mapAsteroid) {
-          mapAsteroid.update(asteroid, this.sectionToAsteroids, this.sectionToShips, this.sectionToLaserBeams, this.socket);
-        } else {
-          this.asteroids.set(asteroid2.id, asteroid2);
-        }
-        const sections: Array<[number, number]> = getObjectSections(asteroid2);
-        for (const [row, column] of sections) {
-          const key = getSectionKey(row, column);
-          const currObjects = this.sectionToAsteroids.get(key) || [];
-          currObjects.push(asteroid2);
+        const asteroid2 = new DrawableAsteroid({
+          ...asteroid,
+          onFinishedExploding: (id: string) => console.log("todo: add gem to screen")
+        });
+        this.asteroids.set(asteroid2.id, asteroid2);
+        for (const [key] of asteroid2.sections) {
+          const currObjects = this.sectionToAsteroids.get(key) || new Set();
+          currObjects.add(asteroid2);
           this.sectionToAsteroids.set(key, currObjects);
         }
       }
       for (const laserBeamDTO of laserBeams) {
         const laserBeam = new DrawableLaserBeam(laserBeamDTO);
-        const mapLaserBeam = this.laserBeams.get(laserBeam.id);
-        if (mapLaserBeam) {
-          mapLaserBeam.update(laserBeam, this.sectionToAsteroids, this.sectionToShips, this.sectionToLaserBeams, this.socket);
-        } else {
-          this.laserBeams.set(laserBeam.id, laserBeam)
-        }
-        const sections: Array<[number, number]> = getObjectSections(laserBeam);
-        for (const [row, column] of sections) {
-          const key = getSectionKey(row, column);
-          const currObjects = this.sectionToLaserBeams.get(key) || [];
-          currObjects.push(laserBeam);
-          this.sectionToLaserBeams.set(key, currObjects);
-        }
+        this.laserBeams.set(laserBeam.id, laserBeam)
+        const {row, col} = laserBeam.section
+        const key = getSectionKey(row, col);
+        const currObjects = this.sectionToLaserBeams.get(key) || new Set();
+        currObjects.add(laserBeam);
+        this.sectionToLaserBeams.set(key, currObjects);
       }
     });
 
@@ -166,9 +160,16 @@ export class Renderer {
       if (mapAsteroid) {
         mapAsteroid.update(object, this.sectionToAsteroids, this.sectionToShips, this.sectionToLaserBeams, socket);
       } else {
-        this.laserBeams.set(object.id, new DrawableAsteroid(object));
+        this.asteroids.set(object.id, new DrawableAsteroid({
+          ...object,
+          onFinishedExploding: (id: string) => console.log("todo: add gem to screen")
+        }));
       }
     });
+
+    socket.on(GameEventType.AsteroidExploded, (asteroidId: string) => {
+
+    })
 
     socket.on(GameEventType.UserLeft, (userId: string, message: string) => {
       const expires = new Date();
@@ -183,11 +184,11 @@ export class Renderer {
     });
     socket.on(GameEventType.ShipExploded, (shipId: string) => {
       if (this.ship.id === shipId) {
-        this.ship.explode();
+        this.ship.explode(this.socket);
       } else {
         const ship = this.ships.get(shipId);
         if (ship) {
-          ship.explode();
+          ship.explode(this.socket);
         }
       }
     });

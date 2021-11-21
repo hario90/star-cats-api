@@ -53,6 +53,8 @@ export interface SocketAuth {
     userId: string;
     canvasHeight: number;
     canvasWidth: number;
+    x: number;
+    y: number;
 }
 
 export enum GameEventType {
@@ -64,6 +66,16 @@ export enum GameEventType {
     UserLeft = "USER_LEFT",
     UserJoined = "USER_JOINED",
     ShipDamage = "SHIP_DAMAGE",
+    AsteroidExploded = "ASTEROID_EXPLODED",
     ShipExploded = "SHIP_EXPLODED",
     EmitLaserBeam = "EMIT_LASER_BEAM"
+}
+
+export interface ISection {
+    row: number;
+    col: number;
+    minX: number;
+    maxX: number;
+    minY: number;
+    maxY: number;
 }

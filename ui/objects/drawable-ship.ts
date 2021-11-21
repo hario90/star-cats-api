@@ -4,12 +4,14 @@ import shipImg from "../../assets/ship.png";
 import { getRelativePosition } from "../util";
 import { Drawable } from "./drawable";
 import { halfShipHeight, halfShipWidth } from "../../shared/constants";
-import { GameEventType, GameObjectDTO, GameObjectType, ShipDTO } from "../../shared/types";
-import { getSections, getSectionsSet, hasCollided } from "../../shared/util";
+import { GameEventType, GameObjectDTO, GameObjectType, ISection } from "../../shared/types";
+import { COL_THICKNESS, getSectionKey, getSectionsMap, hasCollided, isOverlappingWithSection, NUM_COLUMNS, NUM_ROWS, ROW_THICKNESS } from "../../shared/util";
 import { Socket } from "socket.io-client";
 import { DrawableAsteroid } from "./drawable-asteroid";
 import { GameObject } from "../../shared/objects/game-object";
 import { DrawableLaserBeam } from "./drawable-laser-beam";
+import { EXPLOSION_LOCATIONS, EXPLOSION_WIDTH, HALF_EXPLOSION_WIDTH } from "../constants";
+import { Section } from "./section";
 
 export const RAD = Math.PI / 180;
 
@@ -28,25 +30,6 @@ const speedToFrame = new Map([
   [4, BattleShipFrame.THRUST_MED],
   [5, BattleShipFrame.THRUST_HI],
 ]);
-
-const EXPLOSION_WIDTH = 128;
-const HALF_EXPLOSION_WIDTH = EXPLOSION_WIDTH / 2;
-const EXPLOSION_LOCATIONS = [
-  [0, 0],
-  [EXPLOSION_WIDTH, 0],
-  [2*EXPLOSION_WIDTH, 0],
-  [3*EXPLOSION_WIDTH, 0],
-  [0, EXPLOSION_WIDTH],
-  [EXPLOSION_WIDTH, EXPLOSION_WIDTH],
-  [2*EXPLOSION_WIDTH, EXPLOSION_WIDTH],
-  [3*EXPLOSION_WIDTH, EXPLOSION_WIDTH],
-  [0, 2*EXPLOSION_WIDTH],
-  [EXPLOSION_WIDTH, 2*EXPLOSION_WIDTH],
-  [2*EXPLOSION_WIDTH, 2*EXPLOSION_WIDTH],
-  [3*EXPLOSION_WIDTH, 2*EXPLOSION_WIDTH],
-  [0, 3*EXPLOSION_WIDTH],
-  [EXPLOSION_WIDTH, 3*EXPLOSION_WIDTH]
-];
 
 const DEGREE_OF_SHIP_NOSE_FROM_POS_X_AXIS = 90;
 export const MAX_SPEED = 5;
@@ -82,6 +65,7 @@ export class DrawableShip extends Drawable {
   public isDead = false;
   public speed: number = 1;
   public radius = 0;
+  public sections: Map<string, ISection> = new Map();
 
   constructor({id, x, y, deg, speed, name, onFinishedExploding}: DrawableShipProps) {
     super({
@@ -105,37 +89,83 @@ export class DrawableShip extends Drawable {
     this.explosionImg.src = explosionImg;
     this.explosionImg.onload = () => this.explosionLoaded = true;
 
-    this.sections = getSectionsSet(this);
+    this.sections = getSectionsMap(this);
 
     this.getPosition = this.getPosition.bind(this);
     this.explode = this.explode.bind(this);
     this.isLoaded = this.isLoaded.bind(this);
+    this.checkForSectionsChange = this.checkForSectionsChange.bind(this);
+  }
+
+  getCurrentSections() {
+    const currSections = new Map<string, Section>();
+    const row = Math.floor(this.y / ROW_THICKNESS);
+    const col = Math.floor(this.x / COL_THICKNESS);
+
+    // what section is the top point in?
+    const topPointRow = Math.floor(this.minY / ROW_THICKNESS);
+    const topSection = new Section(topPointRow, col);
+    currSections.set(topSection.key, topSection);
+
+    const rightPointCol = Math.floor(this.maxX / COL_THICKNESS);
+    const rightSection = new Section(row, rightPointCol);
+    currSections.set(rightSection.key, rightSection);
+
+    const bottomPointRow = Math.floor(this.maxY / ROW_THICKNESS);
+    const bottomSection = new Section(bottomPointRow, col);
+    currSections.set(bottomSection.key, bottomSection);
+
+    const leftPointCol = Math.floor(this.minX / COL_THICKNESS);
+    const leftSection = new Section(row, leftPointCol);
+    currSections.set(leftSection.key, leftSection);
+
+    return currSections;
+  }
+
+  checkForSectionsChange(sectionToShips: Map<string, Set<DrawableShip>>) {
+    const currSections = this.getCurrentSections();
+    for (const [key] of this.sections) {
+      if (!currSections.has(key)) {
+        const shipsInSection = sectionToShips.get(key);
+        if (shipsInSection) {
+          shipsInSection.delete(this);
+        }
+      }
+    }
+
+    this.sections = currSections;
+
+    console.log("sections size", this.sections.size)
+    if (this.sections.size > 4) {
+      throw new Error("Too many sections")
+    }
   }
 
   // First arg is the ship representing this object
   // Second arg are all the objects
-  public update<T extends GameObjectDTO>(ship: T, sectionToAsteroids: Map<string, DrawableAsteroid[]>, ships: Map<string, DrawableShip[]>, laserBeams: Map<string, DrawableLaserBeam[]>, socket: Socket): void {
+  public update<T extends GameObjectDTO>(ship: T, sectionToAsteroids: Map<string, Set<DrawableAsteroid>>,
+    sectionToShips: Map<string, Set<DrawableShip>>, sectionToLaserBeams: Map<string, Set<DrawableLaserBeam>>,
+    socket: Socket): void {
     this.x = ship.x ?? this.x;
     this.y = ship.y ?? this.y;
     this.deg = ship.deg || 0;
     this.speed = ship.speed || 1;
+    this.checkForSectionsChange(sectionToShips);
 
     // check if it has collided
-    const shipSections: string[] = getSections(this);
     const asteroidsToCheckForCollision = new Set<GameObject>();
-    for (const shipSectionKey of shipSections) {
-      const objects = sectionToAsteroids.get(shipSectionKey) || [];
+    for (const [key] of this.sections) {
+      const objects = sectionToAsteroids.get(key) || [];
       // no asteroids logged but there should be.
       for (const obj of objects) {
         // TODO: .toJSON shouldn't be necessary
         asteroidsToCheckForCollision.add(obj.toJSON());
       }
     }
-
+    console.log(asteroidsToCheckForCollision.size);
     // A ship crashed into an asteroid!
     if (hasCollided(this, Array.from(asteroidsToCheckForCollision))) {
-      socket.emit(GameEventType.ShipExploded, ship.id)
-      this.explode();
+      this.explode(socket);
     }
   }
 
@@ -151,11 +181,11 @@ export class DrawableShip extends Drawable {
     return this.deg - DEGREE_OF_SHIP_NOSE_FROM_POS_X_AXIS;
   }
 
-  explode() {
+  explode(socket: Socket) {
+    socket.emit(GameEventType.ShipExploded, this.id)
     this.isDead = true;
     this.explosionIndex = 0;
     this.numLives--;
-    // TODO if numLives <= 0, show "Game Over"
   }
 
   get isExploding() {

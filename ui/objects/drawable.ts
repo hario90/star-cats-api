@@ -16,7 +16,7 @@ export abstract class Drawable extends GameObject {
         super(props);
     }
 
-    abstract update<T extends GameObject>(ship: T, sectionToAsteroids: Map<string, DrawableAsteroid[]>, ships: Map<string, DrawableShip[]>, laserBeams: Map<string, DrawableLaserBeam[]>, socket: Socket): void;
+    abstract update<T extends GameObject>(ship: T, sectionToAsteroids: Map<string, Set<DrawableAsteroid>>, ships: Map<string, Set<DrawableShip>>, laserBeams: Map<string, Set<DrawableLaserBeam>>, socket: Socket): void;
 
     getId(): string {
         return this.id;

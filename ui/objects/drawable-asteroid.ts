@@ -1,23 +1,61 @@
 import { ImageComponent } from "../component";
-import asteroidImg from "../../assets/asteroid.png"
+import asteroidImg from "../../assets/asteroid.png";
+import explosionImg from "../../assets/explosion.png";
 import { getRelativePosition } from "../util";
 import { Socket } from "socket.io-client";
-import { AsteroidDTO, GameObjectDTO } from "../../shared/types";
+import { AsteroidDTO, GameEventType, GameObjectDTO, ISection } from "../../shared/types";
 import { DrawableShip } from "./drawable-ship";
-import { getSectionsSet } from "../../shared/util";
+import { getSectionsMap } from "../../shared/util";
 import { DrawableLaserBeam } from "./drawable-laser-beam";
+import { EXPLOSION_LOCATIONS, EXPLOSION_WIDTH, HALF_EXPLOSION_WIDTH } from "../constants";
 
 export const ASTEROID_HEIGHT = 32;
 export const ASTEROID_WIDTH = 32;
 
+export interface DrawableAsteroidProps extends AsteroidDTO {
+  onFinishedExploding: (id: string) => void;
+}
+
 export class DrawableAsteroid extends ImageComponent {
   private frame = 2;
-  constructor(asteroid: AsteroidDTO) {
+  private explosionImg: HTMLImageElement;
+  private explosionIndex = -1; // if not exploding. otherwise 0 to 13.
+  private explosionLoaded = false;
+  private onFinishedExploding: (name: string) => void;
+  public sections: Map<string, ISection>;
+
+  constructor(asteroid: DrawableAsteroidProps) {
     super({
       ...asteroid,
       src: asteroidImg,
     });
-    this.sections = getSectionsSet(this);
+    this.onFinishedExploding = asteroid.onFinishedExploding;
+    this.explosionImg = new Image();
+    this.explosionImg.src = explosionImg;
+    this.explosionImg.onload = () => this.explosionLoaded = true;
+
+    this.sections = getSectionsMap(this);
+    this.explode = this.explode.bind(this);
+  }
+
+  explode(socket: Socket) {
+    socket.emit(GameEventType.AsteroidExploded, this.id);
+    this.isDead = true;
+    this.explosionIndex = 0;
+  }
+
+  isLoaded() {
+    return this.loaded && this.explosionLoaded;
+  }
+
+  private drawExplosion(context: CanvasRenderingContext2D) {
+    const location = EXPLOSION_LOCATIONS[Math.floor(this.explosionIndex / 2)];
+    context.drawImage(this.explosionImg, location[0], location[1], EXPLOSION_WIDTH, EXPLOSION_WIDTH, 0 - HALF_EXPLOSION_WIDTH, 0-HALF_EXPLOSION_WIDTH, EXPLOSION_WIDTH, EXPLOSION_WIDTH);
+    this.explosionIndex++;
+
+    if (this.explosionIndex >= EXPLOSION_LOCATIONS.length) {
+      this.onFinishedExploding(this.id);
+    }
   }
 
   draw(context: CanvasRenderingContext2D, shipX: number, shipY: number, halfCanvasWidth: number, halfCanvasHeight: number) {
@@ -25,18 +63,24 @@ export class DrawableAsteroid extends ImageComponent {
       console.error("This image has not loaded yet");
       return;
     }
-    let srcX = 0;
-    let srcY = 0;
-    if (this.frame === 2) {
-      srcX = 32;
-    }
+
     context.save();
     const {x, y} = getRelativePosition(halfCanvasWidth, halfCanvasHeight, shipX, shipY, this.x, this.y);
-    context.drawImage(this.img, srcX, srcY, ASTEROID_WIDTH, ASTEROID_HEIGHT, x - this.radius, y - this.radius, this.width, this.height);
+    context.translate(x, y);
+    if (this.isDead) {
+      this.drawExplosion(context);
+    } else {
+      let srcX = 0;
+      let srcY = 0;
+      if (this.frame === 2) {
+        srcX = 32;
+      }
+      context.drawImage(this.img, srcX, srcY, ASTEROID_WIDTH, ASTEROID_HEIGHT, 0 - this.radius, 0 - this.radius, this.width, this.height);
+    }
     context.restore();
   }
 
-  public update<T extends GameObjectDTO>({x, y, speed, deg, height, width}: T, sectionToAsteroids: Map<string, DrawableAsteroid[]>, sectionToShips: Map<string, DrawableShip[]>, sectionToLaserBeams: Map<string, DrawableLaserBeam[]>, socket: Socket): void {
+  public update<T extends GameObjectDTO>({x, y, speed, deg, height, width}: T, sectionToAsteroids: Map<string, Set<DrawableAsteroid>>, sectionToShips: Map<string, Set<DrawableShip>>, sectionToLaserBeams: Map<string, Set<DrawableLaserBeam>>, socket: Socket): void {
     this.speed = speed;
     this.deg = deg;
     this.height = height;

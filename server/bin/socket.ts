@@ -42,13 +42,13 @@ export function createWebSocket(server: HttpServer) {
     // TODO if this becomes a multi-room app, this will probably need to be roomToShipMap or maybe use a hash of room and ship id depending on how we use this structure
 
     io.use((socket: any, next: () => void) => {
-      const { name } = socket.handshake.auth;
+      const { name, x, y } = socket.handshake.auth;
       const userId = socket.id;
       const ship = new Ship({
         // todo
         type: GameObjectType.Ship,
-        x: 50,
-        y: 50,
+        x,
+        y,
         speed: 1,
         deg: 0,
         height: 2 * halfShipHeight,
@@ -93,6 +93,7 @@ export function createWebSocket(server: HttpServer) {
       })
       socket.on(GameEventType.EmitLaserBeam, (laserBeam: LaserBeamDTO) => {
         laserBeams.set(laserBeam.id, new LaserBeam(laserBeam));
+        socket.broadcast.emit(GameEventType.LaserMoved, laserBeam);
       });
       socket.on("disconnect", (reason: string) => {
         console.log(`user ${name}, id ${userId} has disconnected. Reason: ${reason}`);
