@@ -1,13 +1,9 @@
 import { v4 as uuid } from "uuid";
 
-import { BOARD_WIDTH, BOARD_HEIGHT, halfShipHeight } from "../shared/constants";
+import { BOARD_WIDTH, BOARD_HEIGHT, MAX_ASTEROID_HEIGHT, MAX_ASTEROID_SPEED, MIN_ASTEROID_HEIGHT } from "../shared/constants";
 import { isOverlappingWithSection } from "../shared/util";
 import { Asteroid } from "../shared/objects/asteroid";
 import { GameObjectType } from "../shared/types";
-
-const MAX_ASTEROID_SPEED = 15;
-const MAX_ASTEROID_HEIGHT = 100;
-const MIN_ASTEROID_HEIGHT = halfShipHeight * 2;
 
 export class AsteroidGenerator {
     constructor() {}
