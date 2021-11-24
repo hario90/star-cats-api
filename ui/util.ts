@@ -1,3 +1,5 @@
+import { Drawable } from "./objects/drawable";
+
 export function setupCanvas(canvas: HTMLCanvasElement) {
   // Get the device pixel ratio, falling back to 1.
   const dpr = window.devicePixelRatio || 1;
@@ -31,4 +33,17 @@ export const getRelativePosition = (halfCanvasWidth: number, halfCanvasHeight: n
     const x = Math.round(halfCanvasWidth - (shipX - objectX));
     const y = Math.round(halfCanvasHeight - (shipY - objectY));
     return {x, y};
+}
+
+export function cleanUpResources<T extends Drawable>(id: string, objects: Map<string, T>, sectionToObjects: Map<string, Set<T>>) {
+  const match = objects.get(id);
+  if (match) {
+    objects.delete(id);
+    for (const [key] of match.sections) {
+      const matchingGemsInSection = sectionToObjects.get(key);
+      if (matchingGemsInSection) {
+        matchingGemsInSection.delete(match);
+      }
+    }
+  }
 }

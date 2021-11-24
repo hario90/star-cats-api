@@ -3,14 +3,16 @@ import asteroidImg from "../../assets/asteroid.png";
 import explosionImg from "../../assets/explosion.png";
 import { getRelativePosition } from "../util";
 import { Socket } from "socket.io-client";
-import { AsteroidDTO, GameEventType, GameObjectDTO, ISection } from "../../shared/types";
+import { AsteroidDTO, GameEventType, GameObjectDTO } from "../../shared/types";
 import { DrawableShip } from "./drawable-ship";
 import { getSectionsMap } from "../../shared/util";
 import { DrawableLaserBeam } from "./drawable-laser-beam";
 import { EXPLOSION_LOCATIONS, EXPLOSION_WIDTH, HALF_EXPLOSION_WIDTH } from "../constants";
+import { MIN_ASTEROID_HEIGHT } from "../../shared/constants";
 
 export const ASTEROID_HEIGHT = 32;
 export const ASTEROID_WIDTH = 32;
+const WIDTH_REDUCE_FACTOR = 0.8;
 
 export interface DrawableAsteroidProps extends AsteroidDTO {
   onFinishedExploding: (self: DrawableAsteroid) => void;
@@ -22,7 +24,6 @@ export class DrawableAsteroid extends ImageComponent {
   private explosionIndex = -1; // if not exploding. otherwise 0 to 13.
   private explosionLoaded = false;
   private onFinishedExploding: (self: DrawableAsteroid) => void;
-  public sections: Map<string, ISection>;
 
   constructor(asteroid: DrawableAsteroidProps) {
     super({
@@ -39,10 +40,25 @@ export class DrawableAsteroid extends ImageComponent {
     this.drawExplosion = this.drawExplosion.bind(this);
   }
 
-  explode(socket: Socket, laserBeamId: string) {
+  private explode(socket: Socket, laserBeamId: string) {
     socket.emit(GameEventType.AsteroidExploded, this.id, laserBeamId);
     this.isDead = true;
     this.explosionIndex = 0;
+  }
+
+  get points() {
+    return Math.round(this.width / 10);
+  }
+
+  hit(socket: Socket, laserBeamId: string) {
+    this.width = Math.floor(this.width * WIDTH_REDUCE_FACTOR);
+    this.height = this.width;
+    this.radius = Math.floor(this.width / 2);
+    if (this.width < MIN_ASTEROID_HEIGHT) {
+      this.explode(socket, laserBeamId);
+    } else {
+      socket.emit(GameEventType.AsteroidHit, this.id, laserBeamId, this.width);
+    }
   }
 
   isLoaded() {

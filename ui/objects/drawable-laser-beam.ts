@@ -8,17 +8,20 @@ import { DrawableShip } from "./drawable-ship";
 import { Section } from "./section";
 
 export class DrawableLaserBeam extends Drawable {
-    public section: Section;
+    private prevSection: Section | undefined;
     constructor({color, ...rest}: LaserBeamDTO) {
         super({...rest, type:GameObjectType.LaserBeam});
         this.radius = 0;
-        this.section = this.getSection();
+        this.sections.set(this.section.key, this.section);
     }
 
-    getSection() {
+    get section(): Section {
         const row = Math.floor(this.y / ROW_THICKNESS);
         const col = Math.floor(this.x / COL_THICKNESS);
-        return new Section(row, col)
+        const section =  new Section(row, col)
+        this.sections.clear();
+        this.sections.set(section.key, section);
+        return section;
     }
 
     getEndpoint() {
@@ -50,14 +53,14 @@ export class DrawableLaserBeam extends Drawable {
         this.y = obj.y ?? this.y;
         this.deg = obj.deg || 0;
         this.speed = obj.speed || 1;
-        const prevSection = this.section;
-        this.section = this.getSection();
-        if (this.section.row !== prevSection.row || this.section.col !== prevSection.col) {
-            const laserBeamsInSection = sectionToLaserBeams.get(getSectionKey(prevSection.row, prevSection.col)) || new Set();
+
+        if (this.prevSection && (this.section.row !== this.prevSection?.row || this.section.col !== this.prevSection?.col)) {
+            const laserBeamsInSection = sectionToLaserBeams.get(getSectionKey(this.prevSection.row, this.prevSection.col)) || new Set();
             laserBeamsInSection.delete(this);
             const laserBeamsInNewSection = sectionToLaserBeams.get(getSectionKey(this.section.row, this.section.col)) || new Set();
             laserBeamsInNewSection.add(this);
         }
+        this.prevSection = this.section;
 
         // check for collisions and explode the object we collide into
         const {row, col} = this.section;
@@ -73,7 +76,7 @@ export class DrawableLaserBeam extends Drawable {
         const asteroidsInMySection = sectionToAsteroids.get(sectionKey) || new Set();
         for (const asteroid of asteroidsInMySection) {
             if (distanceBetweenObjects(asteroid, this) <= 0) {
-                asteroid.explode(socket, this.id);
+                asteroid.hit(socket, this.id);
                 this.isDead = true;
                 break;
             }

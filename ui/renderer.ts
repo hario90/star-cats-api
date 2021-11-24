@@ -1,9 +1,9 @@
 import { Socket } from "socket.io-client";
 import { Background } from "./objects/background";
 import { PlayerShip } from "./objects/player-ship";
-import { timeout } from "./util";
+import { cleanUpResources, timeout } from "./util";
 import { DrawableShip } from "./objects/drawable-ship";
-import { AsteroidDTO, GameEventType, GameObjectDTO, GameObjectType, isAsteroidDTO, isLaserBeamDTO, isShipDTO, LaserBeamDTO, ShipDTO } from "../shared/types";
+import { AsteroidDTO, GameEventType, GameObjectDTO, GameObjectType, GemDTO, isAsteroidDTO, isLaserBeamDTO, isShipDTO, LaserBeamDTO, ShipDTO } from "../shared/types";
 import { Ship } from "../shared/objects/ship";
 import { Alerts } from "./objects/alerts";
 import { Asteroid } from "../shared/objects/asteroid";
@@ -12,6 +12,7 @@ import { createSectionToObjectsMap, getSectionKey } from "../shared/util";
 import { drawStats } from "./objects/stats";
 import { DrawableLaserBeam } from "./objects/drawable-laser-beam";
 import { Drawable } from "./objects/drawable";
+import { DrawableGem } from "./objects/drawable-gem";
 
 const ALERT_MESSAGE_DURATION = 8;
 
@@ -24,12 +25,14 @@ export class Renderer {
   private ships: Map<string, DrawableShip> = new Map();
   private asteroids: Map<string, DrawableAsteroid> = new Map();
   private laserBeams: Map<string, DrawableLaserBeam> = new Map();
+  private gems: Map<string, DrawableGem> = new Map();
   private halfCanvasWidth: number = 0;
   private halfCanvasHeight: number = 0;
   private alerts: Alerts = new Alerts();
   private sectionToAsteroids: Map<string, Set<DrawableAsteroid>> = new Map();
   private sectionToLaserBeams: Map<string, Set<DrawableLaserBeam>> = new Map();
   private sectionToShips: Map<string, Set<DrawableShip>> = new Map();
+  private sectionToGems: Map<string, Set<DrawableGem>> = new Map();
 
   constructor(appEl: HTMLDivElement, socket: Socket, nickName: string, x: number, y: number) {
     this.ship = new PlayerShip(
@@ -87,9 +90,10 @@ export class Renderer {
       }
     };
 
-    socket.on(GameEventType.GetInitialObjects, (ships: Ship[], asteroids: Asteroid[], laserBeams: LaserBeamDTO[]) => {
+    socket.on(GameEventType.GetInitialObjects, (ships: Ship[], asteroids: Asteroid[], laserBeams: LaserBeamDTO[], gems: GemDTO[]) => {
       this.sectionToAsteroids = createSectionToObjectsMap<DrawableAsteroid>();
       this.sectionToLaserBeams = createSectionToObjectsMap<DrawableLaserBeam>();
+      this.sectionToGems = createSectionToObjectsMap<DrawableGem>();
       this.ship.id = socket.id;
       updateSectionToShips(this.ship);
       for (const ship of ships) {
@@ -127,6 +131,15 @@ export class Renderer {
         const currObjects = this.sectionToLaserBeams.get(key) || new Set();
         currObjects.add(laserBeam);
         this.sectionToLaserBeams.set(key, currObjects);
+      }
+      for (const gemDTO of gems) {
+        const gem = new DrawableGem(gemDTO);
+        this.gems.set(gem.id, gem);
+        for (const [key] of gem.sections) {
+          const currObjects = this.sectionToGems.get(key) || new Set();
+          currObjects.add(gem);
+          this.sectionToGems.set(key, currObjects);
+        }
       }
     });
 
@@ -210,6 +223,35 @@ export class Renderer {
         }
       }
     });
+    socket.on(GameEventType.ShipPickedUpGem, (shipId: string, gemId: string, shipPoints: number) => {
+      const matchingShip = this.ships.get(shipId);
+      const matchingGem = this.gems.get(gemId);
+      if (matchingShip) {
+        matchingShip.points = shipPoints;
+      }
+      if (matchingGem) {
+        this.gems.delete(gemId);
+        for (const [key] of matchingGem.sections) {
+          const matchingGemsInSection = this.sectionToGems.get(key);
+          if (matchingGemsInSection) {
+            matchingGemsInSection.delete(matchingGem);
+          }
+        }
+      }
+    });
+    socket.on(GameEventType.AsteroidHit, (asteroidId: string, laserBeamId: string, asteroidWidth: number) => {
+      const matchingAsteroid = this.asteroids.get(asteroidId);
+      if (matchingAsteroid) {
+        matchingAsteroid.width = asteroidWidth;
+      }
+
+      cleanUpResources(laserBeamId, this.laserBeams, this.sectionToLaserBeams);
+    });
+    socket.on(GameEventType.AddGems, (gems: GemDTO[]) => {
+      for (const gem of gems) {
+        this.gems.set(gem.id, new DrawableGem(gem));
+      }
+    });
     window.addEventListener("resize", this.setHeightWidth);
   }
 
@@ -240,9 +282,9 @@ export class Renderer {
       if (asteroidsInSection) {
         asteroidsInSection.delete(asteroid);
       }
-   }
+    }
 
-   this.asteroids.delete(asteroid.id);
+    this.asteroids.delete(asteroid.id);
   }
 
   onLaserBeamCollided(laserBeam: DrawableLaserBeam) {
@@ -309,6 +351,11 @@ export class Renderer {
       this.getObjectNextPositionAndEmit(this.context, laserBeam);
       if (laserBeam.isInFrame(this.halfCanvasWidth, this.halfCanvasHeight)) {
         laserBeam.draw(this.context, shipX, shipY, this.halfCanvasWidth, this.halfCanvasHeight);
+      }
+    }
+    for (const gem of this.gems.values()) {
+      if (gem.isInFrame(this.halfCanvasWidth, this.halfCanvasHeight)) {
+        gem.draw(this.context, shipX, shipY, this.halfCanvasWidth, this.halfCanvasHeight);
       }
     }
 

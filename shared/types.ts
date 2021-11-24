@@ -19,7 +19,8 @@ export enum GameObjectType {
     Unknown = "UNKNOWN",
     Ship = "SHIP",
     Asteroid = "ASTEROID",
-    LaserBeam = "LASER_BEAM"
+    LaserBeam = "LASER_BEAM",
+    Gem = "GEM"
 }
 
 export interface IGameObject extends PositionInfo {
@@ -34,6 +35,7 @@ export interface GameObjectDTO extends PositionInfoDTO {
 
 export interface ShipDTO extends GameObjectDTO {
     name: string;
+    points: number;
 }
 
 export interface LaserBeamDTO extends GameObjectDTO {
@@ -42,6 +44,10 @@ export interface LaserBeamDTO extends GameObjectDTO {
 
 export interface AsteroidDTO extends GameObjectDTO {
     color?: string;
+}
+
+export interface GemDTO extends GameObjectDTO {
+    points: number;
 }
 
 export const isShipDTO = (obj: GameObjectDTO): obj is ShipDTO => obj.type === GameObjectType.Ship;
@@ -68,7 +74,10 @@ export enum GameEventType {
     ShipDamage = "SHIP_DAMAGE",
     AsteroidExploded = "ASTEROID_EXPLODED",
     ShipExploded = "SHIP_EXPLODED",
-    EmitLaserBeam = "EMIT_LASER_BEAM"
+    EmitLaserBeam = "EMIT_LASER_BEAM",
+    AddGems = "ADD_GEM",
+    ShipPickedUpGem = "SHIP_PICKED_UP_GEM",
+    AsteroidHit = "ASTEROID_HIT"
 }
 
 export interface ISection {

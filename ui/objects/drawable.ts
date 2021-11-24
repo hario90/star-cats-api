@@ -5,12 +5,14 @@ import { GameObjectDTO } from "../../shared/types";
 import { DrawableAsteroid } from "./drawable-asteroid";
 import { DrawableLaserBeam } from "./drawable-laser-beam";
 import { DrawableShip, RAD } from "./drawable-ship";
+import { Section } from "./section";
 
 export abstract class Drawable extends GameObject {
     public loaded: boolean = false;
     // todo why are these here?
     public userId: string | undefined = undefined;
     public isDead: boolean | undefined = false;
+    public sections: Map<string, Section> = new Map();
 
     constructor(props: GameObjectDTO) {
         super(props);

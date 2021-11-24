@@ -36,8 +36,8 @@ export function distanceBetweenObjects<T extends PositionInfo, V extends Positio
     return distanceFromCenters - (radius1 + radius2)
 }
 
-export function getSectionsMap<T extends GameObject>(positionInfo: T): Map<string, ISection> {
-  const sections = new Map<string, ISection>();
+export function getSectionsMap<T extends GameObject>(positionInfo: T): Map<string, Section> {
+  const sections = new Map<string, Section>();
   // exclude sections where the max x is less than or equal to the min x of input
   // exclude sections where the max y is less than or equal to the min y of the input
   for (let row = 0; row < NUM_ROWS; row++) {

@@ -65,7 +65,6 @@ export class DrawableShip extends Drawable {
   public isDead = false;
   public speed: number = 1;
   public radius = 0;
-  public sections: Map<string, ISection> = new Map();
 
   constructor({id, x, y, deg, speed, name, onFinishedExploding}: DrawableShipProps) {
     super({
