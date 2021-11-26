@@ -10,11 +10,10 @@ import { Asteroid } from "../../shared/objects/asteroid";
 import { LaserBeam } from "../../shared/objects/laser-beam";
 import { Gem } from "../../shared/objects/gem";
 
-
 function createInitialObjects() {
   const asteroids = new Map<string, Asteroid>();
   const asteroidGenerator = new AsteroidGenerator();
-  for (let i = 0; i < 15; i++) {
+  for (let i = 0; i < 100; i++) {
     const asteroid = asteroidGenerator.random(false, asteroids.values());
     if (asteroid) {
       asteroids.set(asteroid.id, asteroid);
@@ -50,8 +49,7 @@ export function createWebSocket(server: HttpServer) {
       // todo don't put ship on asteroids
       const x = Math.random() * BOARD_WIDTH;
       const y = Math.random() * BOARD_HEIGHT;
-      const ship = new Ship({
-        // todo
+      let ship = new Ship({
         type: GameObjectType.Ship,
         x,
         y,
@@ -63,6 +61,7 @@ export function createWebSocket(server: HttpServer) {
         points: 0,
         name,
       });
+
       ships.set(userId, ship);
       socket.emit(GameEventType.GetInitialObjects, mapToJSONList(ships), mapToJSONList(asteroids), mapToJSONList(laserBeams), mapToJSONList(gems));
       socket.broadcast.emit(GameEventType.UserJoined, name);
