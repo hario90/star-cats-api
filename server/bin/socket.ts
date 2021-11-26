@@ -4,7 +4,7 @@ import { v4 as uuidV4 } from "uuid";
 import { AsteroidDTO, GameEventType, GameObjectDTO, GameObjectType, GemDTO, LaserBeamDTO, ShipDTO, SocketAuth } from "../../shared/types";
 import { AsteroidGenerator } from "../asteroid-generator";
 import { Ship } from "../../shared/objects/ship";
-import { halfShipHeight, halfShipWidth } from "../../shared/constants";
+import { BOARD_HEIGHT, BOARD_WIDTH, halfShipHeight, halfShipWidth } from "../../shared/constants";
 import { GameObject } from "../../shared/objects/game-object";
 import { Asteroid } from "../../shared/objects/asteroid";
 import { LaserBeam } from "../../shared/objects/laser-beam";
@@ -45,8 +45,11 @@ export function createWebSocket(server: HttpServer) {
     // TODO if this becomes a multi-room app, this will probably need to be roomToShipMap or maybe use a hash of room and ship id depending on how we use this structure
 
     io.use((socket: any, next: () => void) => {
-      const { name, x, y } = socket.handshake.auth;
+      const { name } = socket.handshake.auth;
       const userId = socket.id;
+      // todo don't put ship on asteroids
+      const x = Math.random() * BOARD_WIDTH;
+      const y = Math.random() * BOARD_HEIGHT;
       const ship = new Ship({
         // todo
         type: GameObjectType.Ship,

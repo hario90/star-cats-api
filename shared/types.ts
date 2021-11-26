@@ -57,10 +57,6 @@ export const isAsteroidDTO = (obj: GameObjectDTO): obj is AsteroidDTO => obj.typ
 export interface SocketAuth {
     name: string;
     userId: string;
-    canvasHeight: number;
-    canvasWidth: number;
-    x: number;
-    y: number;
 }
 
 export enum GameEventType {

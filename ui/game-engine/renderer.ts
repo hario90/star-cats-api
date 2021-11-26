@@ -12,9 +12,9 @@ export class Renderer {
   private gameObjects: GameObjectManager;
   private eventEmitter: SocketEventEmitter;
 
-  constructor(appEl: HTMLDivElement, socket: Socket, nickName: string, x: number, y: number) {
+  constructor(appEl: HTMLDivElement, socket: Socket, nickName: string) {
     this.eventEmitter = new SocketEventEmitter(socket);
-    this.gameObjects = new GameObjectManager(this.eventEmitter, nickName, x, y, socket);
+    this.gameObjects = new GameObjectManager(this.eventEmitter, socket);
 
     this.setHeightWidth();
     appEl.appendChild(this.canvas);
@@ -47,11 +47,11 @@ export class Renderer {
     }
     // don't show canvas until everything is loaded
     this.canvas.className = "visible";
-    this.gameObjects.ship.registerKeydownHandler();
+    this.gameObjects.ship?.registerKeydownHandler();
   }
 
   private draw = () => {
-    if (!this.context) {
+    if (!this.context || !this.gameObjects.ship) {
       return;
     }
 
@@ -63,10 +63,10 @@ export class Renderer {
 
     this.gameObjects.background.draw(this.context, shipX - this.halfCanvasWidth, shipY - this.halfCanvasHeight, this.canvas.width, this.canvas.height);
     this.gameObjects.alerts.draw(this.context, this.halfCanvasWidth, this.halfCanvasHeight);
-    this.gameObjects.ship.draw(this.context, shipX, shipY, this.halfCanvasWidth, this.halfCanvasHeight);
+    this.gameObjects.ship?.draw(this.context, shipX, shipY, this.halfCanvasWidth, this.halfCanvasHeight);
 
     for (const ship of this.gameObjects.ships.values()) {
-      if (this.gameObjects.ship.id !== ship.id) {
+      if (this.gameObjects.ship?.id !== ship.id) {
         if (ship.isInFrame(this.halfCanvasWidth, this.halfCanvasHeight)) {
           ship.draw(this.context, shipX, shipY, this.halfCanvasWidth, this.halfCanvasHeight);
         }
@@ -89,10 +89,12 @@ export class Renderer {
       }
     }
 
-    drawStats(this.context, this.halfCanvasWidth, {
-      points: this.gameObjects.ship.points,
-      lives: this.gameObjects.ship.numLives
-    })
+    if (this.gameObjects.ship) {
+        drawStats(this.context, this.halfCanvasWidth, {
+        points: this.gameObjects.ship.points,
+        lives: this.gameObjects.ship.numLives
+      })
+    }
   }
 
   public animate = () => {

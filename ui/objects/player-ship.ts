@@ -1,7 +1,7 @@
 import { v4 as uuid } from "uuid";
 import { GameObjectType, LaserBeamDTO } from "../../shared/types";
 import { SocketEventEmitter } from "../game-engine/socket-event-emitter";
-import { DrawableShip } from "./drawable-ship";
+import { DrawableShip, DrawableShipProps } from "./drawable-ship";
 
 export const halfShipWidth = 16;
 export const halfShipHeight = 15;
@@ -17,15 +17,8 @@ export const MAX_SPEED = 5;
 // TODO decide on where to place each ship initially
 export class PlayerShip extends DrawableShip {
   private onShoot: (laserBeam: LaserBeamDTO) => void;
-  constructor(x: number, y: number, name: string, id: string, onFinishedExploding: () => void, onShoot: (laserBeam: LaserBeamDTO) => void, eventEmitter: SocketEventEmitter) {
-    super({
-      x,
-      y,
-      name,
-      id,
-      onFinishedExploding,
-      eventEmitter
-    });
+  constructor(props: DrawableShipProps, onShoot: (laserBeam: LaserBeamDTO) => void) {
+    super(props);
     this.getPosition = this.getPosition.bind(this);
     this.handleKeydown = this.handleKeydown.bind(this);
     this.shoot = this.shoot.bind(this);
