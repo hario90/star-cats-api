@@ -28,10 +28,9 @@ export class Renderer {
     this.draw = this.draw.bind(this);
     this.animate = this.animate.bind(this);
     this.moveAndDraw = this.moveAndDraw.bind(this);
-    this.setHeightWidth = this.setHeightWidth.bind(this);
   }
 
-  setHeightWidth() {
+  private setHeightWidth = () => {
     if (this.canvas) {
       this.canvas.height = document.body.clientHeight;
       this.canvas.width = document.body.clientWidth;
@@ -42,7 +41,7 @@ export class Renderer {
     }
   }
 
-  async pollUntilReady() {
+  public pollUntilReady = async () => {
     while (this.gameObjects.notReadyToRender()) {
       await timeout(1000)
     }
@@ -51,7 +50,7 @@ export class Renderer {
     this.gameObjects.ship.registerKeydownHandler();
   }
 
-  draw() {
+  private draw = () => {
     if (!this.context) {
       return;
     }
@@ -96,7 +95,7 @@ export class Renderer {
     })
   }
 
-  animate() {
+  public animate = () => {
     if (!this.context) {
       return;
     }
