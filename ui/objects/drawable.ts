@@ -1,11 +1,14 @@
-import { Socket } from "socket.io-client";
 import { BOARD_HEIGHT, BOARD_WIDTH } from "../../shared/constants";
 import { GameObject } from "../../shared/objects/game-object";
 import { GameObjectDTO } from "../../shared/types";
-import { DrawableAsteroid } from "./drawable-asteroid";
-import { DrawableLaserBeam } from "./drawable-laser-beam";
-import { DrawableShip, RAD } from "./drawable-ship";
+import { RAD } from "../constants";
+import { SocketEventEmitter } from "../game-engine/socket-event-emitter";
+import { DrawableObject } from "../game-engine/types";
 import { Section } from "./section";
+
+export interface DrawableProps extends GameObjectDTO {
+  eventEmitter: SocketEventEmitter;
+}
 
 export abstract class Drawable extends GameObject {
     public loaded: boolean = false;
@@ -13,12 +16,18 @@ export abstract class Drawable extends GameObject {
     public userId: string | undefined = undefined;
     public isDead: boolean | undefined = false;
     public sections: Map<string, Section> = new Map();
+    public eventEmitter: SocketEventEmitter;
 
-    constructor(props: GameObjectDTO) {
+    constructor(props: DrawableProps) {
         super(props);
+        this.eventEmitter = props.eventEmitter;
     }
 
-    abstract update<T extends GameObject>(ship: T, sectionToAsteroids: Map<string, Set<DrawableAsteroid>>, ships: Map<string, Set<DrawableShip>>, laserBeams: Map<string, Set<DrawableLaserBeam>>, socket: Socket): void;
+    abstract update<T extends GameObject>(ship: T): void;
+
+    abstract whenHitBy(object: DrawableObject): void;
+
+    abstract toDTO(): GameObjectDTO;
 
     getId(): string {
         return this.id;

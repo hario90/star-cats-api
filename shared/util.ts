@@ -1,5 +1,3 @@
-import { Drawable } from "../ui/objects/drawable";
-import { Section } from "../ui/objects/section";
 import { BOARD_HEIGHT, BOARD_WIDTH } from "./constants";
 import { GameObject } from "./objects/game-object";
 import { PositionInfo, ISection } from "./types";
@@ -21,7 +19,7 @@ export function hasCollided<T extends GameObject>(ship: T, objects: T[]): boolea
 }
 
 // Assume each object can be represented as circles so that degree doesn't matter
-export function isOverlapping<T extends PositionInfo>(o1: T, o2:T): boolean {
+export function isOverlapping<T extends PositionInfo, P extends PositionInfo>(o1: T, o2: P): boolean {
     const dist = distanceBetweenObjects(o1, o2);
     return dist <= 0
 }
@@ -36,41 +34,8 @@ export function distanceBetweenObjects<T extends PositionInfo, V extends Positio
     return distanceFromCenters - (radius1 + radius2)
 }
 
-export function getSectionsMap<T extends GameObject>(positionInfo: T): Map<string, Section> {
-  const sections = new Map<string, Section>();
-  // exclude sections where the max x is less than or equal to the min x of input
-  // exclude sections where the max y is less than or equal to the min y of the input
-  for (let row = 0; row < NUM_ROWS; row++) {
-    for (let col = 0; col < NUM_COLUMNS; col++) {
-      const section = new Section(row, col);
-      if (isOverlappingWithSection(section, positionInfo)) {
-        sections.set(
-          section.key,
-          section,
-        );
-      }
-    }
-  }
-  return sections;
-}
-
-export function getSections<T extends GameObject>(positionInfo: T): string[] {
-    const sections = [];
-    // exclude sections where the max x is less than or equal to the min x of input
-    // exclude sections where the max y is less than or equal to the min y of the input
-    for (let row = 0; row < NUM_ROWS; row++) {
-      for (let col = 0; col < NUM_COLUMNS; col++) {
-        const section = new Section(row, col)
-        if (isOverlappingWithSection(section, positionInfo)) {
-          sections.push(section.key);
-        }
-      }
-    }
-    return sections;
-  }
-
 export type Coordinate = [number, number];
-export const getSectionKey = (row: number, col: number) => `${row},${col}`;
+
 
 // This is used for determining if an asteroid overlaps with a section of the grid
 export function isOverlappingWithSection<T extends WithBoundries, V extends WithBoundries>(o1: T, o2:V): boolean {
@@ -113,15 +78,3 @@ export function getObjectSections<T extends GameObject>(o: T): Coordinate[] {
   }
   return sections;
 }
-
-export function createSectionToObjectsMap<T extends Drawable> (): Map<string, Set<T>> {
-    const objectMap = new Map<string, Set<T>>();
-    for (let i = 0; i < NUM_ROWS; i++) {
-      for (let j = 0; j < NUM_COLUMNS; j++) {
-        const key = getSectionKey(i, j);
-        objectMap.set(key, new Set());
-      }
-    }
-    return objectMap;
-}
-

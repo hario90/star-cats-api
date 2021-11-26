@@ -1,15 +1,17 @@
-import { Socket } from "socket.io-client";
 import { GameObjectDTO, GameObjectType, LaserBeamDTO, ISection } from "../../shared/types";
-import { COL_THICKNESS, distanceBetweenObjects, getSectionKey, isPointOverlappingWithSection, NUM_COLUMNS, NUM_ROWS, ROW_THICKNESS } from "../../shared/util";
+import { COL_THICKNESS, isPointOverlappingWithSection, ROW_THICKNESS } from "../../shared/util";
+import { SocketEventEmitter } from "../game-engine/socket-event-emitter";
+import { DrawableObject, isDrawableAsteroid, isDrawableShip} from "../game-engine/types";
 import { getRelativePosition } from "../util";
 import { Drawable } from "./drawable";
-import { DrawableAsteroid } from "./drawable-asteroid";
-import { DrawableShip } from "./drawable-ship";
 import { Section } from "./section";
 
+export interface DrawableLaserBeamProps extends LaserBeamDTO {
+    eventEmitter: SocketEventEmitter;
+}
 export class DrawableLaserBeam extends Drawable {
-    private prevSection: Section | undefined;
-    constructor({color, ...rest}: LaserBeamDTO) {
+    public prevSection: Section | undefined;
+    constructor({color, ...rest}: DrawableLaserBeamProps) {
         super({...rest, type:GameObjectType.LaserBeam});
         this.radius = 0;
         this.sections.set(this.section.key, this.section);
@@ -18,10 +20,12 @@ export class DrawableLaserBeam extends Drawable {
     get section(): Section {
         const row = Math.floor(this.y / ROW_THICKNESS);
         const col = Math.floor(this.x / COL_THICKNESS);
-        const section =  new Section(row, col)
-        this.sections.clear();
-        this.sections.set(section.key, section);
+        const section =  new Section(row, col);
         return section;
+    }
+
+    isLoaded() {
+        return true;
     }
 
     getEndpoint() {
@@ -48,38 +52,30 @@ export class DrawableLaserBeam extends Drawable {
         }
     }
 
-    update<T extends GameObjectDTO>(obj: T, sectionToAsteroids: Map<string, Set<DrawableAsteroid>>, sectionToShips: Map<string, Set<DrawableShip>>, sectionToLaserBeams: Map<string, Set<DrawableLaserBeam>>, socket: Socket): void {
+    whenHitBy(object: DrawableObject): void {
+        if (isDrawableAsteroid(object) || isDrawableShip(object)) {
+            this.isDead = true;
+        }
+    }
+
+    update<T extends GameObjectDTO>(obj: T): void {
         this.x = obj.x ?? this.x;
         this.y = obj.y ?? this.y;
         this.deg = obj.deg || 0;
         this.speed = obj.speed || 1;
+        this.sections = new Map([[this.section.key, this.section]]);
+    }
 
-        if (this.prevSection && (this.section.row !== this.prevSection?.row || this.section.col !== this.prevSection?.col)) {
-            const laserBeamsInSection = sectionToLaserBeams.get(getSectionKey(this.prevSection.row, this.prevSection.col)) || new Set();
-            laserBeamsInSection.delete(this);
-            const laserBeamsInNewSection = sectionToLaserBeams.get(getSectionKey(this.section.row, this.section.col)) || new Set();
-            laserBeamsInNewSection.add(this);
-        }
-        this.prevSection = this.section;
-
-        // check for collisions and explode the object we collide into
-        const {row, col} = this.section;
-        const sectionKey = getSectionKey(row, col);
-        const shipsInMySection = sectionToShips.get(sectionKey) || new Set();
-        for (const ship of shipsInMySection) {
-            if (distanceBetweenObjects(ship, this) <= 0) {
-                ship.explode(socket, this.id);
-                this.isDead = true;
-                break;
-            }
-        }
-        const asteroidsInMySection = sectionToAsteroids.get(sectionKey) || new Set();
-        for (const asteroid of asteroidsInMySection) {
-            if (distanceBetweenObjects(asteroid, this) <= 0) {
-                asteroid.hit(socket, this.id);
-                this.isDead = true;
-                break;
-            }
-        }
+    public toDTO(): LaserBeamDTO {
+        return {
+          id: this.id,
+          x: this.x,
+          y: this.y,
+          deg: this.deg,
+          speed: this.speed,
+          height: this.height,
+          width: this.width,
+          type: this.type
+        };
     }
 }

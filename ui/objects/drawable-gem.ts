@@ -1,20 +1,24 @@
-import { getRelativePosition } from "../util";
-import { Socket } from "socket.io-client";
+import { getRelativePosition, getSectionsMap } from "../util";
 import { GemDTO, GameObjectDTO } from "../../shared/types";
 import { DrawableShip } from "./drawable-ship";
-import { getSectionsMap } from "../../shared/util";
 import { DrawableLaserBeam } from "./drawable-laser-beam";
 import { Drawable } from "./drawable";
 import { DrawableAsteroid } from "./drawable-asteroid";
+import { SocketEventEmitter } from "../game-engine/socket-event-emitter";
+import { DrawableObject, isDrawableAsteroid, isDrawableLaserBeam, isDrawableShip, isDrawableGem } from "../game-engine/types";
 
 export const ASTEROID_HEIGHT = 32;
 export const ASTEROID_WIDTH = 32;
+
+export interface DrawableGemProps extends GemDTO {
+    eventEmitter: SocketEventEmitter;
+}
 
 export class DrawableGem extends Drawable {
   private readonly color: string;
   public readonly points: number;
 
-  constructor(gem: GemDTO) {
+  constructor(gem: DrawableGemProps) {
     super(gem);
     this.points = gem.points;
     this.color = "yellow";
@@ -22,6 +26,10 @@ export class DrawableGem extends Drawable {
     this.loaded = true;
     this.width = 10;
     this.height = 14;
+  }
+
+  whenHitBy(object: DrawableObject): void {
+    // the ship that hits it is in charge of emitting an event
   }
 
   draw(context: CanvasRenderingContext2D, shipX: number, shipY: number, halfCanvasWidth: number, halfCanvasHeight: number) {
@@ -45,12 +53,26 @@ export class DrawableGem extends Drawable {
     context.restore();
   }
 
-  public update<T extends GameObjectDTO>({x, y, speed, deg, height, width}: T, sectionToAsteroids: Map<string, Set<DrawableAsteroid>>, sectionToShips: Map<string, Set<DrawableShip>>, sectionToLaserBeams: Map<string, Set<DrawableLaserBeam>>, socket: Socket): void {
+  public update<T extends GameObjectDTO>({x, y, speed, deg, height, width}: T): void {
     this.speed = speed;
     this.deg = deg;
     this.height = height;
     this.width = width;
     this.x = x;
     this.y = y;
+  }
+
+  public toDTO(): GemDTO {
+      return {
+        points: this.points,
+        id: this.id,
+        x: this.x,
+        y: this.y,
+        deg: this.deg,
+        speed: this.speed,
+        height: this.height,
+        width: this.width,
+        type: this.type
+      };
   }
 }

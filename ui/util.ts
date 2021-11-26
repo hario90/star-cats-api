@@ -1,4 +1,7 @@
+import { GameObject } from "../shared/objects/game-object";
+import { NUM_ROWS, NUM_COLUMNS, isOverlappingWithSection } from "../shared/util";
 import { Drawable } from "./objects/drawable";
+import { Section } from "./objects/section";
 
 export function setupCanvas(canvas: HTMLCanvasElement) {
   // Get the device pixel ratio, falling back to 1.
@@ -47,3 +50,50 @@ export function cleanUpResources<T extends Drawable>(id: string, objects: Map<st
     }
   }
 }
+
+export function getSectionsMap<T extends GameObject>(positionInfo: T): Map<string, Section> {
+  const sections = new Map<string, Section>();
+  // exclude sections where the max x is less than or equal to the min x of input
+  // exclude sections where the max y is less than or equal to the min y of the input
+  for (let row = 0; row < NUM_ROWS; row++) {
+    for (let col = 0; col < NUM_COLUMNS; col++) {
+      const section = new Section(row, col);
+      if (isOverlappingWithSection(section, positionInfo)) {
+        sections.set(
+          section.key,
+          section,
+        );
+      }
+    }
+  }
+  return sections;
+}
+
+const getSectionKey = (row: number, col: number) => `${row},${col}`;
+
+export function createSectionToObjectsMap<T extends Drawable> (): Map<string, Set<T>> {
+  const objectMap = new Map<string, Set<T>>();
+  for (let i = 0; i < NUM_ROWS; i++) {
+    for (let j = 0; j < NUM_COLUMNS; j++) {
+      const key = getSectionKey(i, j);
+      objectMap.set(key, new Set());
+    }
+  }
+  return objectMap;
+}
+
+export function getSections<T extends GameObject>(positionInfo: T): string[] {
+  const sections = [];
+  // exclude sections where the max x is less than or equal to the min x of input
+  // exclude sections where the max y is less than or equal to the min y of the input
+  for (let row = 0; row < NUM_ROWS; row++) {
+    for (let col = 0; col < NUM_COLUMNS; col++) {
+      const section = new Section(row, col)
+      if (isOverlappingWithSection(section, positionInfo)) {
+        sections.push(section.key);
+      }
+    }
+  }
+  return sections;
+}
+

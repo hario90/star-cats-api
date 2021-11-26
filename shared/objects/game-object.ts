@@ -1,5 +1,5 @@
-import { GameObjectDTO, GameObjectType, IGameObject, ISection } from "../types";
-import { Coordinate, getSectionKey } from "../util";
+import { GameObjectDTO, GameObjectType, IGameObject } from "../types";
+import { Coordinate } from "../util";
 
 export interface GameObjectProps extends GameObjectDTO {
   sections: Set<Coordinate>;
@@ -57,32 +57,5 @@ export abstract class GameObject implements IGameObject {
       this.speed = speed;
     }
 
-    // https://github.com/Microsoft/TypeScript/issues/16858
-    // capture the getters this way
-    toJSON() {
-        const proto = Object.getPrototypeOf(this);
-        const jsonObj: any = Object.assign({}, this);
-
-        Object.entries(Object.getOwnPropertyDescriptors(proto))
-          .filter(([key, descriptor]) => typeof descriptor.get === 'function')
-          .map(([key, descriptor]) => {
-            if (descriptor && key[0] !== '_') {
-              try {
-                const val = (this as any)[key];
-                jsonObj[key] = val;
-              } catch (error) {
-                console.error(`Error calling getter ${key}`, error);
-              }
-            }
-          });
-
-        return {
-          ...jsonObj,
-          minX: this.minX,
-          minY: this.minY,
-          maxX: this.maxX,
-          maxY: this.maxY,
-          radius: this.radius
-        };
-    }
+    abstract toDTO(): GameObjectDTO;
 }

@@ -1,7 +1,7 @@
 import { GameObjectDTO } from "../shared/types";
-import { Drawable } from "./objects/drawable";
+import { Drawable, DrawableProps } from "./objects/drawable";
 
-export interface ComponentProps extends GameObjectDTO {
+export interface ComponentProps extends DrawableProps {
   src: string;
 }
 

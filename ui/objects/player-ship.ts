@@ -1,10 +1,10 @@
 import { v4 as uuid } from "uuid";
 import { GameObjectType, LaserBeamDTO } from "../../shared/types";
+import { SocketEventEmitter } from "../game-engine/socket-event-emitter";
 import { DrawableShip } from "./drawable-ship";
 
 export const halfShipWidth = 16;
 export const halfShipHeight = 15;
-export const RAD = Math.PI / 180;
 
 const LEFT = "ArrowLeft";
 const RIGHT = "ArrowRight";
@@ -17,13 +17,14 @@ export const MAX_SPEED = 5;
 // TODO decide on where to place each ship initially
 export class PlayerShip extends DrawableShip {
   private onShoot: (laserBeam: LaserBeamDTO) => void;
-  constructor(x: number, y: number, name: string, id: string, onFinishedExploding: () => void, onShoot: (laserBeam: LaserBeamDTO) => void) {
+  constructor(x: number, y: number, name: string, id: string, onFinishedExploding: () => void, onShoot: (laserBeam: LaserBeamDTO) => void, eventEmitter: SocketEventEmitter) {
     super({
       x,
       y,
       name,
       id,
-      onFinishedExploding
+      onFinishedExploding,
+      eventEmitter
     });
     this.getPosition = this.getPosition.bind(this);
     this.handleKeydown = this.handleKeydown.bind(this);
@@ -45,6 +46,10 @@ export class PlayerShip extends DrawableShip {
       id: uuid(),
     }
     this.onShoot(laserBeam);
+  }
+
+  registerKeydownHandler() {
+    document.addEventListener("keydown", this.handleKeydown)
   }
 
   handleKeydown(e: KeyboardEvent) {

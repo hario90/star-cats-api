@@ -1,14 +1,14 @@
 import { ImageComponent } from "../component";
 import asteroidImg from "../../assets/asteroid.png";
 import explosionImg from "../../assets/explosion.png";
-import { getRelativePosition } from "../util";
-import { Socket } from "socket.io-client";
-import { AsteroidDTO, GameEventType, GameObjectDTO } from "../../shared/types";
+import { getRelativePosition, getSectionsMap } from "../util";
+import { AsteroidDTO, GameObjectDTO } from "../../shared/types";
 import { DrawableShip } from "./drawable-ship";
-import { getSectionsMap } from "../../shared/util";
 import { DrawableLaserBeam } from "./drawable-laser-beam";
 import { EXPLOSION_LOCATIONS, EXPLOSION_WIDTH, HALF_EXPLOSION_WIDTH } from "../constants";
 import { MIN_ASTEROID_HEIGHT } from "../../shared/constants";
+import { SocketEventEmitter } from "../game-engine/socket-event-emitter";
+import { DrawableObject, isDrawableAsteroid, isDrawableLaserBeam, isDrawableShip, isDrawableGem } from "../game-engine/types";
 
 export const ASTEROID_HEIGHT = 32;
 export const ASTEROID_WIDTH = 32;
@@ -16,6 +16,7 @@ const WIDTH_REDUCE_FACTOR = 0.8;
 
 export interface DrawableAsteroidProps extends AsteroidDTO {
   onFinishedExploding: (self: DrawableAsteroid) => void;
+  eventEmitter: SocketEventEmitter;
 }
 
 export class DrawableAsteroid extends ImageComponent {
@@ -40,8 +41,16 @@ export class DrawableAsteroid extends ImageComponent {
     this.drawExplosion = this.drawExplosion.bind(this);
   }
 
-  private explode(socket: Socket, laserBeamId: string) {
-    socket.emit(GameEventType.AsteroidExploded, this.id, laserBeamId);
+  whenHitBy(object: DrawableObject): void {
+    if (isDrawableAsteroid(object)) {
+      // todo
+    } else if (isDrawableLaserBeam(object)) {
+      this.hit(object.id);
+    }
+  }
+
+  private explode(laserBeamId: string) {
+    this.eventEmitter.asteroidExploded(this.id, laserBeamId);
     this.isDead = true;
     this.explosionIndex = 0;
   }
@@ -50,14 +59,14 @@ export class DrawableAsteroid extends ImageComponent {
     return Math.round(this.width / 10);
   }
 
-  hit(socket: Socket, laserBeamId: string) {
+  hit(laserBeamId: string) {
     this.width = Math.floor(this.width * WIDTH_REDUCE_FACTOR);
     this.height = this.width;
     this.radius = Math.floor(this.width / 2);
     if (this.width < MIN_ASTEROID_HEIGHT) {
-      this.explode(socket, laserBeamId);
+      this.explode(laserBeamId);
     } else {
-      socket.emit(GameEventType.AsteroidHit, this.id, laserBeamId, this.width);
+      this.eventEmitter.asteroidHit(this.id, this.width, laserBeamId);
     }
   }
 
@@ -101,30 +110,25 @@ export class DrawableAsteroid extends ImageComponent {
     context.restore();
   }
 
-  public update<T extends GameObjectDTO>({x, y, speed, deg, height, width}: T, sectionToAsteroids: Map<string, Set<DrawableAsteroid>>, sectionToShips: Map<string, Set<DrawableShip>>, sectionToLaserBeams: Map<string, Set<DrawableLaserBeam>>, socket: Socket): void {
+  public update<T extends GameObjectDTO>({x, y, speed, deg, height, width}: T): void {
     this.speed = speed;
     this.deg = deg;
     this.height = height;
     this.width = width;
     this.x = x;
     this.y = y;
+  }
 
-  //   // check if it has collided
-  //   const shipSections: string[] = getSections(ship);
-  //   const asteroidsToCheckForCollision = new Set<GameObject>();
-  //   for (const shipSectionKey of shipSections) {
-  //     const objects = objectMap.get(shipSectionKey) || [];
-  //     // no asteroids logged but there should be.
-  //     for (const obj of objects) {
-  //       // TODO: .toJSON shouldn't be necessary
-  //       asteroidsToCheckForCollision.add(obj.toJSON());
-  //     }
-  //   }
-
-  //   // A ship crashed into an asteroid!
-  //   if (hasCollided(ship, Array.from(asteroidsToCheckForCollision))) {
-  //     socket.emit(GameEventType.ShipExploded, ship.id)
-  //     this.explode();
-  //   }
+  public toDTO(): AsteroidDTO {
+    return {
+      id: this.id,
+      x: this.x,
+      y: this.y,
+      deg: this.deg,
+      speed: this.speed,
+      height: this.height,
+      width: this.width,
+      type: this.type
+    };
   }
 }

@@ -1,6 +1,7 @@
 import { ISection } from "../../shared/types";
-import { COL_THICKNESS, getSectionKey, NUM_COLUMNS, NUM_ROWS, ROW_THICKNESS } from "../../shared/util";
+import { COL_THICKNESS, NUM_COLUMNS, NUM_ROWS, ROW_THICKNESS } from "../../shared/util";
 
+const getSectionKey = (row: number, col: number) => `${row},${col}`;
 export class Section implements ISection {
     public readonly row: number;
     public readonly col: number;

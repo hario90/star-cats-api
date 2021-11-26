@@ -1,7 +1,7 @@
 import { Server as HttpServer } from "http";
 import { Server, Socket } from "socket.io";
 import { v4 as uuidV4 } from "uuid";
-import { AsteroidDTO, GameEventType, GameObjectType, GemDTO, LaserBeamDTO, ShipDTO, SocketAuth } from "../../shared/types";
+import { AsteroidDTO, GameEventType, GameObjectDTO, GameObjectType, GemDTO, LaserBeamDTO, ShipDTO, SocketAuth } from "../../shared/types";
 import { AsteroidGenerator } from "../asteroid-generator";
 import { Ship } from "../../shared/objects/ship";
 import { halfShipHeight, halfShipWidth } from "../../shared/constants";
@@ -23,10 +23,10 @@ function createInitialObjects() {
   return {asteroids};
 }
 
-function mapToJSONList<T extends GameObject>(map: Map<string, T>): T[] {
-  const values = [];
+function mapToJSONList(map: Map<string, GameObject>): GameObjectDTO[] {
+  const values: GameObjectDTO[] = [];
   for (const value of map.values()) {
-    values.push(value.toJSON())
+    values.push(value.toDTO())
   }
   return values;
 }
@@ -74,14 +74,14 @@ export function createWebSocket(server: HttpServer) {
         const matchingShip = ships.get(obj.id);
         if (matchingShip) {
           matchingShip.move(obj);
-          socket.broadcast.emit(GameEventType.ShipMoved, matchingShip.toJSON());
+          socket.broadcast.emit(GameEventType.ShipMoved, matchingShip.toDTO());
         }
       });
       socket.on(GameEventType.LaserMoved, (obj: LaserBeamDTO) => {
         const matchingLaserBeam = laserBeams.get(obj.id);
         if (matchingLaserBeam) {
           matchingLaserBeam.move(obj);
-          socket.broadcast.emit(GameEventType.LaserMoved, matchingLaserBeam.toJSON());
+          socket.broadcast.emit(GameEventType.LaserMoved, matchingLaserBeam.toDTO());
         } else {
           laserBeams.set(obj.id, new LaserBeam(obj));
         }
@@ -90,7 +90,7 @@ export function createWebSocket(server: HttpServer) {
         const matchingAsteroid = asteroids.get(obj.id);
         if (matchingAsteroid) {
           matchingAsteroid.move(obj);
-          socket.broadcast.emit(GameEventType.AsteroidMoved, matchingAsteroid.toJSON());
+          socket.broadcast.emit(GameEventType.AsteroidMoved, matchingAsteroid.toDTO());
         } else {
           asteroids.set(obj.id, new Asteroid(obj));
         }

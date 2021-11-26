@@ -1,4 +1,8 @@
-import { IGameObject } from "../shared/types";
+import { GameObjectType, IGameObject } from "../shared/types";
+import { DrawableAsteroid } from "./objects/drawable-asteroid";
+import { DrawableGem } from "./objects/drawable-gem";
+import { DrawableLaserBeam } from "./objects/drawable-laser-beam";
+import { DrawableShip } from "./objects/drawable-ship";
 
 export interface IDrawable extends IGameObject{
   getPosition(): number[];

@@ -1,6 +1,6 @@
 import { io } from 'socket.io-client';
 import './style.css';
-import { Renderer } from "./renderer";
+import { Renderer } from "./game-engine/renderer";
 import { createForm } from './form';
 import { SERVER_URL } from './constants';
 import { BOARD_WIDTH, BOARD_HEIGHT } from '../shared/constants';

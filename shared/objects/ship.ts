@@ -11,4 +11,19 @@ export class Ship extends GameObject {
         this.name = name;
         this.points = points;
     }
+
+    public toDTO(): ShipDTO {
+        return {
+          x: this.x,
+          y: this.y,
+          height: this.height,
+          width: this.width,
+          name: this.name,
+          id: this.id,
+          points: this.points,
+          deg: this.deg,
+          speed: this.speed,
+          type: this.type,
+        }
+      }
 }

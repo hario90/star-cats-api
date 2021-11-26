@@ -1,19 +1,18 @@
 import { BattleShipFrame } from "../types";
 import explosionImg from "../../assets/explosion.png";
 import shipImg from "../../assets/ship.png";
-import { getRelativePosition } from "../util";
+import { getRelativePosition, getSectionsMap } from "../util";
 import { Drawable } from "./drawable";
 import { halfShipHeight, halfShipWidth } from "../../shared/constants";
-import { GameEventType, GameObjectDTO, GameObjectType, ISection } from "../../shared/types";
-import { COL_THICKNESS, getSectionKey, getSectionsMap, hasCollided, isOverlappingWithSection, NUM_COLUMNS, NUM_ROWS, ROW_THICKNESS } from "../../shared/util";
-import { Socket } from "socket.io-client";
+import { GameObjectDTO, GameObjectType, ShipDTO } from "../../shared/types";
+import { COL_THICKNESS, hasCollided, ROW_THICKNESS } from "../../shared/util";
 import { DrawableAsteroid } from "./drawable-asteroid";
 import { GameObject } from "../../shared/objects/game-object";
 import { DrawableLaserBeam } from "./drawable-laser-beam";
-import { EXPLOSION_LOCATIONS, EXPLOSION_WIDTH, HALF_EXPLOSION_WIDTH } from "../constants";
+import { EXPLOSION_LOCATIONS, EXPLOSION_WIDTH, HALF_EXPLOSION_WIDTH, RAD } from "../constants";
 import { Section } from "./section";
-
-export const RAD = Math.PI / 180;
+import { SocketEventEmitter } from "../game-engine/socket-event-emitter";
+import { DrawableObject, isDrawableAsteroid, isDrawableGem, isDrawableLaserBeam, isDrawableShip } from "../game-engine/types";
 
 const frameToLocation = new Map([
   [BattleShipFrame.NORMAL, [0, 0]],
@@ -42,12 +41,14 @@ export interface DrawableShipProps {
   x: number;
   y: number;
   onFinishedExploding: (name: string) => void;
+  eventEmitter: SocketEventEmitter;
 }
 
 const MAX_NUM_LIVES = 5;
 const SHOW_SHIP_INTERVAL = 14;
 const HIDE_SHIP_INTERVAL = 10;
 const MAX_BLINKS = 6;
+const MAX_HEALTH_POINTS = 10;
 export class DrawableShip extends Drawable {
   private shipImg: HTMLImageElement;
   private explosionImg: HTMLImageElement;
@@ -58,6 +59,7 @@ export class DrawableShip extends Drawable {
   public name: string;
   public numLives: number = MAX_NUM_LIVES;
   public points = 0;
+  public healthPoints = MAX_HEALTH_POINTS;
   private blinkCount = MAX_BLINKS;
   private blinkIntervalCount = 0;
   public isComingBackToLife = false;
@@ -66,7 +68,7 @@ export class DrawableShip extends Drawable {
   public speed: number = 1;
   public radius = 0;
 
-  constructor({id, x, y, deg, speed, name, onFinishedExploding}: DrawableShipProps) {
+  constructor({id, x, y, deg, speed, name, onFinishedExploding, eventEmitter}: DrawableShipProps) {
     super({
       x,
       y,
@@ -75,7 +77,8 @@ export class DrawableShip extends Drawable {
       type: GameObjectType.Ship,
       speed: speed ?? 1,
       height: 2 * halfShipHeight,
-      width: 2 * halfShipWidth
+      width: 2 * halfShipWidth,
+      eventEmitter,
     });
     this.name = name;
 
@@ -141,28 +144,26 @@ export class DrawableShip extends Drawable {
 
   // First arg is the ship representing this object
   // Second arg are all the objects
-  public update<T extends GameObjectDTO>(ship: T, sectionToAsteroids: Map<string, Set<DrawableAsteroid>>,
-    sectionToShips: Map<string, Set<DrawableShip>>, sectionToLaserBeams: Map<string, Set<DrawableLaserBeam>>,
-    socket: Socket): void {
+  public update<T extends GameObjectDTO>(ship: T): void {
     this.x = ship.x ?? this.x;
     this.y = ship.y ?? this.y;
     this.deg = ship.deg || 0;
     this.speed = ship.speed || 1;
-    this.checkForSectionsChange(sectionToShips);
+    this.sections = this.getCurrentSections();
+  }
 
-    // check if it has collided
-    const asteroidsToCheckForCollision = new Set<GameObject>();
-    for (const [key] of this.sections) {
-      const objects = sectionToAsteroids.get(key) || [];
-      // no asteroids logged but there should be.
-      for (const obj of objects) {
-        // TODO: .toJSON shouldn't be necessary
-        asteroidsToCheckForCollision.add(obj.toJSON());
-      }
-    }
-    // A ship crashed into an asteroid!
-    if (hasCollided(this, Array.from(asteroidsToCheckForCollision))) {
-      this.explode(socket);
+  public toDTO(): ShipDTO {
+    return {
+      x: this.x,
+      y: this.y,
+      height: this.height,
+      width: this.width,
+      name: this.name,
+      id: this.id,
+      points: this.points,
+      deg: this.deg,
+      speed: this.speed,
+      type: this.type,
     }
   }
 
@@ -178,8 +179,27 @@ export class DrawableShip extends Drawable {
     return this.deg - DEGREE_OF_SHIP_NOSE_FROM_POS_X_AXIS;
   }
 
-  explode(socket: Socket, laserBeamId?: string) {
-    socket.emit(GameEventType.ShipExploded, this.id, laserBeamId)
+  whenHitBy(object: DrawableObject): void {
+    if (isDrawableAsteroid(object)) {
+      this.explode();
+    } else if (isDrawableLaserBeam(object)) {
+      this.reduceHealthPoints();
+    } else if (isDrawableShip(object)) {
+      this.explode();
+    } else if (isDrawableGem(object)) {
+      this.points++;
+      this.eventEmitter.shipPickedUpGem(this.id, object.id);
+    }
+  }
+
+  reduceHealthPoints(): void {
+    if (this.healthPoints > 0) {
+      this.healthPoints--;
+    }
+  }
+
+  explode(laserBeamId?: string) {
+    this.eventEmitter.shipExploded(this.id, laserBeamId)
     this.isDead = true;
     this.explosionIndex = 0;
     this.numLives--;
