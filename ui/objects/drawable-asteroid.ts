@@ -3,8 +3,6 @@ import asteroidImg from "../../assets/asteroid.png";
 import explosionImg from "../../assets/explosion.png";
 import { getRelativePosition, getSectionsMap } from "../util";
 import { AsteroidDTO, GameObjectDTO } from "../../shared/types";
-import { DrawableShip } from "./drawable-ship";
-import { DrawableLaserBeam } from "./drawable-laser-beam";
 import { EXPLOSION_LOCATIONS, EXPLOSION_WIDTH, HALF_EXPLOSION_WIDTH } from "../constants";
 import { MIN_ASTEROID_HEIGHT } from "../../shared/constants";
 import { SocketEventEmitter } from "../game-engine/socket-event-emitter";
@@ -50,9 +48,11 @@ export class DrawableAsteroid extends ImageComponent {
   }
 
   private explode(laserBeamId: string) {
-    this.eventEmitter.asteroidExploded(this.id, laserBeamId);
-    this.isDead = true;
-    this.explosionIndex = 0;
+    if (this.explosionIndex < 0 && !this.isDead) {
+      this.eventEmitter.asteroidExploded(this.id, laserBeamId);
+      this.isDead = true;
+      this.explosionIndex = 0;
+    }
   }
 
   get points() {
