@@ -5,11 +5,8 @@ import { getRelativePosition, getSectionsMap } from "../util";
 import { Drawable } from "./drawable";
 import { halfShipHeight, halfShipWidth } from "../../shared/constants";
 import { GameObjectDTO, GameObjectType, ShipDTO } from "../../shared/types";
-import { COL_THICKNESS, hasCollided, ROW_THICKNESS } from "../../shared/util";
-import { DrawableAsteroid } from "./drawable-asteroid";
-import { GameObject } from "../../shared/objects/game-object";
-import { DrawableLaserBeam } from "./drawable-laser-beam";
-import { EXPLOSION_LOCATIONS, EXPLOSION_WIDTH, HALF_EXPLOSION_WIDTH, RAD } from "../constants";
+import { COL_THICKNESS, ROW_THICKNESS } from "../../shared/util";
+import { EXPLOSION_LOCATIONS, SRC_EXPLOSION_WIDTH, HALF_EXPLOSION_WIDTH, RAD } from "../constants";
 import { Section } from "./section";
 import { SocketEventEmitter } from "../game-engine/socket-event-emitter";
 import { DrawableObject, isDrawableAsteroid, isDrawableGem, isDrawableLaserBeam, isDrawableShip } from "../game-engine/types";
@@ -206,7 +203,7 @@ export class DrawableShip extends Drawable {
 
   private drawExplosion(context: CanvasRenderingContext2D) {
     const location = EXPLOSION_LOCATIONS[Math.floor(this.explosionIndex / 2)];
-    context.drawImage(this.explosionImg, location[0], location[1], EXPLOSION_WIDTH, EXPLOSION_WIDTH, 0 - HALF_EXPLOSION_WIDTH, 0-HALF_EXPLOSION_WIDTH, EXPLOSION_WIDTH, EXPLOSION_WIDTH);
+    context.drawImage(this.explosionImg, location[0], location[1], SRC_EXPLOSION_WIDTH, SRC_EXPLOSION_WIDTH, 0 - HALF_EXPLOSION_WIDTH, 0-HALF_EXPLOSION_WIDTH, SRC_EXPLOSION_WIDTH, SRC_EXPLOSION_WIDTH);
     this.explosionIndex++;
 
     if (this.explosionIndex >= EXPLOSION_LOCATIONS.length) {

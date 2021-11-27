@@ -7,10 +7,6 @@ export class Gem extends GameObject {
         super({...props, type: GameObjectType.Gem});
     }
 
-    isLoaded() {
-        return true;
-    }
-
     public toDTO(): GemDTO {
         return {
           points: this.points,

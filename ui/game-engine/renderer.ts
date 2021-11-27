@@ -52,6 +52,7 @@ export class Renderer {
 
   private draw = () => {
     if (!this.context || !this.gameObjects.ship) {
+      throw new Error("context or playerShip is undefined")
       return;
     }
 
@@ -73,6 +74,7 @@ export class Renderer {
       }
     }
     for (const asteroid of this.gameObjects.asteroids.values()) {
+      this.gameObjects.getObjectNextPositionAndEmit(asteroid);
       if (asteroid.isInFrame(this.halfCanvasWidth, this.halfCanvasHeight)) {
         asteroid.draw(this.context, shipX, shipY, this.halfCanvasWidth, this.halfCanvasHeight);
       }

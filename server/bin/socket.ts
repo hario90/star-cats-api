@@ -13,7 +13,7 @@ import { Gem } from "../../shared/objects/gem";
 function createInitialObjects() {
   const asteroids = new Map<string, Asteroid>();
   const asteroidGenerator = new AsteroidGenerator();
-  for (let i = 0; i < 100; i++) {
+  for (let i = 0; i < 20; i++) {
     const asteroid = asteroidGenerator.random(false, asteroids.values());
     if (asteroid) {
       asteroids.set(asteroid.id, asteroid);
@@ -114,14 +114,13 @@ export function createWebSocket(server: HttpServer) {
           laserBeams.delete(laserBeamId);
         }
       });
-      socket.on(GameEventType.AsteroidExploded, (id: string, laserBeamId: string) => {
-        const matchingAsteroid = asteroids.get(id);
+      socket.on(GameEventType.AsteroidExploded, (asteroid: AsteroidDTO, laserBeamId: string) => {
         const gemsToAdd: Gem[] = [];
 
-        if (matchingAsteroid) {
+        if (asteroid) {
           const id = uuidV4();
           const gem = new Gem({
-            ...matchingAsteroid,
+            ...asteroid,
             id,
           });
           gems.set(id, gem);

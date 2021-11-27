@@ -2,39 +2,51 @@ import { v4 as uuidV4 } from "uuid";
 import { ImageComponent } from "../component";
 import asteroidImg from "../../assets/asteroid.png";
 import explosionImg from "../../assets/explosion.png";
-import { getRelativePosition, getSectionsMap } from "../util";
+import { getSectionsMap } from "../util";
 import { AsteroidDTO, GameObjectDTO } from "../../shared/types";
-import { EXPLOSION_LOCATIONS, EXPLOSION_WIDTH, HALF_EXPLOSION_WIDTH } from "../constants";
+import { EXPLOSION_LOCATIONS, SRC_EXPLOSION_WIDTH } from "../constants";
 import { MIN_ASTEROID_HEIGHT } from "../../shared/constants";
 import { SocketEventEmitter } from "../game-engine/socket-event-emitter";
 import { DrawableObject, isDrawableAsteroid, isDrawableLaserBeam } from "../game-engine/types";
 import { Asteroid } from "../../shared/objects/asteroid";
+import { Drawable } from "./drawable";
 
 export const ASTEROID_HEIGHT = 32;
 export const ASTEROID_WIDTH = 32;
-const WIDTH_REDUCE_FACTOR = 0.8;
+export const EXPLOSION_WIDTH = 96;
 
 export interface DrawableAsteroidProps extends AsteroidDTO {
   onFinishedExploding: (self: DrawableAsteroid) => void;
   eventEmitter: SocketEventEmitter;
 }
 
-export class DrawableAsteroid extends ImageComponent {
-  private frame = 2;
-  private explosionImg: HTMLImageElement;
+export class DrawableAsteroid extends Drawable {
+  private asteroidImg: ImageComponent;
+  private explosionImg: ImageComponent;
   private explosionIndex = -1; // if not exploding. otherwise 0 to 13.
-  private explosionLoaded = false;
   private onFinishedExploding: (self: DrawableAsteroid) => void;
 
   constructor(asteroid: DrawableAsteroidProps) {
-    super({
+    super(asteroid);
+    this.asteroidImg = new ImageComponent({
       ...asteroid,
       src: asteroidImg,
+      srcWidth: ASTEROID_WIDTH,
+      srcHeight: ASTEROID_HEIGHT,
+      frame: 0,
+      frameLocations: [[0, 0], [ASTEROID_WIDTH, 0]]
     });
     this.onFinishedExploding = asteroid.onFinishedExploding;
-    this.explosionImg = new Image();
-    this.explosionImg.src = explosionImg;
-    this.explosionImg.onload = () => this.explosionLoaded = true;
+    this.explosionImg = new ImageComponent({
+      ...asteroid,
+      height: EXPLOSION_WIDTH,
+      width: EXPLOSION_WIDTH,
+      src: explosionImg,
+      srcWidth: SRC_EXPLOSION_WIDTH,
+      srcHeight: SRC_EXPLOSION_WIDTH,
+      frame: 0,
+      frameLocations: EXPLOSION_LOCATIONS,
+    });
 
     this.sections = getSectionsMap(this);
     this.explode = this.explode.bind(this);
@@ -51,7 +63,7 @@ export class DrawableAsteroid extends ImageComponent {
 
   private explode(laserBeamId: string) {
     if (this.explosionIndex < 0 && !this.isDead) {
-      this.eventEmitter.asteroidExploded(this.id, laserBeamId);
+      this.eventEmitter.asteroidExploded(this.toDTO(), laserBeamId);
       this.isDead = true;
       this.explosionIndex = 0;
     }
@@ -62,7 +74,7 @@ export class DrawableAsteroid extends ImageComponent {
   }
 
   hit(laserBeamId: string) {
-    if (this.width < MIN_ASTEROID_HEIGHT) {
+    if (this.radius < MIN_ASTEROID_HEIGHT) {
       this.explode(laserBeamId);
     } else {
       // split asteroid into 2 asteroids half the original size, 180 deg apart
@@ -71,6 +83,7 @@ export class DrawableAsteroid extends ImageComponent {
       const nextPos2 = this.getNextPosition(Math.floor(this.radius / 2), deg + 180);
       const asteroid1 = new Asteroid({
         ...this,
+        speed: 1,
         width: this.radius,
         height: this.radius,
         id: uuidV4(),
@@ -79,6 +92,7 @@ export class DrawableAsteroid extends ImageComponent {
       });
       const asteroid2 = new Asteroid({
         ...this,
+        speed: 1,
         width: this.radius,
         height: this.radius,
         id: uuidV4(),
@@ -90,12 +104,13 @@ export class DrawableAsteroid extends ImageComponent {
   }
 
   isLoaded() {
-    return this.loaded && this.explosionLoaded;
+    return this.asteroidImg.loaded && this.explosionImg.loaded;
   }
 
-  private drawExplosion(context: CanvasRenderingContext2D) {
-    const location = EXPLOSION_LOCATIONS[this.getThrottledExplosionIndex()];
-    context.drawImage(this.explosionImg, location[0], location[1], EXPLOSION_WIDTH, EXPLOSION_WIDTH, 0 - HALF_EXPLOSION_WIDTH, 0-HALF_EXPLOSION_WIDTH, EXPLOSION_WIDTH, EXPLOSION_WIDTH);
+  private drawExplosion(context: CanvasRenderingContext2D, shipX: number, shipY: number, halfCanvasWidth: number, halfCanvasHeight: number) {
+    this.explosionImg.frame = this.getThrottledExplosionIndex()
+    this.explosionImg.draw(context, shipX, shipY, halfCanvasWidth, halfCanvasHeight);
+
     this.explosionIndex++;
 
     if (this.getThrottledExplosionIndex() >= EXPLOSION_LOCATIONS.length) {
@@ -108,34 +123,28 @@ export class DrawableAsteroid extends ImageComponent {
   }
 
   draw(context: CanvasRenderingContext2D, shipX: number, shipY: number, halfCanvasWidth: number, halfCanvasHeight: number) {
-    if (!this.loaded) {
+    if (!this.isLoaded()) {
       console.error("This image has not loaded yet");
       return;
     }
 
-    context.save();
-    const {x, y} = getRelativePosition(halfCanvasWidth, halfCanvasHeight, shipX, shipY, this.x, this.y);
-    context.translate(x, y);
     if (this.isDead && this.getThrottledExplosionIndex() < EXPLOSION_LOCATIONS.length) {
-      this.drawExplosion(context);
+      this.drawExplosion(context, shipX, shipY, halfCanvasWidth, halfCanvasHeight);
     } else if (!this.isDead) {
-      let srcX = 0;
-      let srcY = 0;
-      if (this.frame === 2) {
-        srcX = 32;
-      }
-      context.drawImage(this.img, srcX, srcY, ASTEROID_WIDTH, ASTEROID_HEIGHT, 0 - this.radius, 0 - this.radius, this.width, this.height);
+      this.asteroidImg.draw(context, shipX, shipY, halfCanvasWidth, halfCanvasHeight);
     }
-    context.restore();
   }
 
-  public update<T extends GameObjectDTO>({x, y, speed, deg, height, width}: T): void {
+  public update<T extends GameObjectDTO>(dto: T): void {
+    const {x, y, speed, deg, height, width} = dto;
     this.speed = speed;
     this.deg = deg;
     this.height = height;
     this.width = width;
     this.x = x;
     this.y = y;
+    this.asteroidImg.update(dto);
+    this.explosionImg.update({...dto, height: EXPLOSION_WIDTH, width: EXPLOSION_WIDTH});
   }
 
   public toDTO(): AsteroidDTO {

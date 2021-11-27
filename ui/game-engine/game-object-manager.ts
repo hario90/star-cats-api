@@ -31,18 +31,12 @@ const GAME_OBJECT_TYPE_TO_EMIT_TYPE: Map<GameObjectType, GameEventTypes> = new M
     [GameObjectType.Ship, {
         move: GameEventType.ShipMoved,
     }],
-    [GameObjectType.Asteroid, {
-        move: GameEventType.AsteroidMoved,
-    }],
-    [GameObjectType.LaserBeam, {
-        move: GameEventType.LaserMoved,
-    }]
 ]);
 
 export class GameObjectManager {
-    public ship?: PlayerShip;
     public background: Background;
-    public ships: Map<string, DrawableShip> = new Map();
+    public ship?: PlayerShip;
+    public ships: Map<string, DrawableShip | PlayerShip> = new Map();
     public asteroids: Map<string, DrawableAsteroid> = new Map();
     public laserBeams: Map<string, DrawableLaserBeam> = new Map();
     public gems: Map<string, DrawableGem> = new Map();
@@ -161,45 +155,14 @@ export class GameObjectManager {
         this.sectionToGems = createSectionToObjectsMap<DrawableGem>();
 
         const playerShipDTO = ships.find((s) => s.id === this.socket.id);
-
-        if (!playerShipDTO) {
+        if (playerShipDTO) {
+            this.ship = this.createPlayerShip(playerShipDTO);
+        } else {
             throw new Error("Where is the main player's ship?")
         }
+
         const otherShipDTOs = ships.filter((s) => s.id !== this.socket.id);
-
-
-        for (const ship of ships) {
-            let drawableShip;
-          if (ship.id !== this.socket.id) {
-            drawableShip = new DrawableShip({
-              ...ship,
-              x: ship.x,
-              y: ship.y,
-              eventEmitter: this.eventEmitter,
-              onFinishedExploding: () => {
-                this.alerts.push(`${ship.name} died!`);
-              }
-            });
-            this.ships.set(ship.id, drawableShip);
-          } else {
-            this.ship = new PlayerShip(
-                {
-                    ...ship,
-                    eventEmitter: this.eventEmitter,
-                    onFinishedExploding: () => {
-                        this.alerts.push(`You died!`);
-                    }
-                },
-                (laserBeam: LaserBeamDTO) => {
-                    this.laserBeams.set(laserBeam.id, this.createLaserBeam(laserBeam));
-                    this.eventEmitter.fireLaserBeam(laserBeam);
-                },
-            );
-            drawableShip = this.ship;
-          }
-          this.syncSectionToObjects(drawableShip);
-        }
-
+        this.registerObjects([playerShipDTO], this.ships, this.createPlayerShip);
         this.registerObjects(otherShipDTOs, this.ships, this.createShip);
         this.registerObjects(asteroids, this.asteroids, this.createAsteroid);
         this.registerObjects(laserBeams, this.laserBeams, this.createLaserBeam);
@@ -230,7 +193,7 @@ export class GameObjectManager {
 
     public notReadyToRender = () => {
         const allObjects = this.getAllObjects();
-        return !this.background.isLoaded() ||
+        return !this.background.isLoaded() || !this.ship ||
             allObjects.map((c) => c.isLoaded()).some((loaded) => !loaded);
     }
 

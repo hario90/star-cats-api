@@ -1,3 +1,4 @@
+import gemImg from "../../assets/gem3.png";
 import { getRelativePosition, getSectionsMap } from "../util";
 import { GemDTO, GameObjectDTO } from "../../shared/types";
 import { Drawable } from "./drawable";
@@ -12,17 +13,25 @@ export interface DrawableGemProps extends GemDTO {
 }
 
 export class DrawableGem extends Drawable {
-  private readonly color: string;
   public readonly points: number;
+  private img: HTMLImageElement;
+  public loaded = false;
 
   constructor(gem: DrawableGemProps) {
     super(gem);
     this.points = gem.points || 1;
-    this.color = "yellow";
     this.sections = getSectionsMap(this);
     this.loaded = true;
-    this.width = 10;
-    this.height = 14;
+    this.width = 30;
+    this.radius = 15;
+    this.height = 30;
+    this.img = new Image();
+    this.img.src = gemImg;
+    this.img.onload = () => this.loaded = true;
+  }
+
+  isLoaded() {
+    return this.loaded;
   }
 
   whenHitBy(object: DrawableObject): void {
@@ -38,14 +47,7 @@ export class DrawableGem extends Drawable {
     context.save();
     const {x, y} = getRelativePosition(halfCanvasWidth, halfCanvasHeight, shipX, shipY, this.x, this.y);
     if (!this.isDead) {
-        context.beginPath();
-        context.moveTo(x, y + this.radius);
-        context.lineTo(x + this.radius, y);
-        context.lineTo(x, y - this.radius);
-        context.lineTo(x - this.radius, y);
-        context.closePath();
-        context.fillStyle = this.color;
-        context.fill();
+        context.drawImage(this.img, 0, 0, 553, 553, x - this.radius, y - this.radius, this.width, this.width);
     }
     context.restore();
   }
