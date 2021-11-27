@@ -5,15 +5,16 @@ import { isOverlappingWithSection } from "../shared/util";
 import { Asteroid } from "../shared/objects/asteroid";
 import { GameObjectType } from "../shared/types";
 
+const BUFFER = 50 + 0.5 * MAX_ASTEROID_HEIGHT;
 export class AsteroidGenerator {
     constructor() {}
 
     getRandomX() {
-        return Math.random() * BOARD_WIDTH;
+        return BUFFER + (Math.random() * (BOARD_WIDTH - BUFFER));
     }
 
     getRandomY() {
-        return Math.random() * BOARD_HEIGHT;
+        return BUFFER + (Math.random() * (BOARD_HEIGHT - BUFFER));
     }
 
     isInbounds(asteroid: Asteroid) {
