@@ -79,6 +79,7 @@ export function createWebSocket(server: HttpServer) {
           socket.broadcast.emit(GameEventType.ShipMoved, matchingShip.toDTO());
         }
       });
+      // todo delete?
       socket.on(GameEventType.LaserMoved, (obj: LaserBeamDTO) => {
         const matchingLaserBeam = laserBeams.get(obj.id);
         if (matchingLaserBeam) {
@@ -88,6 +89,7 @@ export function createWebSocket(server: HttpServer) {
           laserBeams.set(obj.id, new LaserBeam(obj));
         }
       })
+      // todo delete?
       socket.on(GameEventType.AsteroidMoved, (obj: AsteroidDTO) => {
         const matchingAsteroid = asteroids.get(obj.id);
         if (matchingAsteroid) {

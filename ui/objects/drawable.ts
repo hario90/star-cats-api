@@ -1,6 +1,7 @@
 import { BOARD_HEIGHT, BOARD_WIDTH } from "../../shared/constants";
 import { GameObject } from "../../shared/objects/game-object";
 import { GameObjectDTO } from "../../shared/types";
+import { ROW_THICKNESS, COL_THICKNESS } from "../../shared/util";
 import { RAD } from "../constants";
 import { SocketEventEmitter } from "../game-engine/socket-event-emitter";
 import { DrawableObject } from "../game-engine/types";
@@ -76,8 +77,6 @@ export abstract class Drawable extends GameObject {
         return Math.round(this.width / 2);
     }
 
-
-
   abstract draw(context: CanvasRenderingContext2D, shipX: number, shipY: number, halfCanvasWidth: number, halfCanvasHeight: number): void;
 
   // Pass in speed if we want a different hypotenuse
@@ -128,5 +127,30 @@ export abstract class Drawable extends GameObject {
     const minY = y - halfCanvasHeight;
     const maxY = y + halfCanvasHeight;
     return x >= minX && x <= maxX && y >= minY && y <= maxY;
+  }
+
+  getCurrentSections() {
+    const currSections = new Map<string, Section>();
+    const row = Math.floor(this.y / ROW_THICKNESS);
+    const col = Math.floor(this.x / COL_THICKNESS);
+
+    // what section is the top point in?
+    const topPointRow = Math.floor(this.minY / ROW_THICKNESS);
+    const topSection = new Section(topPointRow, col);
+    currSections.set(topSection.key, topSection);
+
+    const rightPointCol = Math.floor(this.maxX / COL_THICKNESS);
+    const rightSection = new Section(row, rightPointCol);
+    currSections.set(rightSection.key, rightSection);
+
+    const bottomPointRow = Math.floor(this.maxY / ROW_THICKNESS);
+    const bottomSection = new Section(bottomPointRow, col);
+    currSections.set(bottomSection.key, bottomSection);
+
+    const leftPointCol = Math.floor(this.minX / COL_THICKNESS);
+    const leftSection = new Section(row, leftPointCol);
+    currSections.set(leftSection.key, leftSection);
+
+    return currSections;
   }
 }

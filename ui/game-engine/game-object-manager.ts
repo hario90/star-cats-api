@@ -352,10 +352,8 @@ export class GameObjectManager {
     };
 
     public addGems = (gems: GemDTO[]) => {
-        for (const gem of gems) {
-          this.gems.set(gem.id, this.createGem(gem));
-        }
-      }
+        this.registerObjects(gems, this.gems, this.createGem);
+    }
 
     private createShip = (dto: ShipDTO) => {
         return new DrawableShip({

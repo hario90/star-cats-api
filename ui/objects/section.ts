@@ -12,8 +12,12 @@ export class Section implements ISection {
     public maxY: number;
 
     constructor(row: number, col: number) {
-        if (row < 0 || col < 0 || row >= NUM_ROWS || col >= NUM_COLUMNS) {
-            throw new Error("Row or column out of range");
+        if (row < 0 || row >= NUM_ROWS) {
+            throw new Error(`Row out of range: ${row}`);
+        }
+
+        if (col < 0 || col >= NUM_COLUMNS) {
+            throw new Error(`Column out of range: ${col}`);
         }
 
         this.row = row;

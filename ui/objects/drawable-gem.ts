@@ -59,6 +59,7 @@ export class DrawableGem extends Drawable {
     this.width = width;
     this.x = x;
     this.y = y;
+    this.sections = this.getCurrentSections();
   }
 
   public toDTO(): GemDTO {

@@ -69,10 +69,6 @@ export class DrawableAsteroid extends Drawable {
     }
   }
 
-  get points() {
-    return Math.round(this.width / 10);
-  }
-
   hit(laserBeamId: string) {
     if (this.radius < MIN_ASTEROID_HEIGHT) {
       this.explode(laserBeamId);
@@ -145,6 +141,7 @@ export class DrawableAsteroid extends Drawable {
     this.y = y;
     this.asteroidImg.update(dto);
     this.explosionImg.update({...dto, height: EXPLOSION_WIDTH, width: EXPLOSION_WIDTH});
+    this.sections = this.getCurrentSections();
   }
 
   public toDTO(): AsteroidDTO {

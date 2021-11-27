@@ -100,50 +100,6 @@ export class DrawableShip extends Drawable {
     this.getPosition = this.getPosition.bind(this);
     this.explode = this.explode.bind(this);
     this.isLoaded = this.isLoaded.bind(this);
-    this.checkForSectionsChange = this.checkForSectionsChange.bind(this);
-  }
-
-  getCurrentSections() {
-    const currSections = new Map<string, Section>();
-    const row = Math.floor(this.y / ROW_THICKNESS);
-    const col = Math.floor(this.x / COL_THICKNESS);
-
-    // what section is the top point in?
-    const topPointRow = Math.floor(this.minY / ROW_THICKNESS);
-    const topSection = new Section(topPointRow, col);
-    currSections.set(topSection.key, topSection);
-
-    const rightPointCol = Math.floor(this.maxX / COL_THICKNESS);
-    const rightSection = new Section(row, rightPointCol);
-    currSections.set(rightSection.key, rightSection);
-
-    const bottomPointRow = Math.floor(this.maxY / ROW_THICKNESS);
-    const bottomSection = new Section(bottomPointRow, col);
-    currSections.set(bottomSection.key, bottomSection);
-
-    const leftPointCol = Math.floor(this.minX / COL_THICKNESS);
-    const leftSection = new Section(row, leftPointCol);
-    currSections.set(leftSection.key, leftSection);
-
-    return currSections;
-  }
-
-  checkForSectionsChange(sectionToShips: Map<string, Set<DrawableShip>>) {
-    const currSections = this.getCurrentSections();
-    for (const [key] of this.sections) {
-      if (!currSections.has(key)) {
-        const shipsInSection = sectionToShips.get(key);
-        if (shipsInSection) {
-          shipsInSection.delete(this);
-        }
-      }
-    }
-
-    this.sections = currSections;
-
-    if (this.sections.size > 4) {
-      throw new Error("Too many sections")
-    }
   }
 
   // First arg is the ship representing this object
