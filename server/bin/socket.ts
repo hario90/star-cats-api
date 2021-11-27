@@ -121,9 +121,21 @@ export function createWebSocket(server: HttpServer) {
 
         if (asteroid) {
           const id = uuidV4();
+          const random = Math.random();
+          let points = 1;
+          if (random > 0.99) {
+            points = 5;
+          } else if (random > 0.95) {
+            points = 4;
+          } else if (random > 0.9) {
+            points = 3;
+          } else if (random > 0.85) {
+            points = 2;
+          }
           const gem = new Gem({
             ...asteroid,
             id,
+            points
           });
           gems.set(id, gem);
           gemsToAdd.push(gem);

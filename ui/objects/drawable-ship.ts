@@ -180,8 +180,10 @@ export class DrawableShip extends Drawable {
     this.explosionImg.frame = this.getThrottledExplosionIndex()
     this.explosionImg.draw(context, shipX, shipY, halfCanvasWidth, halfCanvasHeight)
     this.explosionIndex++;
+    console.log("explosionIndex", this.explosionIndex);
 
     if (this.getThrottledExplosionIndex() >= EXPLOSION_LOCATIONS.length) {
+      console.log("hit")
       this.onFinishedExploding(this.name);
       this.startComingBackToLifeAnimation();
     }

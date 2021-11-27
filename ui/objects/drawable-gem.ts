@@ -1,9 +1,14 @@
-import gemImg from "../../assets/gem3.png";
+import gemImg1 from "../../assets/gem1.png";
+import gemImg2 from "../../assets/gem2.png";
+import gemImg3 from "../../assets/gem3.png";
+import gemImg4 from "../../assets/gem4.png";
+import gemImg5 from "../../assets/gem5.png";
 import { getRelativePosition, getSectionsMap } from "../util";
 import { GemDTO, GameObjectDTO } from "../../shared/types";
 import { Drawable } from "./drawable";
 import { SocketEventEmitter } from "../game-engine/socket-event-emitter";
 import { DrawableObject } from "../game-engine/types";
+import { ImageComponent } from "../component";
 
 export const ASTEROID_HEIGHT = 32;
 export const ASTEROID_WIDTH = 32;
@@ -13,9 +18,8 @@ export interface DrawableGemProps extends GemDTO {
 }
 
 export class DrawableGem extends Drawable {
+  private gemImg: ImageComponent;
   public readonly points: number;
-  private img: HTMLImageElement;
-  public loaded = false;
 
   constructor(gem: DrawableGemProps) {
     super(gem);
@@ -25,13 +29,35 @@ export class DrawableGem extends Drawable {
     this.width = 30;
     this.radius = 15;
     this.height = 30;
-    this.img = new Image();
-    this.img.src = gemImg;
-    this.img.onload = () => this.loaded = true;
+    let src = gemImg1;
+    switch(this.points) {
+      case 2:
+        src = gemImg2;
+        break;
+      case 3:
+        src = gemImg3;
+        break;
+      case 4:
+        src = gemImg4;
+        break;
+      case 5:
+        src = gemImg5;
+        break;
+    }
+    this.gemImg = new ImageComponent({
+      ...gem,
+      height: this.height,
+      width: this.width,
+      src,
+      srcHeight: 553,
+      srcWidth: 553,
+      frame: 0,
+      frameLocations: [[0, 0]]
+    });
   }
 
   isLoaded() {
-    return this.loaded;
+    return this.gemImg.loaded;
   }
 
   whenHitBy(object: DrawableObject): void {
@@ -44,12 +70,9 @@ export class DrawableGem extends Drawable {
       return;
     }
 
-    context.save();
-    const {x, y} = getRelativePosition(halfCanvasWidth, halfCanvasHeight, shipX, shipY, this.x, this.y);
     if (!this.isDead) {
-        context.drawImage(this.img, 0, 0, 553, 553, x - this.radius, y - this.radius, this.width, this.width);
+      this.gemImg.draw(context, shipX, shipY, halfCanvasWidth, halfCanvasHeight)
     }
-    context.restore();
   }
 
   public update<T extends GameObjectDTO>({x, y, speed, deg, height, width}: T): void {

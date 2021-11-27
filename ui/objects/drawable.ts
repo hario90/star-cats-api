@@ -1,7 +1,7 @@
 import { BOARD_HEIGHT, BOARD_WIDTH } from "../../shared/constants";
 import { GameObject } from "../../shared/objects/game-object";
 import { GameObjectDTO } from "../../shared/types";
-import { ROW_THICKNESS, COL_THICKNESS } from "../../shared/util";
+import { ROW_THICKNESS, COL_THICKNESS, NUM_ROWS, NUM_COLUMNS } from "../../shared/util";
 import { RAD } from "../constants";
 import { SocketEventEmitter } from "../game-engine/socket-event-emitter";
 import { DrawableObject } from "../game-engine/types";
@@ -136,20 +136,28 @@ export abstract class Drawable extends GameObject {
 
     // what section is the top point in?
     const topPointRow = Math.floor(this.minY / ROW_THICKNESS);
-    const topSection = new Section(topPointRow, col);
-    currSections.set(topSection.key, topSection);
+    if (topPointRow < NUM_ROWS && topPointRow >= 0) {
+      const topSection = new Section(topPointRow, col);
+      currSections.set(topSection.key, topSection);
+    }
 
     const rightPointCol = Math.floor(this.maxX / COL_THICKNESS);
-    const rightSection = new Section(row, rightPointCol);
-    currSections.set(rightSection.key, rightSection);
+    if (rightPointCol < NUM_COLUMNS && rightPointCol >= 0) {
+      const rightSection = new Section(row, rightPointCol);
+      currSections.set(rightSection.key, rightSection);
+    }
 
     const bottomPointRow = Math.floor(this.maxY / ROW_THICKNESS);
-    const bottomSection = new Section(bottomPointRow, col);
-    currSections.set(bottomSection.key, bottomSection);
+    if (bottomPointRow < NUM_ROWS && bottomPointRow >= 0) {
+      const bottomSection = new Section(bottomPointRow, col);
+      currSections.set(bottomSection.key, bottomSection);
+    }
 
     const leftPointCol = Math.floor(this.minX / COL_THICKNESS);
-    const leftSection = new Section(row, leftPointCol);
-    currSections.set(leftSection.key, leftSection);
+    if (leftPointCol < NUM_COLUMNS && leftPointCol >= 0) {
+      const leftSection = new Section(row, leftPointCol);
+      currSections.set(leftSection.key, leftSection);
+    }
 
     return currSections;
   }

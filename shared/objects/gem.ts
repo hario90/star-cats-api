@@ -2,9 +2,10 @@ import { AsteroidDTO, GameObjectType, GemDTO } from "../types";
 import { GameObject } from "./game-object";
 
 export class Gem extends GameObject {
-    public readonly points = 1;
-    constructor(props: AsteroidDTO) {
+    public readonly points: number;
+    constructor(props: GemDTO) {
         super({...props, type: GameObjectType.Gem});
+        this.points = props.points ?? 1;
     }
 
     public toDTO(): GemDTO {
