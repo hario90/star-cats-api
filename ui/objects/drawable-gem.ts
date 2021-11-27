@@ -1,11 +1,8 @@
 import { getRelativePosition, getSectionsMap } from "../util";
 import { GemDTO, GameObjectDTO } from "../../shared/types";
-import { DrawableShip } from "./drawable-ship";
-import { DrawableLaserBeam } from "./drawable-laser-beam";
 import { Drawable } from "./drawable";
-import { DrawableAsteroid } from "./drawable-asteroid";
 import { SocketEventEmitter } from "../game-engine/socket-event-emitter";
-import { DrawableObject, isDrawableAsteroid, isDrawableLaserBeam, isDrawableShip, isDrawableGem } from "../game-engine/types";
+import { DrawableObject } from "../game-engine/types";
 
 export const ASTEROID_HEIGHT = 32;
 export const ASTEROID_WIDTH = 32;
@@ -20,7 +17,7 @@ export class DrawableGem extends Drawable {
 
   constructor(gem: DrawableGemProps) {
     super(gem);
-    this.points = gem.points;
+    this.points = gem.points || 1;
     this.color = "yellow";
     this.sections = getSectionsMap(this);
     this.loaded = true;

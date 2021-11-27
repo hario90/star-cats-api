@@ -34,8 +34,8 @@ export interface GameObjectDTO extends PositionInfoDTO {
 }
 
 export interface ShipDTO extends GameObjectDTO {
-    name: string;
-    points: number;
+    name?: string;
+    points?: number;
 }
 
 export interface LaserBeamDTO extends GameObjectDTO {
@@ -47,7 +47,7 @@ export interface AsteroidDTO extends GameObjectDTO {
 }
 
 export interface GemDTO extends GameObjectDTO {
-    points: number;
+    points?: number;
 }
 
 export const isShipDTO = (obj: GameObjectDTO): obj is ShipDTO => obj.type === GameObjectType.Ship;

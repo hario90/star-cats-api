@@ -146,10 +146,26 @@ export class GameObjectManager {
         }
     }
 
+    public registerObjects = (dto: DTO[], objectMap: Map<string, DrawableObject>, createDrawable: (dto: DTO) => DrawableObject, prevSections?: Map<string, Section>) => {
+        for (const asteroid of dto) {
+            const asteroid2 = createDrawable(asteroid);
+            objectMap.set(asteroid2.id, asteroid2);
+            this.syncSectionToObjects(asteroid2);
+        }
+    }
+
     public receiveInitialObjects = (ships: Ship[], asteroids: Asteroid[], laserBeams: LaserBeamDTO[], gems: GemDTO[]): void => {
         this.sectionToAsteroids = createSectionToObjectsMap<DrawableAsteroid>();
         this.sectionToLaserBeams = createSectionToObjectsMap<DrawableLaserBeam>();
         this.sectionToGems = createSectionToObjectsMap<DrawableGem>();
+
+        const playerShipDTO = ships.find((s) => s.id === this.socket.id);
+
+        if (!playerShipDTO) {
+            throw new Error("Where is the main player's ship?")
+        }
+        const otherShipDTOs = ships.filter((s) => s.id !== this.socket.id);
+
 
         for (const ship of ships) {
             let drawableShip;
@@ -164,7 +180,6 @@ export class GameObjectManager {
               }
             });
             this.ships.set(ship.id, drawableShip);
-            this.syncSectionToObjects(drawableShip);
           } else {
             this.ship = new PlayerShip(
                 {
@@ -183,31 +198,11 @@ export class GameObjectManager {
           }
           this.syncSectionToObjects(drawableShip);
         }
-        for (const asteroid of asteroids) {
-          const asteroid2 = this.createAsteroid(asteroid);
-          this.asteroids.set(asteroid2.id, asteroid2);
-          for (const [key] of asteroid2.sections) {
-            const currObjects = this.sectionToAsteroids.get(key) || new Set();
-            currObjects.add(asteroid2);
-            this.sectionToAsteroids.set(key, currObjects);
-          }
-        }
-        for (const laserBeamDTO of laserBeams) {
-          const laserBeam = this.createLaserBeam(laserBeamDTO);
-          this.laserBeams.set(laserBeam.id, laserBeam)
-          const currObjects = this.sectionToLaserBeams.get(laserBeam.section.key) || new Set();
-          currObjects.add(laserBeam);
-          this.sectionToLaserBeams.set(laserBeam.section.key, currObjects);
-        }
-        for (const gemDTO of gems) {
-          const gem = this.createGem(gemDTO);
-          this.gems.set(gem.id, gem);
-          for (const [key] of gem.sections) {
-            const currObjects = this.sectionToGems.get(key) || new Set();
-            currObjects.add(gem);
-            this.sectionToGems.set(key, currObjects);
-          }
-        }
+
+        this.registerObjects(otherShipDTOs, this.ships, this.createShip);
+        this.registerObjects(asteroids, this.asteroids, this.createAsteroid);
+        this.registerObjects(laserBeams, this.laserBeams, this.createLaserBeam);
+        this.registerObjects(gems, this.gems, this.createGem);
     }
 
     public removeObject = (object: DrawableObject): void => {
@@ -397,6 +392,22 @@ export class GameObjectManager {
                 this.alerts.push(`${name} died!`);
             }
         });
+    }
+
+    private createPlayerShip = (ship: ShipDTO) => {
+        return new PlayerShip(
+            {
+                ...ship,
+                eventEmitter: this.eventEmitter,
+                onFinishedExploding: () => {
+                    this.alerts.push(`You died!`);
+                }
+            },
+            (laserBeam: LaserBeamDTO) => {
+                this.laserBeams.set(laserBeam.id, this.createLaserBeam(laserBeam));
+                this.eventEmitter.fireLaserBeam(laserBeam);
+            },
+        );
     }
 
     private createAsteroid = (dto: AsteroidDTO) => {

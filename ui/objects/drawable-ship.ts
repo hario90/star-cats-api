@@ -33,13 +33,7 @@ const speedToFrame = new Map([
 const DEGREE_OF_SHIP_NOSE_FROM_POS_X_AXIS = 90;
 export const MAX_SPEED = 5;
 
-export interface DrawableShipProps {
-  id: string;
-  name: string;
-  deg?: number;
-  speed?: number;
-  x: number;
-  y: number;
+export interface DrawableShipProps extends ShipDTO {
   onFinishedExploding: (name: string) => void;
   eventEmitter: SocketEventEmitter;
 }
@@ -68,7 +62,7 @@ export class DrawableShip extends Drawable {
   public speed: number = 1;
   public radius = 0;
 
-  constructor({id, x, y, deg, speed, name, onFinishedExploding, eventEmitter}: DrawableShipProps) {
+  constructor({id, x, y, deg, speed, name, points, onFinishedExploding, eventEmitter}: DrawableShipProps) {
     super({
       x,
       y,
@@ -80,8 +74,8 @@ export class DrawableShip extends Drawable {
       width: 2 * halfShipWidth,
       eventEmitter,
     });
-    this.name = name;
-
+    this.name = name || "Unnamed Vigilante";
+    this.points = points || 0;
     this.shipImg = new Image();
     this.shipImg.src = shipImg;
     this.shipImg.onload = () => this.loaded = true;

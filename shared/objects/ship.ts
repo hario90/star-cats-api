@@ -3,13 +3,13 @@ import { GameObjectType, ShipDTO } from "../types";
 import { GameObject } from "./game-object";
 
 export class Ship extends GameObject {
-    public name: string;
-    public points: number = 0;
+    public name?: string;
+    public points?: number;
 
     constructor({id, x, y, deg = 0, speed = 1, height = 2 * halfShipHeight, width = 2 * halfShipWidth, name, points}: ShipDTO ) {
         super({id, x, y, deg, speed, height, width, type: GameObjectType.Ship});
-        this.name = name;
-        this.points = points;
+        this.name = name || "Unnamed Vigilante";
+        this.points = points ?? 0;
     }
 
     public toDTO(): ShipDTO {
