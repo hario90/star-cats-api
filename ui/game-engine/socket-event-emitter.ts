@@ -1,5 +1,5 @@
 import { Socket } from "socket.io-client";
-import { GameEventType, LaserBeamDTO } from "../../shared/types";
+import { AsteroidDTO, GameEventType, LaserBeamDTO } from "../../shared/types";
 import { DrawableObject } from "./types";
 
 export class SocketEventEmitter {
@@ -28,8 +28,8 @@ export class SocketEventEmitter {
         this.socket.emit(GameEventType.ShipExploded, shipId, laserBeamId);
     }
 
-    asteroidHit(asteroidId: string, asteroidWidth: number, laserBeamId?: string) {
-        this.socket.emit(GameEventType.AsteroidHit, asteroidId, laserBeamId, asteroidWidth);
+    asteroidHit(asteroidId: string, asteroid1: AsteroidDTO, asteroid2: AsteroidDTO, laserBeamId?: string) {
+        this.socket.emit(GameEventType.AsteroidHit, asteroidId, asteroid1, asteroid2, laserBeamId);
     }
 
     asteroidExploded(asteroidId: string, laserBeamId?: string) {

@@ -114,27 +114,18 @@ export function createWebSocket(server: HttpServer) {
           laserBeams.delete(laserBeamId);
         }
       });
-      const wiggleRoom = 25;
       socket.on(GameEventType.AsteroidExploded, (id: string, laserBeamId: string) => {
         const matchingAsteroid = asteroids.get(id);
         const gemsToAdd: Gem[] = [];
 
         if (matchingAsteroid) {
-          const points = matchingAsteroid.points;
-          for (let i = 0; i < points; i++) {
-            const minus = Math.random() >= 0.5 ? 1 : -1;
-            const x = matchingAsteroid.x + (minus * Math.random() * wiggleRoom);
-            const y = matchingAsteroid.y + (minus * Math.random() * wiggleRoom);
-            const id = uuidV4();
-            const gem = new Gem({
-              ...matchingAsteroid,
-              id,
-              x,
-              y
-            });
-            gems.set(id, gem);
-            gemsToAdd.push(gem);
-          }
+          const id = uuidV4();
+          const gem = new Gem({
+            ...matchingAsteroid,
+            id,
+          });
+          gems.set(id, gem);
+          gemsToAdd.push(gem);
           asteroids.delete(id);
         }
 
@@ -152,13 +143,18 @@ export function createWebSocket(server: HttpServer) {
           socket.emit(GameEventType.ShipPickedUpGem, shipId, gemId);
         }
       });
-      socket.on(GameEventType.AsteroidHit, (asteroidId: string, laserBeamId: string, asteroidWidth: number) => {
+      socket.on(GameEventType.AsteroidHit, (asteroidId: string, asteroid1: AsteroidDTO, asteroid2: AsteroidDTO, laserBeamId?: string) => {
         const matchingAsteroid = asteroids.get(asteroidId);
         if (matchingAsteroid) {
-          matchingAsteroid.width = asteroidWidth;
+          if (laserBeamId) {
+            laserBeams.delete(laserBeamId);
+          }
+
+          asteroids.delete(asteroidId);
+          asteroids.set(asteroid1.id, new Asteroid(asteroid1));
+          asteroids.set(asteroid2.id, new Asteroid(asteroid2));
+          socket.emit(GameEventType.AsteroidHit, asteroidId, asteroid1, asteroid2, laserBeamId);
         }
-        laserBeams.delete(laserBeamId);
-        socket.broadcast.emit(GameEventType.AsteroidHit, asteroidId, laserBeamId, asteroidWidth);
       })
       socket.on("disconnect", (reason: string) => {
         console.log(`user ${name}, id ${userId} has disconnected. Reason: ${reason}`);

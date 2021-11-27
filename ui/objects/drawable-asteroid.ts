@@ -1,3 +1,4 @@
+import { v4 as uuidV4 } from "uuid";
 import { ImageComponent } from "../component";
 import asteroidImg from "../../assets/asteroid.png";
 import explosionImg from "../../assets/explosion.png";
@@ -6,7 +7,8 @@ import { AsteroidDTO, GameObjectDTO } from "../../shared/types";
 import { EXPLOSION_LOCATIONS, EXPLOSION_WIDTH, HALF_EXPLOSION_WIDTH } from "../constants";
 import { MIN_ASTEROID_HEIGHT } from "../../shared/constants";
 import { SocketEventEmitter } from "../game-engine/socket-event-emitter";
-import { DrawableObject, isDrawableAsteroid, isDrawableLaserBeam, isDrawableShip, isDrawableGem } from "../game-engine/types";
+import { DrawableObject, isDrawableAsteroid, isDrawableLaserBeam } from "../game-engine/types";
+import { Asteroid } from "../../shared/objects/asteroid";
 
 export const ASTEROID_HEIGHT = 32;
 export const ASTEROID_WIDTH = 32;
@@ -60,13 +62,30 @@ export class DrawableAsteroid extends ImageComponent {
   }
 
   hit(laserBeamId: string) {
-    this.width = Math.floor(this.width * WIDTH_REDUCE_FACTOR);
-    this.height = this.width;
-    this.radius = Math.floor(this.width / 2);
     if (this.width < MIN_ASTEROID_HEIGHT) {
       this.explode(laserBeamId);
     } else {
-      this.eventEmitter.asteroidHit(this.id, this.width, laserBeamId);
+      // split asteroid into 2 asteroids half the original size, 180 deg apart
+      const deg = this.getHeading();
+      const nextPos1 = this.getNextPosition(Math.floor(this.radius / 2));
+      const nextPos2 = this.getNextPosition(Math.floor(this.radius / 2), deg + 180);
+      const asteroid1 = new Asteroid({
+        ...this,
+        width: this.radius,
+        height: this.radius,
+        id: uuidV4(),
+        x: nextPos1[0],
+        y: nextPos1[1]
+      });
+      const asteroid2 = new Asteroid({
+        ...this,
+        width: this.radius,
+        height: this.radius,
+        id: uuidV4(),
+        x: nextPos2[0],
+        y: nextPos2[1]
+      });
+      this.eventEmitter.asteroidHit(this.id, asteroid1.toDTO(), asteroid2.toDTO(), laserBeamId);
     }
   }
 

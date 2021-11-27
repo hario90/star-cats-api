@@ -17,6 +17,10 @@ export class AsteroidGenerator {
         return BUFFER + (Math.random() * (BOARD_HEIGHT - BUFFER));
     }
 
+    getRandomDeg() {
+        return Math.random() * 360;
+    }
+
     isInbounds(asteroid: Asteroid) {
         return asteroid.minX >= 0 && asteroid.maxX <= BOARD_WIDTH && asteroid.minY >= 0 && asteroid.maxY <= BOARD_HEIGHT;
     }
@@ -43,10 +47,11 @@ export class AsteroidGenerator {
         const height = Math.random() * MAX_ASTEROID_HEIGHT + MIN_ASTEROID_HEIGHT;
         const width = height;
         const id = uuid();
+        const deg = this.getRandomDeg();
 
         let tries = 10;
         let asteroid = new Asteroid(
-            {id, x, y, height, width, speed, deg: 0, type: GameObjectType.Asteroid}
+            {id, x, y, height, width, speed, deg, type: GameObjectType.Asteroid}
         );
         while (tries > 0 && !this.isValid(asteroid, otherAsteroids)) {
             x = this.getRandomX();

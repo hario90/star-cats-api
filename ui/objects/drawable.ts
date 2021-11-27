@@ -81,10 +81,10 @@ export abstract class Drawable extends GameObject {
   abstract draw(context: CanvasRenderingContext2D, shipX: number, shipY: number, halfCanvasWidth: number, halfCanvasHeight: number): void;
 
   // Pass in speed if we want a different hypotenuse
-  getNextPosition(speed?: number): [number, number] {
+  getNextPosition(speed?: number, heading?: number): [number, number] {
     const [x, y] = this.getPosition();
     speed = speed ?? this.getSpeed();
-    let heading = this.getHeading();
+    heading = heading ?? this.getHeading();
     if (heading < 0) {
       heading = 360 + heading;
     }

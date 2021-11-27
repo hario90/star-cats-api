@@ -151,7 +151,7 @@ export class GameObjectManager {
         for (const asteroid of dto) {
             const asteroid2 = createDrawable(asteroid);
             objectMap.set(asteroid2.id, asteroid2);
-            this.syncSectionToObjects(asteroid2);
+            this.syncSectionToObjects(asteroid2, prevSections);
         }
     }
 
@@ -372,17 +372,21 @@ export class GameObjectManager {
         }
     };
 
-    public handleAsteroidHit = (asteroidId: string, laserBeamId: string, asteroidWidth: number) => {
-        const matchingAsteroid = this.asteroids.get(asteroidId);
-        if (matchingAsteroid) {
-          matchingAsteroid.width = asteroidWidth;
+    public handleAsteroidHit = (asteroidId: string, asteroid1: AsteroidDTO, asteroid2: AsteroidDTO, laserBeamId?: string) => {
+        const asteroidToDelete = this.asteroids.get(asteroidId);
+        if (asteroidToDelete) {
+            this.removeObject(asteroidToDelete);
         }
 
-        const laserBeam = this.laserBeams.get(laserBeamId);
-        if (laserBeam) {
-            this.removeObject(laserBeam);
+        if (laserBeamId) {
+            const laserBeam = this.laserBeams.get(laserBeamId);
+            if (laserBeam) {
+                this.removeObject(laserBeam);
+            }
         }
-      };
+
+        this.registerObjects([asteroid1, asteroid2], this.asteroids, this.createAsteroid);
+    };
 
     public addGems = (gems: GemDTO[]) => {
         for (const gem of gems) {
