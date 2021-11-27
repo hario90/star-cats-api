@@ -1,5 +1,6 @@
 import { GameObjectDTO } from "../shared/types";
 import { Coordinate } from "../shared/util";
+import { RAD } from "./constants";
 import { DrawableObject } from "./game-engine/types";
 import { Drawable, DrawableProps } from "./objects/drawable";
 import { getRelativePosition } from "./util";
@@ -67,6 +68,7 @@ export class ImageComponent extends Drawable {
     const {x, y} = getRelativePosition(halfCanvasWidth, halfCanvasHeight, shipX, shipY, this.x, this.y);
     context.translate(x, y);
     if (!this.isDead) {
+      context.rotate(this.deg * RAD);
       const frame = this.frameLocations[this.frame];
       const srcX = frame[0];
       const srcY = frame[1];
