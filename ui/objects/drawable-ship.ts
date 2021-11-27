@@ -306,7 +306,7 @@ export class DrawableShip extends Drawable {
       }
 
       if (!this.isDead || (this.isComingBackToLife && this.showShip)) {
-        this.shipImg.frame = this.speed;
+        this.shipImg.frame = this.speed - 1;
         this.shipImg.draw(context, shipX, shipY, halfCanvasWidth, halfCanvasHeight);
       }
 

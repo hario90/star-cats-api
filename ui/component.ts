@@ -67,9 +67,9 @@ export class ImageComponent extends Drawable {
     context.save();
     const {x, y} = getRelativePosition(halfCanvasWidth, halfCanvasHeight, shipX, shipY, this.x, this.y);
     context.translate(x, y);
-    if (!this.isDead) {
+    const frame = this.frameLocations[this.frame];
+    if (!this.isDead && frame) {
       context.rotate(this.deg * RAD);
-      const frame = this.frameLocations[this.frame];
       const srcX = frame[0];
       const srcY = frame[1];
       context.drawImage(this.img, srcX, srcY, this.srcWidth, this.srcHeight, 0 - this.radius, 0 - this.radius, this.width, this.height);
