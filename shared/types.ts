@@ -36,6 +36,7 @@ export interface GameObjectDTO extends PositionInfoDTO {
 export interface ShipDTO extends GameObjectDTO {
     name?: string;
     points?: number;
+    healthPoints?: number;
 }
 
 export interface LaserBeamDTO extends GameObjectDTO {

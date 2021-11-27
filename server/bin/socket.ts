@@ -101,6 +101,13 @@ export function createWebSocket(server: HttpServer) {
         laserBeams.set(laserBeam.id, new LaserBeam(laserBeam));
         socket.broadcast.emit(GameEventType.LaserMoved, laserBeam);
       });
+      socket.on(GameEventType.ShipDamage, (shipId: string, healthPoints: number) => {
+        const ship = ships.get(shipId);
+        if (ship) {
+          ship.healthPoints = healthPoints;
+          socket.broadcast.emit(GameEventType.ShipDamage, shipId, healthPoints);
+        }
+      });
       socket.on(GameEventType.ShipExploded, (id: string, laserBeamId: string) => {
         ships.delete(id);
         if (laserBeamId) {

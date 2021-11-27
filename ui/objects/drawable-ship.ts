@@ -189,6 +189,7 @@ export class DrawableShip extends Drawable {
   reduceHealthPoints(): void {
     if (this.healthPoints > 0) {
       this.healthPoints--;
+      this.eventEmitter.shipDamaged(this.id, this.healthPoints);
     }
   }
 

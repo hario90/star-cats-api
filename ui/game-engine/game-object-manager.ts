@@ -79,6 +79,7 @@ export class GameObjectManager {
         socket.on(GameEventType.ShipPickedUpGem, this.handleShipPickedUpGem);
         socket.on(GameEventType.AsteroidHit, this.handleAsteroidHit);
         socket.on(GameEventType.AddGems, this.addGems);
+        socket.on(GameEventType.ShipDamage, this.shipDamaged);
 
         this.addAlert = this.addAlert.bind(this);
         this.removeObject = this.removeObject.bind(this);
@@ -320,6 +321,13 @@ export class GameObjectManager {
             mapLaserBeam.update(object);
         } else {
             this.laserBeams.set(object.id, this.createLaserBeam(object));
+        }
+    }
+
+    public shipDamaged = (shipId: string, healthPoints: number) => {
+        const ship = this.ships.get(shipId);
+        if (ship) {
+            ship.healthPoints = healthPoints;
         }
     }
 

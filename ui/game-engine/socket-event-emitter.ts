@@ -20,6 +20,10 @@ export class SocketEventEmitter {
         this.socket.emit(emitType, object.toDTO());
     }
 
+    shipDamaged(shipId: string, healthPoints: number) {
+        this.socket.emit(GameEventType.ShipDamage, shipId, healthPoints);
+    }
+
     shipExploded(shipId: string, laserBeamId?: string) {
         this.socket.emit(GameEventType.ShipExploded, shipId, laserBeamId);
     }
