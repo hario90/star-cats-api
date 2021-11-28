@@ -116,44 +116,29 @@ export function createWebSocket(server: HttpServer) {
           laserBeams.delete(laserBeamId);
         }
       });
-      socket.on(GameEventType.AsteroidExploded, (asteroid: AsteroidDTO, laserBeamId: string) => {
-        const gemsToAdd: Gem[] = [];
-
-        if (asteroid) {
-          const id = uuidV4();
-          const random = Math.random();
-          let points = 1;
-          if (random > 0.99) {
-            points = 5;
-          } else if (random > 0.95) {
-            points = 4;
-          } else if (random > 0.9) {
-            points = 3;
-          } else if (random > 0.85) {
-            points = 2;
-          }
-          const gem = new Gem({
-            ...asteroid,
-            id,
-            points
-          });
-          gems.set(id, gem);
-          gemsToAdd.push(gem);
-          asteroids.delete(id);
+      socket.on(GameEventType.AsteroidExploded, (asteroid: AsteroidDTO, laserBeamId?: string) => {
+        if (!asteroids.has(asteroid.id)) {
+          return;
         }
+
+        const gem = new Gem({...asteroid, points: asteroid.gemPoints});
+        asteroids.delete(asteroid.id);
+        gems.set(gem.id, gem)
 
         if (laserBeamId) {
           laserBeams.delete(laserBeamId);
         }
-        socket.emit(GameEventType.AddGems, gemsToAdd);
+        socket.emit(GameEventType.AddGem, gem.toDTO());
       });
       socket.on(GameEventType.ShipPickedUpGem, (shipId: string, gemId: string) => {
+        console.log("ship picked up gem")
         const matchingShip = ships.get(shipId);
         const matchingGem = gems.get(gemId);
         if (matchingShip && matchingGem) {
+          console.log("found matches")
           matchingShip.points = matchingGem.points;
           gems.delete(gemId);
-          socket.emit(GameEventType.ShipPickedUpGem, shipId, gemId);
+          socket.broadcast.emit(GameEventType.ShipPickedUpGem, shipId, gemId);
         }
       });
       socket.on(GameEventType.AsteroidHit, (asteroidId: string, asteroid1: AsteroidDTO, asteroid2: AsteroidDTO, laserBeamId?: string) => {
