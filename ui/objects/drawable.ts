@@ -26,7 +26,7 @@ export abstract class Drawable extends GameObject {
 
     abstract update<T extends GameObject>(ship: T): void;
 
-    abstract whenHitBy(object: DrawableObject): void;
+    abstract whenHitBy(object: DrawableObject, removeObject: (o: DrawableObject) => void): void;
 
     abstract toDTO(): GameObjectDTO;
 

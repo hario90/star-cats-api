@@ -25,9 +25,15 @@ export class DrawableAsteroid extends Drawable {
   private explosionImg: ImageComponent;
   private explosionIndex = -1; // if not exploding. otherwise 0 to 13.
   private onFinishedExploding: (self: DrawableAsteroid) => void;
+  private gemPoints: number;
+  private asteroidId1: string;
+  private asteroidId2: string;
 
   constructor(asteroid: DrawableAsteroidProps) {
     super(asteroid);
+    this.gemPoints = asteroid.gemPoints || 1;
+    this.asteroidId1 = asteroid.asteroidId1 || uuidV4();
+    this.asteroidId2 = asteroid.asteroidId2 || uuidV4();
     this.asteroidImg = new ImageComponent({
       ...asteroid,
       src: asteroidImg,
@@ -53,7 +59,7 @@ export class DrawableAsteroid extends Drawable {
     this.drawExplosion = this.drawExplosion.bind(this);
   }
 
-  whenHitBy(object: DrawableObject): void {
+  whenHitBy(object: DrawableObject, removeObject: (d: DrawableObject) => void): void {
     if (isDrawableAsteroid(object)) {
       // todo
     } else if (isDrawableLaserBeam(object)) {
@@ -74,28 +80,31 @@ export class DrawableAsteroid extends Drawable {
       this.explode(laserBeamId);
     } else {
       // split asteroid into 2 asteroids half the original size, 180 deg apart
-      const deg = this.getHeading();
-      const nextPos1 = this.getNextPosition(Math.floor(this.radius / 2));
-      const nextPos2 = this.getNextPosition(Math.floor(this.radius / 2), deg + 180);
-      const asteroid1 = new Asteroid({
-        ...this,
-        speed: 1,
-        width: this.radius,
-        height: this.radius,
-        id: uuidV4(),
-        x: nextPos1[0],
-        y: nextPos1[1]
-      });
-      const asteroid2 = new Asteroid({
-        ...this,
-        speed: 1,
-        width: this.radius,
-        height: this.radius,
-        id: uuidV4(),
-        x: nextPos2[0],
-        y: nextPos2[1]
-      });
-      this.eventEmitter.asteroidHit(this.id, asteroid1.toDTO(), asteroid2.toDTO(), laserBeamId);
+      // const deg = this.getHeading();
+      // const nextPos1 = this.getNextPosition(Math.floor(this.radius / 2));
+      // const nextPos2 = this.getNextPosition(Math.floor(this.radius / 2), deg + 180);
+      // const asteroid1 = new Asteroid({
+      //   ...this,
+      //   speed: 1,
+      //   width: this.radius,
+      //   height: this.radius,
+      //   id: uuidV4(),
+      //   x: nextPos1[0],
+      //   y: nextPos1[1],
+      //   asteroidId1: this.asteroidId1,
+      //   asteroidId2: this.asteroidId2,
+      //   gemPoints: this.gemPoints,
+      // });
+      // const asteroid2 = new Asteroid({
+      //   ...this,
+      //   speed: 1,
+      //   width: this.radius,
+      //   height: this.radius,
+      //   id: uuidV4(),
+      //   x: nextPos2[0],
+      //   y: nextPos2[1]
+      // });
+      this.eventEmitter.asteroidHit(this.toDTO(), laserBeamId);
     }
   }
 

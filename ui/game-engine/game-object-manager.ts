@@ -72,7 +72,7 @@ export class GameObjectManager {
         socket.on(GameEventType.ShipExploded, this.handleShipExploded);
         socket.on(GameEventType.ShipPickedUpGem, this.handleShipPickedUpGem);
         socket.on(GameEventType.AsteroidHit, this.handleAsteroidHit);
-        socket.on(GameEventType.AddGems, this.addGems);
+        socket.on(GameEventType.AddGem, this.addGem);
         socket.on(GameEventType.ShipDamage, this.shipDamaged);
 
         this.addAlert = this.addAlert.bind(this);
@@ -226,9 +226,9 @@ export class GameObjectManager {
 
                     // no asteroids logged but there should be.
                     for (const obj of [...asteroids, ...gems, ...laserBeams]) {
-                        if (isOverlapping(gameObject, obj)) {
-                            gameObject.whenHitBy(obj);
-                            obj.whenHitBy(gameObject);
+                        if (!gameObject.isDead && !obj.isDead && isOverlapping(gameObject, obj)) {
+                            gameObject.whenHitBy(obj, this.removeObject);
+                            obj.whenHitBy(gameObject, this.removeObject);
                         }
                     }
                 }
@@ -248,8 +248,8 @@ export class GameObjectManager {
                 const asteroidsInMySection = this.sectionToAsteroids.get(gameObject.section.key) || new Set();
                 for (const asteroid of asteroidsInMySection) {
                     if (distanceBetweenObjects(asteroid, gameObject) <= 0) {
-                        asteroid.whenHitBy(gameObject);
-                        gameObject.whenHitBy(asteroid);
+                        asteroid.whenHitBy(gameObject, this.removeObject);
+                        gameObject.whenHitBy(asteroid, this.removeObject);
                         break;
                     }
                 }
@@ -313,7 +313,7 @@ export class GameObjectManager {
         } else {
             const ship = this.ships.get(shipId);
             if (ship) {
-            ship.explode();
+                ship.explode();
             }
         }
     }
@@ -325,13 +325,7 @@ export class GameObjectManager {
             matchingShip.points = shipPoints;
         }
         if (matchingGem) {
-            this.gems.delete(gemId);
-            for (const [key] of matchingGem.sections) {
-            const matchingGemsInSection = this.sectionToGems.get(key);
-            if (matchingGemsInSection) {
-                matchingGemsInSection.delete(matchingGem);
-            }
-            }
+            this.removeObject(matchingGem);
         }
     };
 
@@ -351,8 +345,8 @@ export class GameObjectManager {
         this.registerObjects([asteroid1, asteroid2], this.asteroids, this.createAsteroid);
     };
 
-    public addGems = (gems: GemDTO[]) => {
-        this.registerObjects(gems, this.gems, this.createGem);
+    public addGem = (gem: GemDTO) => {
+        this.registerObjects([gem], this.gems, this.createGem);
     }
 
     private createShip = (dto: ShipDTO) => {

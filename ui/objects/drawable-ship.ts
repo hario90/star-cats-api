@@ -3,11 +3,10 @@ import explosionImg from "../../assets/explosion.png";
 import shipImg from "../../assets/ship.png";
 import { getRelativePosition, getSectionsMap } from "../util";
 import { Drawable } from "./drawable";
-import { halfShipHeight, halfShipWidth } from "../../shared/constants";
-import { GameObjectDTO, GameObjectType, ShipDTO } from "../../shared/types";
-import { COL_THICKNESS, Coordinate, ROW_THICKNESS } from "../../shared/util";
-import { EXPLOSION_LOCATIONS, SRC_EXPLOSION_WIDTH, HALF_EXPLOSION_WIDTH, RAD } from "../constants";
-import { Section } from "./section";
+import { DEGREE_OF_SHIP_NOSE_FROM_POS_X_AXIS, halfShipHeight, halfShipWidth } from "../../shared/constants";
+import { GameObjectDTO, ShipDTO } from "../../shared/types";
+import { Coordinate } from "../../shared/util";
+import { EXPLOSION_LOCATIONS, SRC_EXPLOSION_WIDTH } from "../constants";
 import { SocketEventEmitter } from "../game-engine/socket-event-emitter";
 import { DrawableObject, isDrawableAsteroid, isDrawableGem, isDrawableLaserBeam, isDrawableShip } from "../game-engine/types";
 import { ImageComponent } from "../component";
@@ -42,6 +41,7 @@ export const MAX_SPEED = 5;
 export interface DrawableShipProps extends ShipDTO {
   onFinishedExploding: (name: string) => void;
   eventEmitter: SocketEventEmitter;
+  isMainShip?: boolean;
 }
 
 const MAX_NUM_LIVES = 5;
@@ -55,8 +55,8 @@ export class DrawableShip extends Drawable {
   private shipImg: ImageComponent;
   private explosionImg: ImageComponent;
   private explosionIndex = -1; // if not exploding. otherwise 0 to 13.
-  private explosionLoaded = false;
   private onFinishedExploding: (name: string) => void;
+  private isMainShip = false;
 
   public name: string;
   public numLives: number = MAX_NUM_LIVES;
@@ -72,6 +72,7 @@ export class DrawableShip extends Drawable {
 
   constructor(props: DrawableShipProps) {
     super(props);
+    this.isMainShip = props.isMainShip ?? false;
     this.speed = props.speed ?? 1;
     this.name = props.name ?? "Unnamed Vigilante";
     this.points = props.points ?? 0;
@@ -145,7 +146,7 @@ export class DrawableShip extends Drawable {
     return this.deg - DEGREE_OF_SHIP_NOSE_FROM_POS_X_AXIS;
   }
 
-  whenHitBy(object: DrawableObject): void {
+  whenHitBy(object: DrawableObject, removeObject: (d: DrawableObject) => void): void {
     if (isDrawableAsteroid(object)) {
       this.explode();
     } else if (isDrawableLaserBeam(object)) {
@@ -153,37 +154,44 @@ export class DrawableShip extends Drawable {
     } else if (isDrawableShip(object)) {
       this.explode();
     } else if (isDrawableGem(object)) {
-      this.points++;
-      this.eventEmitter.shipPickedUpGem(this.id, object.id);
+      removeObject(object);
+      this.points += object.points;
+      if (this.isMainShip) {
+        this.eventEmitter.shipPickedUpGem(this.id, object.id);
+      }
     }
   }
 
   reduceHealthPoints(): void {
     if (this.healthPoints > 0) {
       this.healthPoints--;
-      this.eventEmitter.shipDamaged(this.id, this.healthPoints);
+      if (this.isMainShip) {
+        this.eventEmitter.shipDamaged(this.id, this.healthPoints);
+      }
     }
   }
 
   explode(laserBeamId?: string) {
-    this.eventEmitter.shipExploded(this.id, laserBeamId)
+    if (this.isMainShip) {
+      this.eventEmitter.shipExploded(this.id, laserBeamId)
+    }
+
     this.isDead = true;
     this.explosionIndex = 0;
     this.numLives--;
   }
 
   get isExploding() {
-    return this.explosionIndex > -1 && this.explosionIndex < EXPLOSION_LOCATIONS.length
+    const explosionIndex = this.getThrottledExplosionIndex();
+    return explosionIndex > -1 && explosionIndex < EXPLOSION_LOCATIONS.length
   }
 
   private drawExplosion(context: CanvasRenderingContext2D, shipX: number, shipY: number, halfCanvasWidth: number, halfCanvasHeight: number) {
     this.explosionImg.frame = this.getThrottledExplosionIndex()
     this.explosionImg.draw(context, shipX, shipY, halfCanvasWidth, halfCanvasHeight)
     this.explosionIndex++;
-    console.log("explosionIndex", this.explosionIndex);
 
     if (this.getThrottledExplosionIndex() >= EXPLOSION_LOCATIONS.length) {
-      console.log("hit")
       this.onFinishedExploding(this.name);
       this.startComingBackToLifeAnimation();
     }

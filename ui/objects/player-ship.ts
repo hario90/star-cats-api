@@ -1,6 +1,5 @@
 import { v4 as uuid } from "uuid";
 import { GameObjectType, LaserBeamDTO } from "../../shared/types";
-import { SocketEventEmitter } from "../game-engine/socket-event-emitter";
 import { DrawableShip, DrawableShipProps } from "./drawable-ship";
 
 export const halfShipWidth = 16;
@@ -18,7 +17,10 @@ export const MAX_SPEED = 5;
 export class PlayerShip extends DrawableShip {
   private onShoot: (laserBeam: LaserBeamDTO) => void;
   constructor(props: DrawableShipProps, onShoot: (laserBeam: LaserBeamDTO) => void) {
-    super(props);
+    super({
+      ...props,
+      isMainShip: true
+    });
     this.getPosition = this.getPosition.bind(this);
     this.handleKeydown = this.handleKeydown.bind(this);
     this.shoot = this.shoot.bind(this);

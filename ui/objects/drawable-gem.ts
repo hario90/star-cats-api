@@ -60,7 +60,7 @@ export class DrawableGem extends Drawable {
     return this.gemImg.loaded;
   }
 
-  whenHitBy(object: DrawableObject): void {
+  whenHitBy(object: DrawableObject, removeObject: (d: DrawableObject) => void): void {
     // the ship that hits it is in charge of emitting an event
   }
 

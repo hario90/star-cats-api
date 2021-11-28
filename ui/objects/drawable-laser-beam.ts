@@ -52,9 +52,10 @@ export class DrawableLaserBeam extends Drawable {
         }
     }
 
-    whenHitBy(object: DrawableObject): void {
+    whenHitBy(object: DrawableObject, removeObject: (d: DrawableObject) => void): void {
         if (isDrawableAsteroid(object) || isDrawableShip(object)) {
             this.isDead = true;
+            removeObject(this);
         }
     }
 
