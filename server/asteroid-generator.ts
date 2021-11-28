@@ -21,6 +21,21 @@ export class AsteroidGenerator {
         return Math.random() * 360;
     }
 
+    getPoints() {
+        const random = Math.random();
+        let points = 1;
+        if (random > 0.99) {
+            points = 5;
+        } else if (random > 0.95) {
+            points = 4;
+        } else if (random > 0.9) {
+            points = 3;
+        } else if (random > 0.85) {
+            points = 2;
+        }
+        return points;
+    }
+
     isInbounds(asteroid: Asteroid) {
         return asteroid.minX >= 0 && asteroid.maxX <= BOARD_WIDTH && asteroid.minY >= 0 && asteroid.maxY <= BOARD_HEIGHT;
     }
@@ -48,6 +63,9 @@ export class AsteroidGenerator {
         const width = height;
         const id = uuid();
         const deg = this.getRandomDeg();
+        const gemPoints = this.getPoints();
+        const asteroidId1 = uuid();
+        const asteroidId2 = uuid();
 
         let tries = 10;
         let asteroid = new Asteroid(
@@ -56,7 +74,7 @@ export class AsteroidGenerator {
         while (tries > 0 && !this.isValid(asteroid, otherAsteroids)) {
             x = this.getRandomX();
             y = this.getRandomY();
-            asteroid = new Asteroid({id, x, y, height, width, speed, deg: 0, type: GameObjectType.Asteroid});
+            asteroid = new Asteroid({gemPoints, asteroidId1, asteroidId2, id, x, y, height, width, speed, deg: 0, type: GameObjectType.Asteroid});
             tries--;
         }
         return this.isValid(asteroid, otherAsteroids) ? asteroid : undefined;
