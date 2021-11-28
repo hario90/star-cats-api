@@ -6,6 +6,10 @@ export class LaserBeam extends GameObject {
         super({...props, type: GameObjectType.LaserBeam});
     }
 
+    getHeading(): number {
+        return this.deg;
+    }
+
     public toDTO(): LaserBeamDTO {
         return {
           id: this.id,

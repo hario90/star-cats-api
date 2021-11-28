@@ -4,8 +4,12 @@ import { GameObject } from "./game-object";
 export class Gem extends GameObject {
     public readonly points: number;
     constructor(props: GemDTO) {
-        super({...props, type: GameObjectType.Gem});
+        super({...props, width: 30, height: 30, type: GameObjectType.Gem});
         this.points = props.points ?? 1;
+    }
+
+    getHeading(): number {
+        return this.deg;
     }
 
     public toDTO(): GemDTO {
@@ -18,7 +22,7 @@ export class Gem extends GameObject {
           speed: this.speed,
           height: this.height,
           width: this.width,
-          type: this.type
+          type: this.type,
         };
     }
 }

@@ -14,6 +14,10 @@ export class Ship extends GameObject {
         this.healthPoints = healthPoints ?? 0;
     }
 
+    getHeading(): number {
+      return this.deg - 90;
+    }
+
     public toDTO(): ShipDTO {
         return {
           x: this.x,
