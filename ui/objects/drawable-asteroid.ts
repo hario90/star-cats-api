@@ -104,7 +104,7 @@ export class DrawableAsteroid extends Drawable {
       //   x: nextPos2[0],
       //   y: nextPos2[1]
       // });
-      this.eventEmitter.asteroidHit(this.toDTO(), laserBeamId);
+      // this.eventEmitter.asteroidHit(this.toDTO(), laserBeamId);
     }
   }
 

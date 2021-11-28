@@ -3,7 +3,7 @@ import explosionImg from "../../assets/explosion.png";
 import shipImg from "../../assets/ship.png";
 import { getRelativePosition, getSectionsMap } from "../util";
 import { Drawable } from "./drawable";
-import { DEGREE_OF_SHIP_NOSE_FROM_POS_X_AXIS, halfShipHeight, halfShipWidth } from "../../shared/constants";
+import { halfShipHeight, halfShipWidth } from "../../shared/constants";
 import { GameObjectDTO, ShipDTO } from "../../shared/types";
 import { Coordinate } from "../../shared/util";
 import { EXPLOSION_LOCATIONS, SRC_EXPLOSION_WIDTH } from "../constants";
