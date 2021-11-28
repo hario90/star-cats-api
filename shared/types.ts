@@ -44,7 +44,14 @@ export interface LaserBeamDTO extends GameObjectDTO {
 }
 
 export interface AsteroidDTO extends GameObjectDTO {
-    color?: string;
+    // An asteroid turns into 2 smaller asteroids when hit
+    // and explodes when it reaches a certain size threshold.
+    // After it explodes, a gem replaces the asteroid.
+    // We need to pre-calculate this for consistency purposes
+    // gemId will be equal to the asteroidId
+    gemPoints?: number;
+    asteroidId1?: string;
+    asteroidId2?: string;
 }
 
 export interface GemDTO extends GameObjectDTO {
@@ -72,7 +79,7 @@ export enum GameEventType {
     AsteroidExploded = "ASTEROID_EXPLODED",
     ShipExploded = "SHIP_EXPLODED",
     EmitLaserBeam = "EMIT_LASER_BEAM",
-    AddGems = "ADD_GEM",
+    AddGem = "ADD_GEM",
     ShipPickedUpGem = "SHIP_PICKED_UP_GEM",
     AsteroidHit = "ASTEROID_HIT"
 }
