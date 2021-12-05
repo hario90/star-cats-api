@@ -64,8 +64,6 @@ export class AsteroidGenerator {
         const id = uuid();
         const deg = this.getRandomDeg();
         const gemPoints = this.getPoints();
-        const asteroidId1 = uuid();
-        const asteroidId2 = uuid();
 
         let tries = 10;
         let asteroid = new Asteroid(
@@ -74,7 +72,7 @@ export class AsteroidGenerator {
         while (tries > 0 && !this.isValid(asteroid, otherAsteroids)) {
             x = this.getRandomX();
             y = this.getRandomY();
-            asteroid = new Asteroid({gemPoints, asteroidId1, asteroidId2, id, x, y, height, width, speed, deg: 0, type: GameObjectType.Asteroid});
+            asteroid = new Asteroid({gemPoints, id, x, y, height, width, speed, deg: 0, type: GameObjectType.Asteroid});
             tries--;
         }
         return this.isValid(asteroid, otherAsteroids) ? asteroid : undefined;

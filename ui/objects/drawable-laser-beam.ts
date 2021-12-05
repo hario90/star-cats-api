@@ -11,10 +11,13 @@ export interface DrawableLaserBeamProps extends LaserBeamDTO {
 }
 export class DrawableLaserBeam extends Drawable {
     public prevSection: Section | undefined;
-    constructor({color, ...rest}: DrawableLaserBeamProps) {
+    public readonly fromShipId: string;
+
+    constructor({color, fromShipId, ...rest}: DrawableLaserBeamProps) {
         super({...rest, type:GameObjectType.LaserBeam});
         this.radius = 0;
         this.sections.set(this.section.key, this.section);
+        this.fromShipId = fromShipId || "unknown";
     }
 
     get section(): Section {
@@ -49,13 +52,6 @@ export class DrawableLaserBeam extends Drawable {
             context.moveTo(x, y);
             context.lineTo(relativeEndX, relativeEndY);
             context.stroke();
-        }
-    }
-
-    whenHitBy(object: DrawableObject, removeObject: (d: DrawableObject) => void): void {
-        if (isDrawableAsteroid(object) || isDrawableShip(object)) {
-            this.isDead = true;
-            removeObject(this);
         }
     }
 

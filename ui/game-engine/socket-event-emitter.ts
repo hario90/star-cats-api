@@ -1,5 +1,5 @@
 import { Socket } from "socket.io-client";
-import { AsteroidDTO, GameEventType, LaserBeamDTO } from "../../shared/types";
+import { AsteroidDTO, GameEventType, GemDTO, LaserBeamDTO, ShipDamageArgs } from "../../shared/types";
 import { DrawableObject } from "./types";
 
 export class SocketEventEmitter {
@@ -20,23 +20,23 @@ export class SocketEventEmitter {
         this.socket.emit(emitType, object.toDTO());
     }
 
-    shipDamaged(shipId: string, healthPoints: number) {
-        this.socket.emit(GameEventType.ShipDamage, shipId, healthPoints);
+    shipDamaged(onShipDamage: (shipId: string, healthPoints: number, lives: number) => void, shipDamageArgs: ShipDamageArgs) {
+        this.socket.emit(GameEventType.ShipDamage, shipDamageArgs, onShipDamage);
     }
 
     shipExploded(shipId: string, laserBeamId?: string) {
         this.socket.emit(GameEventType.ShipExploded, shipId, laserBeamId);
     }
 
-    asteroidHit(asteroidId: string, asteroid1: AsteroidDTO, asteroid2: AsteroidDTO, laserBeamId?: string) {
-        this.socket.emit(GameEventType.AsteroidHit, asteroidId, asteroid1, asteroid2, laserBeamId);
+    asteroidHitByLaserBeam(asteroid: AsteroidDTO, laserBeamId: string, asteroidHit: (asteroidDTO1: AsteroidDTO, asteroidDTO2: AsteroidDTO) => void) {
+        this.socket.emit(GameEventType.AsteroidHit, asteroid, laserBeamId, asteroidHit);
     }
 
-    asteroidExploded(asteroidDTO: AsteroidDTO, laserBeamId?: string) {
-        this.socket.emit(GameEventType.AsteroidExploded, asteroidDTO, laserBeamId);
+    asteroidExploded(asteroidDTO: AsteroidDTO, laserBeamId: string, addGem: (gem: GemDTO) => void) {
+        this.socket.emit(GameEventType.AsteroidExploded, asteroidDTO, laserBeamId, addGem);
     }
 
-    shipPickedUpGem(shipId: string, gemId: string) {
-        this.socket.emit(GameEventType.ShipPickedUpGem, shipId, gemId);
+    shipPickedUpGem(shipId: string, gemId: string, cb: (shipId: string, gemId: string, shipPoints: number) => void) {
+        this.socket.emit(GameEventType.ShipPickedUpGem, shipId, gemId, cb);
     }
 }

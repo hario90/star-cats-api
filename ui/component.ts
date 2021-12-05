@@ -1,6 +1,6 @@
+import { RAD } from "../shared/constants";
 import { GameObjectDTO } from "../shared/types";
 import { Coordinate } from "../shared/util";
-import { RAD } from "./constants";
 import { DrawableObject } from "./game-engine/types";
 import { Drawable, DrawableProps } from "./objects/drawable";
 import { getRelativePosition } from "./util";

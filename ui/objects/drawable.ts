@@ -1,14 +1,11 @@
-import { BOARD_HEIGHT, BOARD_WIDTH } from "../../shared/constants";
 import { GameObject } from "../../shared/objects/game-object";
 import { GameObjectDTO } from "../../shared/types";
 import { ROW_THICKNESS, COL_THICKNESS, NUM_ROWS, NUM_COLUMNS } from "../../shared/util";
-import { RAD } from "../constants";
 import { SocketEventEmitter } from "../game-engine/socket-event-emitter";
 import { DrawableObject } from "../game-engine/types";
 import { Section } from "./section";
 
 export interface DrawableProps extends GameObjectDTO {
-  eventEmitter: SocketEventEmitter;
 }
 
 export abstract class Drawable extends GameObject {
@@ -17,16 +14,12 @@ export abstract class Drawable extends GameObject {
     public userId: string | undefined = undefined;
     public isDead: boolean | undefined = false;
     public sections: Map<string, Section> = new Map();
-    public eventEmitter: SocketEventEmitter;
 
     constructor(props: DrawableProps) {
         super(props);
-        this.eventEmitter = props.eventEmitter;
     }
 
     abstract update<T extends GameObject>(ship: T): void;
-
-    abstract whenHitBy(object: DrawableObject, removeObject: (o: DrawableObject) => void): void;
 
     abstract toDTO(): GameObjectDTO;
 
@@ -78,47 +71,6 @@ export abstract class Drawable extends GameObject {
     }
 
   abstract draw(context: CanvasRenderingContext2D, shipX: number, shipY: number, halfCanvasWidth: number, halfCanvasHeight: number): void;
-
-  // Pass in speed if we want a different hypotenuse
-  getNextPosition(speed?: number, heading?: number): [number, number] {
-    const [x, y] = this.getPosition();
-    speed = speed ?? this.getSpeed();
-    heading = heading ?? this.getHeading();
-    if (heading < 0) {
-      heading = 360 + heading;
-    }
-    let deg = heading;
-    const minX = this.getRadius();
-    const maxX = BOARD_WIDTH - this.getWidth();
-    const minY = this.getWidth();
-    const maxY = BOARD_HEIGHT - this.getWidth();
-    if (heading < 90) {
-      const adjacent = Math.cos(deg * RAD) * speed;
-      const opposite = Math.sin(deg * RAD) * speed;
-      return [Math.min(x + adjacent, maxX), Math.min(y + opposite, maxY)];
-    } else if (heading === 90) {
-      return [x, Math.min(y + speed, maxY)];
-    } else if (heading < 180) {
-      deg = 180 - heading;
-      const adjacent = Math.cos(deg * RAD) * speed;
-      const opposite = Math.sin(deg * RAD) * speed;
-      return [Math.max(x - adjacent, minX), Math.min(y + opposite, maxY)];
-    } else if (heading === 180) {
-      return [Math.max(x - speed, minX), y];
-    } else if (heading < 270) {
-      deg = heading - 180;
-      const adjacent = Math.cos(deg * RAD) * speed;
-      const opposite = Math.sin(deg * RAD) * speed;
-      return [Math.max(x - adjacent, minX), Math.max(y - opposite, minY)];
-    } else if (heading === 270) {
-      return [x, Math.max(y - speed, minY)];
-    } else {
-      deg = 360 - heading;
-      const adjacent = Math.cos(deg * RAD) * speed;
-      const opposite = Math.sin(deg * RAD) * speed;
-      return [Math.min(x + adjacent, maxX), Math.max(y - opposite, minY)]
-    }
-  }
 
   isInFrame(halfCanvasWidth: number, halfCanvasHeight: number): boolean {
     const [x, y] = this.getPosition();

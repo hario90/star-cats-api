@@ -22,5 +22,3 @@ export const EXPLOSION_LOCATIONS: Coordinate[] = [
   [0, 3*SRC_EXPLOSION_WIDTH],
   [SRC_EXPLOSION_WIDTH, 3*SRC_EXPLOSION_WIDTH]
 ];
-
-export const RAD = Math.PI / 180;

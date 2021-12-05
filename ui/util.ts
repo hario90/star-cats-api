@@ -71,8 +71,8 @@ export function getSectionsMap<T extends GameObject>(positionInfo: T): Map<strin
 
 const getSectionKey = (row: number, col: number) => `${row},${col}`;
 
-export function createSectionToObjectsMap<T extends Drawable> (): Map<string, Set<T>> {
-  const objectMap = new Map<string, Set<T>>();
+export function createSectionToObjectsMap (): Map<string, Set<string>> {
+  const objectMap = new Map<string, Set<string>>();
   for (let i = 0; i < NUM_ROWS; i++) {
     for (let j = 0; j < NUM_COLUMNS; j++) {
       const key = getSectionKey(i, j);

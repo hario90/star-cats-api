@@ -6,3 +6,5 @@ export const halfShipHeight = 15;
 export const MAX_ASTEROID_SPEED = 15;
 export const MAX_ASTEROID_HEIGHT = 100;
 export const MIN_ASTEROID_HEIGHT = halfShipHeight * 2;
+
+export const RAD = Math.PI / 180;

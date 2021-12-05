@@ -39,6 +39,7 @@ export class PlayerShip extends DrawableShip {
       height: 30,
       width: 10,
       id: uuid(),
+      fromShipId: this.id,
     }
     this.onShoot(laserBeam);
   }

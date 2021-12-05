@@ -37,10 +37,12 @@ export interface ShipDTO extends GameObjectDTO {
     name?: string;
     points?: number;
     healthPoints?: number;
+    lives?: number;
 }
 
 export interface LaserBeamDTO extends GameObjectDTO {
     color?: string;
+    fromShipId?: string;
 }
 
 export interface AsteroidDTO extends GameObjectDTO {
@@ -91,4 +93,10 @@ export interface ISection {
     maxX: number;
     minY: number;
     maxY: number;
+}
+
+export interface ShipDamageArgs {
+    laserBeamId?: string;
+    shipId?: string;
+    asteroidId?: string
 }

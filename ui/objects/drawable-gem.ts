@@ -4,10 +4,9 @@ import gemImg3 from "../../assets/gem3.png";
 import gemImg4 from "../../assets/gem4.png";
 import gemImg5 from "../../assets/gem5.png";
 import { getRelativePosition, getSectionsMap } from "../util";
-import { GemDTO, GameObjectDTO } from "../../shared/types";
+import { GemDTO, GameObjectDTO, GameObjectType } from "../../shared/types";
 import { Drawable } from "./drawable";
 import { SocketEventEmitter } from "../game-engine/socket-event-emitter";
-import { DrawableObject } from "../game-engine/types";
 import { ImageComponent } from "../component";
 
 export const ASTEROID_HEIGHT = 32;
@@ -22,7 +21,7 @@ export class DrawableGem extends Drawable {
   public readonly points: number;
 
   constructor(gem: DrawableGemProps) {
-    super(gem);
+    super({...gem, type: GameObjectType.Gem});
     this.points = gem.points || 1;
     this.sections = getSectionsMap(this);
     this.loaded = true;
@@ -58,10 +57,6 @@ export class DrawableGem extends Drawable {
 
   isLoaded() {
     return this.gemImg.loaded;
-  }
-
-  whenHitBy(object: DrawableObject, removeObject: (d: DrawableObject) => void): void {
-    // the ship that hits it is in charge of emitting an event
   }
 
   draw(context: CanvasRenderingContext2D, shipX: number, shipY: number, halfCanvasWidth: number, halfCanvasHeight: number) {

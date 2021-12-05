@@ -2,8 +2,11 @@ import { GameObjectType, LaserBeamDTO } from "../types";
 import { GameObject } from "./game-object";
 
 export class LaserBeam extends GameObject {
+    public fromShipId: string;
+
     constructor(props: LaserBeamDTO) {
         super({...props, type: GameObjectType.LaserBeam});
+        this.fromShipId = props.fromShipId ?? "";
     }
 
     getHeading(): number {

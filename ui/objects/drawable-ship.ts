@@ -7,7 +7,6 @@ import { halfShipHeight, halfShipWidth } from "../../shared/constants";
 import { GameObjectDTO, ShipDTO } from "../../shared/types";
 import { Coordinate } from "../../shared/util";
 import { EXPLOSION_LOCATIONS, SRC_EXPLOSION_WIDTH } from "../constants";
-import { SocketEventEmitter } from "../game-engine/socket-event-emitter";
 import { DrawableObject, isDrawableAsteroid, isDrawableGem, isDrawableLaserBeam, isDrawableShip } from "../game-engine/types";
 import { ImageComponent } from "../component";
 
@@ -40,7 +39,6 @@ export const MAX_SPEED = 5;
 
 export interface DrawableShipProps extends ShipDTO {
   onFinishedExploding: (name: string) => void;
-  eventEmitter: SocketEventEmitter;
   isMainShip?: boolean;
 }
 
@@ -56,10 +54,10 @@ export class DrawableShip extends Drawable {
   private explosionImg: ImageComponent;
   private explosionIndex = -1; // if not exploding. otherwise 0 to 13.
   private onFinishedExploding: (name: string) => void;
-  private isMainShip = false;
+  public isMainShip = false;
 
   public name: string;
-  public numLives: number = MAX_NUM_LIVES;
+  public lives: number = MAX_NUM_LIVES;
   public points = 0;
   public healthPoints = MAX_HEALTH_POINTS;
   private blinkCount = MAX_BLINKS;
@@ -76,6 +74,8 @@ export class DrawableShip extends Drawable {
     this.speed = props.speed ?? 1;
     this.name = props.name ?? "Unnamed Vigilante";
     this.points = props.points ?? 0;
+    this.lives = props.lives || MAX_NUM_LIVES;
+    this.healthPoints = props.healthPoints || MAX_HEALTH_POINTS;
     this.shipImg = new ImageComponent({
       ...props,
       src: shipImg,
@@ -105,7 +105,7 @@ export class DrawableShip extends Drawable {
 
   // First arg is the ship representing this object
   // Second arg are all the objects
-  public update<T extends GameObjectDTO>(ship: T): void {
+  public update = <T extends GameObjectDTO>(ship: T): void => {
     this.x = ship.x ?? this.x;
     this.y = ship.y ?? this.y;
     this.deg = ship.deg || 0;
@@ -119,7 +119,7 @@ export class DrawableShip extends Drawable {
     })
   }
 
-  public toDTO(): ShipDTO {
+  public toDTO = (): ShipDTO => {
     return {
       x: this.x,
       y: this.y,
@@ -131,54 +131,26 @@ export class DrawableShip extends Drawable {
       deg: this.deg,
       speed: this.speed,
       type: this.type,
+      lives: this.lives,
+      healthPoints: this.healthPoints
     }
   }
 
-  getWidth(): number {
+  getWidth = (): number => {
     return 2 * halfShipWidth;
   }
 
-  getHeight(): number {
+  getHeight = (): number => {
     return 2 * halfShipHeight
   }
 
-  getHeading() {
+  getHeading = () => {
     return this.deg - DEGREE_OF_SHIP_NOSE_FROM_POS_X_AXIS;
   }
 
-  whenHitBy(object: DrawableObject, removeObject: (d: DrawableObject) => void): void {
-    if (isDrawableAsteroid(object)) {
-      this.explode();
-    } else if (isDrawableLaserBeam(object)) {
-      this.reduceHealthPoints();
-    } else if (isDrawableShip(object)) {
-      this.explode();
-    } else if (isDrawableGem(object)) {
-      removeObject(object);
-      this.points += object.points;
-      if (this.isMainShip) {
-        this.eventEmitter.shipPickedUpGem(this.id, object.id);
-      }
-    }
-  }
-
-  reduceHealthPoints(): void {
-    if (this.healthPoints > 0) {
-      this.healthPoints--;
-      if (this.isMainShip) {
-        this.eventEmitter.shipDamaged(this.id, this.healthPoints);
-      }
-    }
-  }
-
-  explode(laserBeamId?: string) {
-    if (this.isMainShip) {
-      this.eventEmitter.shipExploded(this.id, laserBeamId)
-    }
-
+  explode = () => {
     this.isDead = true;
     this.explosionIndex = 0;
-    this.numLives--;
   }
 
   get isExploding() {
@@ -186,8 +158,8 @@ export class DrawableShip extends Drawable {
     return explosionIndex > -1 && explosionIndex < EXPLOSION_LOCATIONS.length
   }
 
-  private drawExplosion(context: CanvasRenderingContext2D, shipX: number, shipY: number, halfCanvasWidth: number, halfCanvasHeight: number) {
-    this.explosionImg.frame = this.getThrottledExplosionIndex()
+  private drawExplosion =(context: CanvasRenderingContext2D, shipX: number, shipY: number, halfCanvasWidth: number, halfCanvasHeight: number) => {
+    this.explosionImg.frame = this.getThrottledExplosionIndex();
     this.explosionImg.draw(context, shipX, shipY, halfCanvasWidth, halfCanvasHeight)
     this.explosionIndex++;
 
@@ -197,11 +169,11 @@ export class DrawableShip extends Drawable {
     }
   }
 
-  private getThrottledExplosionIndex() {
+  private getThrottledExplosionIndex = () => {
     return Math.floor(this.explosionIndex / 2);
   }
 
-  private comeToLife() {
+  private comeToLife = () => {
     this.isComingBackToLife = false;
     this.isDead = false;
     this.showShip = true;
@@ -209,8 +181,8 @@ export class DrawableShip extends Drawable {
     this.blinkCount = MAX_BLINKS;
   }
 
-  private startComingBackToLifeAnimation() {
-    if (this.numLives > 0) {
+  private startComingBackToLifeAnimation = () => {
+    if (this.lives > 0) {
       this.isComingBackToLife = true;
       this.showShip = false;
       this.blinkIntervalCount = HIDE_SHIP_INTERVAL
@@ -222,7 +194,7 @@ export class DrawableShip extends Drawable {
     this.radius = 0;
   }
 
-  private handleComingBackToLifeAnimation() {
+  private handleComingBackToLifeAnimation = () => {
     this.blinkIntervalCount--;
 
     if (this.blinkIntervalCount <= 0) {
@@ -235,12 +207,12 @@ export class DrawableShip extends Drawable {
     }
   }
 
-  isLoaded() {
+  isLoaded = () => {
     return this.shipImg.loaded && this.explosionImg.loaded;
   }
 
-  draw(context: CanvasRenderingContext2D, shipX: number, shipY: number,
-    halfCanvasWidth: number, halfCanvasHeight: number): void {
+  draw = (context: CanvasRenderingContext2D, shipX: number, shipY: number,
+    halfCanvasWidth: number, halfCanvasHeight: number): void => {
     if (!this.isLoaded()) {
       console.error("Image has not loaded yet");
       return;
