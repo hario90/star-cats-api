@@ -31,7 +31,7 @@ export abstract class GameObject implements IGameObject {
         this.speed = speed;
         this.height = height;
         this.width = width;
-        this.radius = Math.floor(this.width / 2);
+        this.radius = Math.round(this.width / 2);
     }
 
     get minX(): number {
@@ -72,34 +72,53 @@ export abstract class GameObject implements IGameObject {
         }
         let deg = heading;
         const minX = this.getRadius();
-        const maxX = BOARD_WIDTH - this.width;
-        const minY = this.width;
-        const maxY = BOARD_HEIGHT - this.width;
+        const maxX = BOARD_WIDTH - this.getRadius();
+        const minY = this.getRadius();
+        const maxY = BOARD_HEIGHT - this.getRadius();
+        let nextX = x;
+        let nextY = y;
         if (heading < 90) {
           const adjacent = Math.cos(deg * RAD) * speed;
           const opposite = Math.sin(deg * RAD) * speed;
-          return [Math.min(x + adjacent, maxX), Math.min(y + opposite, maxY)];
+          nextX = x + adjacent;
+          nextY = y + opposite;
         } else if (heading === 90) {
-          return [x, Math.min(y + speed, maxY)];
+          nextY = y + speed;
         } else if (heading < 180) {
           deg = 180 - heading;
           const adjacent = Math.cos(deg * RAD) * speed;
           const opposite = Math.sin(deg * RAD) * speed;
-          return [Math.max(x - adjacent, minX), Math.min(y + opposite, maxY)];
+          nextX = x - adjacent;
+          nextY = y + opposite;
         } else if (heading === 180) {
-          return [Math.max(x - speed, minX), y];
+          nextX = x - speed;
         } else if (heading < 270) {
           deg = heading - 180;
           const adjacent = Math.cos(deg * RAD) * speed;
           const opposite = Math.sin(deg * RAD) * speed;
-          return [Math.max(x - adjacent, minX), Math.max(y - opposite, minY)];
+          nextX = x - adjacent;
+          nextY = y - opposite;
         } else if (heading === 270) {
-          return [x, Math.max(y - speed, minY)];
+          nextY = y - speed;
         } else {
           deg = 360 - heading;
           const adjacent = Math.cos(deg * RAD) * speed;
           const opposite = Math.sin(deg * RAD) * speed;
-          return [Math.min(x + adjacent, maxX), Math.max(y - opposite, minY)]
+          nextX = x + adjacent;
+          nextY = y - opposite;
         }
+
+        if (nextX < minX) {
+          nextX = minX;
+        } else if (nextX > maxX) {
+          nextX = maxX;
+        }
+        if (nextY < minY) {
+          nextY = minY;
+        } else if (nextY > maxY) {
+          nextY = maxY;
+        }
+        
+        return [nextX, nextY];
     }
 }
