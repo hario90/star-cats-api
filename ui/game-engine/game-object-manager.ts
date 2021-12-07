@@ -139,78 +139,80 @@ export class GameObjectManager {
     public getObjectNextPositionAndEmit = (gameObject: DrawableObject): [number, number] => {
         let x = gameObject.x;
         let y = gameObject.y;
+        if (gameObject.isDead) {
+            return [x, y];
+        }
 
-        if (!gameObject.isDead) {
-            const prevSections = new Map(gameObject.sections);
-            const [nextX, nextY] = gameObject.getNextPosition();
-            x = nextX;
-            y = nextY;
+        const prevSections = new Map(gameObject.sections);
+        const [nextX, nextY] = gameObject.getNextPosition();
 
-            gameObject.update({...gameObject.toDTO(), x, y});
-            const emitType = GAME_OBJECT_TYPE_TO_EMIT_TYPE.get(gameObject.type);
-            if (emitType) {
-                this.eventEmitter.gameObjectMoved(emitType.move, gameObject);
-            }
+        x = nextX;
+        y = nextY;
+        
+        gameObject.update({...gameObject.toDTO(), x, y});
 
-            // update section map
-            const objects = this.getObjects(gameObject);
-            objects.sync(gameObject, prevSections);
+        const emitType = GAME_OBJECT_TYPE_TO_EMIT_TYPE.get(gameObject.type);
+        if (emitType) {
+            this.eventEmitter.gameObjectMoved(emitType.move, gameObject);
+        }
 
-            // check for collision
-            if (isDrawableShip(gameObject)) {
-                // check for collisions into asteroids, laserbeams, gems
-                for (const [key] of gameObject.sections) {
-                    const asteroids = this.asteroids.getObjectsInSection(key);
-                    const gems = this.gems.getObjectsInSection(key);
-                    const ships = this.ships.getObjectsInSection(key);
+        // update section map
+        const objects = this.getObjects(gameObject);
+        objects.sync(gameObject, prevSections);
 
-                    for (const asteroid of asteroids) {
-                        if (!gameObject.isDead && !asteroid.isDead && isOverlapping(gameObject, asteroid)) {
-                            this.handleShipHitAsteroid(gameObject, asteroid);
-                        }
-                    }
+        // check for collision
+        if (isDrawableShip(gameObject)) {
+            // check for collisions into asteroids, laserbeams, gems
+            for (const [key] of gameObject.sections) {
+                const asteroids = this.asteroids.getObjectsInSection(key);
+                const gems = this.gems.getObjectsInSection(key);
+                const ships = this.ships.getObjectsInSection(key);
 
-                    for (const gem of gems) {
-                        // assume that the ship is always the player ship. otherwise we're emitting
-                        // too much
-                        if (isOverlapping(gameObject, gem)) {
-                            this.handleShipPickedUpGemAndEmit(gameObject.id, gem);
-                        }
-                    }
-
-                    for (const ship of ships) {
-                        if (!ship.isDead && !this.ship?.isDead && ship.id !== this.ship?.id && isOverlapping(ship, gameObject)) {
-                            this.handleShipHitShip(gameObject, ship);
-                        }
-                    }
-                }
-            } else if (isDrawableLaserBeam(gameObject)) {
-                const { row, col} = gameObject.section;
-                const prevSection = gameObject.prevSection;
-                if (prevSection) {
-                    const { row: prevRow, col: prevCol } = prevSection;
-                    if (row !== prevRow || col !== prevCol) {
-                        this.laserBeams.sync(gameObject);
+                for (const asteroid of asteroids) {
+                    if (!gameObject.isDead && !asteroid.isDead && isOverlapping(gameObject, asteroid)) {
+                        this.handleShipHitAsteroid(gameObject, asteroid);
                     }
                 }
 
-                const asteroidsInMySection = this.asteroids.getObjectsInSection(gameObject.section.key);
-                for (const asteroid of asteroidsInMySection) {
-                    if (asteroid && distanceBetweenObjects(asteroid, gameObject) <= 0) {
-                        this.handleLaserBeamHitAsteroidAndEmit(gameObject, asteroid);
-                        break;
+                for (const gem of gems) {
+                    // assume that the ship is always the player ship. otherwise we're emitting
+                    // too much
+                    if (isOverlapping(gameObject, gem)) {
+                        this.handleShipPickedUpGemAndEmit(gameObject.id, gem);
                     }
                 }
 
-                const shipsInMySection = this.ships.getObjectsInSection(gameObject.section.key);
-                for (const ship of shipsInMySection) {
-                    if (ship && distanceBetweenObjects(ship, gameObject) <= 0) {
-                        this.handleLaserBeamHitShipAndEmit(gameObject, ship);
-                        break;
+                for (const ship of ships) {
+                    if (!ship.isDead && ship.id !== gameObject.id && isOverlapping(ship, gameObject)) {
+                        this.handleShipHitShip(gameObject, ship);
                     }
                 }
             }
+        } else if (isDrawableLaserBeam(gameObject)) {
+            const { row, col} = gameObject.section;
+            const prevSection = gameObject.prevSection;
+            if (prevSection) {
+                const { row: prevRow, col: prevCol } = prevSection;
+                if (row !== prevRow || col !== prevCol) {
+                    this.laserBeams.sync(gameObject);
+                }
+            }
 
+            const asteroidsInMySection = this.asteroids.getObjectsInSection(gameObject.section.key);
+            for (const asteroid of asteroidsInMySection) {
+                if (asteroid && distanceBetweenObjects(asteroid, gameObject) <= 0) {
+                    this.handleLaserBeamHitAsteroidAndEmit(gameObject, asteroid);
+                    break;
+                }
+            }
+
+            const shipsInMySection = this.ships.getObjectsInSection(gameObject.section.key);
+            for (const ship of shipsInMySection) {
+                if (ship && distanceBetweenObjects(ship, gameObject) <= 0) {
+                    this.handleLaserBeamHitShipAndEmit(gameObject, ship);
+                    break;
+                }
+            }
         }
 
         return [x, y];
@@ -226,9 +228,13 @@ export class GameObjectManager {
     }
 
     private handleShipHitShip = (ship1: DrawableShip, ship2: DrawableShip) => {
-        // each ship is responsible for telling the socket it ran into another ship
+        console.log("ship hit ship")
+        ship1.explode();
+        ship2.explode();
         if (ship1.isMainShip) {
-            this.eventEmitter.shipDamaged(this.handleShipDamage, {shipId: ship2.id});
+            this.eventEmitter.shipExploded(ship1.id, this.handleShipExploded);
+        } else if (ship2.isMainShip) {
+            this.eventEmitter.shipExploded(ship2.id, this.handleShipExploded);
         }
     }
 
@@ -325,14 +331,16 @@ export class GameObjectManager {
         this.alerts.push(`${nickname} has joined`);
     };
 
-    public handleShipExploded = (shipId: string) => {
-        if (this.ship?.id === shipId) {
-            this.ship.explode();
-        } else {
-            const ship = this.ships.get(shipId);
-            if (ship) {
+    public handleShipExploded = (shipId: string, shipLives: number, laserBeamId?: string) => {
+        const ship = this.ships.get(shipId);
+        if (ship ) {
+            ship.lives = shipLives;
+            if (shipId !== this.ship?.id) {
                 ship.explode();
             }
+        }
+        if (laserBeamId) {
+            this.laserBeams.delete(laserBeamId);
         }
     }
 

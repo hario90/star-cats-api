@@ -24,8 +24,8 @@ export class SocketEventEmitter {
         this.socket.emit(GameEventType.ShipDamage, shipDamageArgs, onShipDamage);
     }
 
-    shipExploded(shipId: string, laserBeamId?: string) {
-        this.socket.emit(GameEventType.ShipExploded, shipId, laserBeamId);
+    shipExploded(shipId: string, shipExploded: (shipId: string, lives: number, laserBeamId?: string) => void, laserBeamId?: string) {
+        this.socket.emit(GameEventType.ShipExploded, shipId, laserBeamId, shipExploded);
     }
 
     asteroidHitByLaserBeam(asteroid: AsteroidDTO, laserBeamId: string, asteroidHit: (asteroidDTO1: AsteroidDTO, asteroidDTO2: AsteroidDTO) => void) {

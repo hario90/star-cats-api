@@ -145,11 +145,11 @@ export function createWebSocket(server: HttpServer) {
 
       });
       socket.on(GameEventType.AsteroidExploded, (asteroid: AsteroidDTO, laserBeamId: string, addGem: (gem: GemDTO) => void) => {
-        console.log("asteroid exploded", asteroid)
+        console.log("asteroid exploded")
         if (!asteroids.has(asteroid.id)) {
+          console.log("asteroid not found")
           return;
         }
-        console.log("asteroid found")
 
         // Gem has same id as asteroid
         const gem = new Gem({...asteroid, points: asteroid.gemPoints});
@@ -163,6 +163,21 @@ export function createWebSocket(server: HttpServer) {
         console.log("broadcasting add gem")
         socket.broadcast.emit(GameEventType.AddGem, gem.toDTO());
       });
+      socket.on(GameEventType.ShipExploded, (shipId: string, laserBeamId: string, shipExploded: (shipId: string, lives: number, laserBeamId?: string) => void) => {
+        console.log(`Ship ${shipId} exploded.`)
+        const ship = ships.get(shipId);
+        if (ship) {
+          ship.lives--;
+          if (ship.lives <= 0) {
+            ships.delete(shipId);
+          }
+
+          shipExploded(shipId, ship.lives, laserBeamId);
+          socket.broadcast.emit(GameEventType.ShipExploded, shipId, ship.lives, laserBeamId);
+        }
+
+        laserBeams.delete(laserBeamId);
+      })
       socket.on(GameEventType.ShipPickedUpGem, (shipId: string, gemId: string, cb: (shipId: string, gemId: string, shipPoints: number) => void) => {
         console.log("ship picked up gem")
         const matchingShip = ships.get(shipId);
@@ -179,7 +194,7 @@ export function createWebSocket(server: HttpServer) {
       });
       socket.on(GameEventType.AsteroidHit, (asteroid: AsteroidDTO, laserBeamId: string, cb: (a1: AsteroidDTO, a2: AsteroidDTO) => void) => {
         const matchingAsteroid = asteroids.get(asteroid.id);
-        console.log("asteroid hit", asteroid)
+        console.log("asteroid hit")
         if (!matchingAsteroid) {
           console.log("could not find matching asteroid")
           return;
@@ -192,8 +207,10 @@ export function createWebSocket(server: HttpServer) {
         const radius = Math.round(asteroid.width / 2);
         const nextPos1 = matchingAsteroid.getNextPosition(Math.floor(radius / 2));
         const nextPos2 = matchingAsteroid.getNextPosition(Math.floor(radius / 2), asteroid.deg + 180);
+        const speed = 0.5;
         const a1 = {
           ...asteroid,
+          speed,
           id: uuidV4(),
           width: radius,
           height: radius,
@@ -202,6 +219,7 @@ export function createWebSocket(server: HttpServer) {
         }
         const a2 = {
           ...asteroid,
+          speed,
           id: uuidV4(),
           width: radius,
           height: radius,
