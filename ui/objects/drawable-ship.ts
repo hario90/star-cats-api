@@ -71,7 +71,7 @@ export class DrawableShip extends Drawable {
   constructor(props: DrawableShipProps) {
     super(props);
     this.isMainShip = props.isMainShip ?? false;
-    this.speed = props.speed ?? 1;
+    this.speed = Math.max(props.speed ?? 1, 1);
     this.name = props.name ?? "Unnamed Vigilante";
     this.points = props.points ?? 0;
     this.lives = props.lives || MAX_NUM_LIVES;
