@@ -50,7 +50,6 @@ export class Renderer {
   private draw = () => {
     if (!this.context || !this.gameObjects.ship) {
       throw new Error("context or playerShip is undefined")
-      return;
     }
 
     this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
