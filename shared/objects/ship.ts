@@ -11,7 +11,7 @@ export class Ship extends GameObject {
     public healthPoints: number;
     public lives: number;
 
-    constructor({id, x, y, healthPoints, lives, deg = 0, speed = 1, height = 2 * halfShipHeight, width = 2 * halfShipWidth, name, points}: ShipDTO ) {
+    constructor({id, x, y, healthPoints, lives, deg = 0, speed = 1, height = 2 * halfShipHeight, width = 2 * halfShipWidth, name, points}: ShipDTO) {
         super({id, x, y, deg, speed, height, width, type: GameObjectType.Ship});
         this.name = name || "Unnamed Vigilante";
         this.points = points ?? 0;

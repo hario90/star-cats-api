@@ -1,34 +1,13 @@
 import { Server as HttpServer } from "http";
 import { Server, Socket } from "socket.io";
 import { v4 as uuidV4 } from "uuid";
-import { AsteroidDTO, GameEventType, GameObjectDTO, GameObjectType, GemDTO, LaserBeamDTO, ShipDamageArgs, ShipDTO, SocketAuth } from "../../shared/types";
-import { AsteroidGenerator } from "../asteroid-generator";
+import { AsteroidDTO, GameEventType, GemDTO, LaserBeamDTO, ShipDamageArgs, ShipDTO, SocketAuth } from "../../shared/types";
 import { Ship } from "../../shared/objects/ship";
-import { BOARD_HEIGHT, BOARD_WIDTH, halfShipHeight, halfShipWidth } from "../../shared/constants";
-import { GameObject } from "../../shared/objects/game-object";
 import { Asteroid } from "../../shared/objects/asteroid";
 import { LaserBeam } from "../../shared/objects/laser-beam";
 import { Gem } from "../../shared/objects/gem";
-
-function createInitialObjects() {
-  const asteroids = new Map<string, Asteroid>();
-  const asteroidGenerator = new AsteroidGenerator();
-  for (let i = 0; i < 20; i++) {
-    const asteroid = asteroidGenerator.random(false, asteroids.values());
-    if (asteroid) {
-      asteroids.set(asteroid.id, asteroid);
-    }
-  }
-  return {asteroids};
-}
-
-function mapToJSONList(map: Map<string, GameObject>): GameObjectDTO[] {
-  const values: GameObjectDTO[] = [];
-  for (const value of map.values()) {
-    values.push(value.toDTO())
-  }
-  return values;
-}
+import { getDegBetweenObjects } from "../../shared/util";
+import { createInitialObjects, generateRandomShip, mapToJSONList } from "./socket-utils";
 
 export function createWebSocket(server: HttpServer) {
     const io = new Server(server, {
@@ -38,6 +17,8 @@ export function createWebSocket(server: HttpServer) {
       }
     });
     const ships = new Map<string, Ship>();
+    const evilShips = new Set<string>();
+    const shipToEvilShips = new Map<string, Set<string>>();
     const {asteroids} = createInitialObjects();
     const laserBeams = new Map<string, LaserBeam>();
     const gems = new Map<string, Gem>();
@@ -46,21 +27,20 @@ export function createWebSocket(server: HttpServer) {
     io.use((socket: any, next: () => void) => {
       const { name } = socket.handshake.auth;
       const userId = socket.id;
-      // todo don't put ship on asteroids
-      const x = Math.random() * BOARD_WIDTH;
-      const y = Math.random() * BOARD_HEIGHT;
-      let ship = new Ship({
-        type: GameObjectType.Ship,
-        x,
-        y,
-        speed: 1,
-        deg: 0,
-        height: 2 * halfShipHeight,
-        width: 2 * halfShipWidth,
-        id: userId,
-        points: 0,
-        name,
-      });
+      // TODO don't put ship on asteroids
+      const ship = generateRandomShip({name, id: userId, speed: 1});
+
+      const evilShipIds = new Set<string>();
+      for (let i = 0; i < 10; i++) {
+        const evilShip = generateRandomShip({
+          name: `Mr. Evil ${i + 1}`
+        });
+        evilShips.add(evilShip.id);
+        ships.set(evilShip.id, evilShip);
+        evilShipIds.add(evilShip.id);
+      }
+
+      shipToEvilShips.set(userId, evilShipIds);
 
       ships.set(userId, ship);
       socket.emit(GameEventType.GetInitialObjects, mapToJSONList(ships), mapToJSONList(asteroids), mapToJSONList(laserBeams), mapToJSONList(gems));
@@ -68,18 +48,44 @@ export function createWebSocket(server: HttpServer) {
       console.log(`user ${name}, id ${userId} has joined`);
       next();
     });
-    io.on("connection", (socket: Socket) => {
+    io.on("connection", async (socket: Socket) => {
       const { name } = socket.handshake.auth as SocketAuth;
       const userId = socket.id;
 
-      socket.on(GameEventType.ShipMoved, (obj: ShipDTO) => {
+      socket.on(GameEventType.ShipMoved, (obj: ShipDTO, onShipsMoved: (shipDTOs: ShipDTO[]) => void) => {
         const matchingShip = ships.get(obj.id);
         if (matchingShip) {
+          const degChanged = matchingShip.deg !== obj.deg;
           matchingShip.move(obj);
           socket.broadcast.emit(GameEventType.ShipMoved, matchingShip.toDTO());
+
+          const evilShipIds = shipToEvilShips.get(userId);
+          if (evilShipIds) {
+            const evilShips = [];
+            for (const id of evilShipIds) {
+              const evilShip = ships.get(id);
+              if (!evilShip) {
+                console.log("Could not find evil ship")
+                continue;
+              }
+              // make evil ship go towards ship
+              if (degChanged) {
+                // adding 90 b/c the ship image starts rotated 90 deg counter-clockwise from the x-axis
+                // and so when the image is drawn, we subtract 90 degrees
+                const deg = getDegBetweenObjects(evilShip, matchingShip) + 90;
+                evilShip.deg = deg;
+              }
+
+              const [x, y] = evilShip.getNextPosition();
+              evilShip.x = x;
+              evilShip.y = y;
+              evilShips.push(evilShip.toDTO());
+              socket.broadcast.emit(GameEventType.ShipMoved, evilShip.toDTO());
+            }
+            onShipsMoved(evilShips);
+          }
         }
       });
-      // todo delete?
       socket.on(GameEventType.LaserMoved, (obj: LaserBeamDTO) => {
         const matchingLaserBeam = laserBeams.get(obj.id);
         if (matchingLaserBeam) {
@@ -89,7 +95,6 @@ export function createWebSocket(server: HttpServer) {
           laserBeams.set(obj.id, new LaserBeam(obj));
         }
       })
-      // todo delete?
       socket.on(GameEventType.AsteroidMoved, (obj: AsteroidDTO) => {
         const matchingAsteroid = asteroids.get(obj.id);
         if (matchingAsteroid) {

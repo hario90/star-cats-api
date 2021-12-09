@@ -12,12 +12,12 @@ export class SocketEventEmitter {
         this.socket.emit(GameEventType.EmitLaserBeam, laserBeam);
     }
 
-    gameObjectMoved(emitType: GameEventType, object: DrawableObject): void {
+    gameObjectMoved(emitType: GameEventType, object: DrawableObject, cb?: (dtos: DrawableObject[]) => void): void {
         if (object.isDead) {
             return;
         }
 
-        this.socket.emit(emitType, object.toDTO());
+        this.socket.emit(emitType, object.toDTO(), cb);
     }
 
     shipDamaged(onShipDamage: (shipId: string, healthPoints: number, lives: number) => void, shipDamageArgs: ShipDamageArgs) {

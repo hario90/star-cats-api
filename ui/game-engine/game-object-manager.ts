@@ -13,7 +13,6 @@ import { DrawableLaserBeam } from "../objects/drawable-laser-beam";
 import { DrawableShip } from "../objects/drawable-ship";
 import { PlayerShip } from "../objects/player-ship";
 import { Section } from "../objects/section";
-import { createSectionToObjectsMap } from "../util";
 import { DrawableObjectMap } from "./drawable-object-map";
 import { SocketEventEmitter } from "./socket-event-emitter";
 import { DrawableObject, isDrawableShip, isDrawableAsteroid, isDrawableGem, isDrawableLaserBeam } from "./types";
@@ -21,10 +20,6 @@ import { DrawableObject, isDrawableShip, isDrawableAsteroid, isDrawableGem, isDr
 const ALERT_MESSAGE_DURATION = 8;
 
 type DTO = ShipDTO | AsteroidDTO | GemDTO | LaserBeamDTO;
-const isShipDTO = (dto: DTO): dto is ShipDTO => dto.type === GameObjectType.Ship;
-const isAsteroidDTO = (dto: DTO): dto is AsteroidDTO => dto.type === GameObjectType.Asteroid;
-const isLaserBeamDTO = (dto: DTO): dto is LaserBeamDTO => dto.type === GameObjectType.LaserBeam;
-const isGemDTO = (dto: DTO): dto is GemDTO => dto.type === GameObjectType.Gem;
 
 interface GameEventTypes {
     move: GameEventType
@@ -148,12 +143,17 @@ export class GameObjectManager {
 
         x = nextX;
         y = nextY;
-        
+
         gameObject.update({...gameObject.toDTO(), x, y});
 
         const emitType = GAME_OBJECT_TYPE_TO_EMIT_TYPE.get(gameObject.type);
         if (emitType) {
-            this.eventEmitter.gameObjectMoved(emitType.move, gameObject);
+            let cb = undefined;
+            if (gameObject.type === GameObjectType.Ship) {
+                cb = this.moveShips;
+            }
+
+            this.eventEmitter.gameObjectMoved(emitType.move, gameObject, cb);
         }
 
         // update section map
@@ -255,7 +255,6 @@ export class GameObjectManager {
             this.asteroids.delete(asteroid.id)
              // only one client should be responsible for sending this event
             if (laserBeamWasFiredByThisShip) {
-                console.log("emitting asteroidHitByLaserBeam")
                 this.eventEmitter.asteroidHitByLaserBeam(asteroid.toDTO(), laserBeam.id, this.handleAsteroidHit);
             }
         }
@@ -270,7 +269,6 @@ export class GameObjectManager {
     }
 
     public handleAsteroidHit = (asteroidDTO1: AsteroidDTO, asteroidDTO2: AsteroidDTO) => {
-        console.log("handle asteroid hit")
         this.registerObjects([asteroidDTO1, asteroidDTO2], this.asteroids, this.createAsteroid);
     }
 
@@ -288,6 +286,12 @@ export class GameObjectManager {
             mapShip.update(object);
         } else {
             this.ships.set(object.id, this.createShip(object));
+        }
+    }
+
+    public moveShips = (objects: ShipDTO[]) => {
+        for (const ship of objects) {
+            this.moveShip(ship);
         }
     }
 

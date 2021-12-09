@@ -62,34 +62,37 @@ export class Renderer {
     this.gameObjects.alerts.draw(this.context, this.halfCanvasWidth, this.halfCanvasHeight);
     this.gameObjects.ship?.draw(this.context, shipX, shipY, this.halfCanvasWidth, this.halfCanvasHeight);
 
-    for (const ship of this.gameObjects.ships.values()) {
-      if (this.gameObjects.ship?.id !== ship.id) {
-        if (ship.isLoaded() && ship.isInFrame(this.halfCanvasWidth, this.halfCanvasHeight)) {
-          ship.draw(this.context, shipX, shipY, this.halfCanvasWidth, this.halfCanvasHeight);
+    const otherObjectsToDraw = [
+      {
+        computeNextPosition: false,
+        objects: Array.from(this.gameObjects.ships.values()).filter(s => s.id !== this.gameObjects.ship?.id)
+      },
+      {
+        computeNextPosition: true,
+        objects: this.gameObjects.asteroids.values()
+      },
+      {
+        computeNextPosition: true,
+        objects: this.gameObjects.laserBeams.values()
+      },
+      {
+        computeNextPosition: false,
+        objects: this.gameObjects.gems.values()
+      },
+    ];
+    for (const objectsDef of otherObjectsToDraw) {
+      for (const object of objectsDef.objects) {
+        if (objectsDef.computeNextPosition) {
+          this.gameObjects.getObjectNextPositionAndEmit(object);
         }
-      }
-    }
-    for (const asteroid of this.gameObjects.asteroids.values()) {
-      this.gameObjects.getObjectNextPositionAndEmit(asteroid);
-      if (asteroid.isLoaded() && asteroid.isInFrame(this.halfCanvasWidth, this.halfCanvasHeight)) {
-        asteroid.draw(this.context, shipX, shipY, this.halfCanvasWidth, this.halfCanvasHeight);
-      }
-    }
-    for (const laserBeam of this.gameObjects.laserBeams.values()) {
-      this.gameObjects.getObjectNextPositionAndEmit(laserBeam);
-      if (laserBeam.isLoaded() && laserBeam.isInFrame(this.halfCanvasWidth, this.halfCanvasHeight)) {
-        laserBeam.draw(this.context, shipX, shipY, this.halfCanvasWidth, this.halfCanvasHeight);
-      }
-    }
-    for (const gem of this.gameObjects.gems.values()) {
-      if (gem.isLoaded() && gem.isInFrame(this.halfCanvasWidth, this.halfCanvasHeight)) {
-        gem.draw(this.context, shipX, shipY, this.halfCanvasWidth, this.halfCanvasHeight);
+        if (object.isLoaded() && object.isInFrame(this.halfCanvasWidth, this.halfCanvasHeight)) {
+          object.draw(this.context, shipX, shipY, this.halfCanvasWidth, this.halfCanvasHeight);
+        }
       }
     }
 
     if (this.gameObjects.ship) {
-      const s1 = this.gameObjects.ship;
-      const s2 = this.gameObjects.ships.get(this.gameObjects.ship.id);
+      this.gameObjects.ships.get(this.gameObjects.ship.id);
         drawStats(this.context, this.halfCanvasWidth, {
         points: this.gameObjects.ship.points,
         lives: this.gameObjects.ship.lives

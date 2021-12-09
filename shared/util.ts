@@ -78,3 +78,25 @@ export function getObjectSections<T extends GameObject>(o: T): Coordinate[] {
   }
   return sections;
 }
+
+// The degree will be according to the canvas degrees (clockwise starting at the x-axis)
+export function getDegBetweenObjects<T extends GameObject, P extends GameObject>(o1: T, o2: P): number {
+  // shift o1 and o2 such that o1 is at the origin
+  const x = o2.x - o1.x;
+  const y = o1.y - o2.y; // the canvas is flipped so that up is down and down is up...
+  const normalDeg = Math.atan2(y, x) * 180 / Math.PI;
+
+  // normalDeg ranges from -180 to 180.
+  // if it's positive, add 180 deg
+  // if it's neg, multiply by -1
+
+  let result = 0;
+  if (normalDeg < 0) {
+    result = normalDeg * -1;
+  }
+  if (normalDeg > 0) {
+    result = (360 - normalDeg);
+  }
+
+  return result;
+}
