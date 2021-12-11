@@ -60,34 +60,13 @@ export class Renderer {
 
     this.gameObjects.background.draw(this.context, shipX - this.halfCanvasWidth, shipY - this.halfCanvasHeight, this.canvas.width, this.canvas.height);
     this.gameObjects.alerts.draw(this.context, this.halfCanvasWidth, this.halfCanvasHeight);
-    this.gameObjects.ship?.draw(this.context, shipX, shipY, this.halfCanvasWidth, this.halfCanvasHeight);
 
-    const otherObjectsToDraw = [
-      {
-        computeNextPosition: false,
-        objects: Array.from(this.gameObjects.ships.values()).filter(s => s.id !== this.gameObjects.ship?.id)
-      },
-      {
-        computeNextPosition: true,
-        objects: this.gameObjects.asteroids.values()
-      },
-      {
-        computeNextPosition: true,
-        objects: this.gameObjects.laserBeams.values()
-      },
-      {
-        computeNextPosition: false,
-        objects: this.gameObjects.gems.values()
-      },
-    ];
-    for (const objectsDef of otherObjectsToDraw) {
-      for (const object of objectsDef.objects) {
-        if (objectsDef.computeNextPosition) {
-          this.gameObjects.getObjectNextPositionAndEmit(object);
-        }
-        if (object.isLoaded() && object.isInFrame(this.halfCanvasWidth, this.halfCanvasHeight)) {
-          object.draw(this.context, shipX, shipY, this.halfCanvasWidth, this.halfCanvasHeight);
-        }
+    for (const object of this.gameObjects.getAllObjects()) {
+      if (!object.userControlled) {
+        this.gameObjects.getObjectNextPositionAndEmit(object);
+      }
+      if (object.isLoaded() && object.isInFrame(this.halfCanvasWidth, this.halfCanvasHeight)) {
+        object.draw(this.context, shipX, shipY, this.halfCanvasWidth, this.halfCanvasHeight);
       }
     }
 

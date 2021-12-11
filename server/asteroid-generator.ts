@@ -67,12 +67,12 @@ export class AsteroidGenerator {
 
         let tries = 10;
         let asteroid = new Asteroid(
-            {id, x, y, height, width, speed, deg, type: GameObjectType.Asteroid}
+            {id, x, y, height, width, speed, deg, type: GameObjectType.Asteroid, userControlled: false}
         );
         while (tries > 0 && !this.isValid(asteroid, otherAsteroids)) {
             x = this.getRandomX();
             y = this.getRandomY();
-            asteroid = new Asteroid({gemPoints, id, x, y, height, width, speed, deg: 0, type: GameObjectType.Asteroid});
+            asteroid = new Asteroid({gemPoints, id, x, y, height, width, speed, deg: 0, type: GameObjectType.Asteroid, userControlled: false});
             tries--;
         }
         return this.isValid(asteroid, otherAsteroids) ? asteroid : undefined;

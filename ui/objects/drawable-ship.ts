@@ -3,7 +3,7 @@ import explosionImg from "../../assets/explosion.png";
 import shipImg from "../../assets/ship.png";
 import { getRelativePosition, getSectionsMap } from "../util";
 import { Drawable } from "./drawable";
-import { halfShipHeight, halfShipWidth } from "../../shared/constants";
+import { BOARD_HEIGHT, BOARD_WIDTH, halfShipHeight, halfShipWidth } from "../../shared/constants";
 import { GameObjectDTO, ShipDTO } from "../../shared/types";
 import { Coordinate } from "../../shared/util";
 import { EXPLOSION_LOCATIONS, SRC_EXPLOSION_WIDTH } from "../constants";
@@ -132,7 +132,8 @@ export class DrawableShip extends Drawable {
       speed: this.speed,
       type: this.type,
       lives: this.lives,
-      healthPoints: this.healthPoints
+      healthPoints: this.healthPoints,
+      userControlled: this.userControlled,
     }
   }
 
@@ -188,10 +189,11 @@ export class DrawableShip extends Drawable {
       this.blinkIntervalCount = HIDE_SHIP_INTERVAL
     }
 
-    this.x = 50;
-    this.y = 50;
-    this.speed = 1;
-    this.radius = 0;
+    this.x = Math.random() * BOARD_WIDTH;
+    this.y = Math.random() * BOARD_HEIGHT;
+    if (this.userControlled) {
+      this.speed = 1;
+    }
   }
 
   private handleComingBackToLifeAnimation = () => {

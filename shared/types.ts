@@ -26,11 +26,13 @@ export enum GameObjectType {
 export interface IGameObject extends PositionInfo {
     id: string;
     type: GameObjectType;
+    userControlled: boolean;
 }
 
 export interface GameObjectDTO extends PositionInfoDTO {
     id: string;
     type: GameObjectType;
+    userControlled: boolean;
 }
 
 export interface ShipDTO extends GameObjectDTO {
@@ -83,7 +85,8 @@ export enum GameEventType {
     EmitLaserBeam = "EMIT_LASER_BEAM",
     AddGem = "ADD_GEM",
     ShipPickedUpGem = "SHIP_PICKED_UP_GEM",
-    AsteroidHit = "ASTEROID_HIT"
+    AsteroidHit = "ASTEROID_HIT",
+    EvilShipsChange = "EVIL_SHIP_CHANGE"
 }
 
 export interface ISection {

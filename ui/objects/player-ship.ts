@@ -15,6 +15,7 @@ export const MAX_SPEED = 5;
 
 // TODO decide on where to place each ship initially
 export class PlayerShip extends DrawableShip {
+  public readonly userControlled = true;
   private onShoot: (laserBeam: LaserBeamDTO) => void;
   constructor(props: DrawableShipProps, onShoot: (laserBeam: LaserBeamDTO) => void) {
     super({
@@ -40,6 +41,7 @@ export class PlayerShip extends DrawableShip {
       width: 10,
       id: uuid(),
       fromShipId: this.id,
+      userControlled: this.userControlled
     }
     this.onShoot(laserBeam);
   }

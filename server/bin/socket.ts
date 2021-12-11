@@ -28,7 +28,7 @@ export function createWebSocket(server: HttpServer) {
       const { name } = socket.handshake.auth;
       const userId = socket.id;
       // TODO don't put ship on asteroids
-      const ship = generateRandomShip({name, id: userId, speed: 1});
+      const ship = generateRandomShip({name, id: userId, speed: 1, userControlled: true});
 
       const evilShipIds = new Set<string>();
       for (let i = 0; i < 10; i++) {
@@ -52,38 +52,11 @@ export function createWebSocket(server: HttpServer) {
       const { name } = socket.handshake.auth as SocketAuth;
       const userId = socket.id;
 
-      socket.on(GameEventType.ShipMoved, (obj: ShipDTO, onShipsMoved: (shipDTOs: ShipDTO[]) => void) => {
+      socket.on(GameEventType.ShipMoved, (obj: ShipDTO) => {
         const matchingShip = ships.get(obj.id);
         if (matchingShip) {
-          const degChanged = matchingShip.deg !== obj.deg;
           matchingShip.move(obj);
           socket.broadcast.emit(GameEventType.ShipMoved, matchingShip.toDTO());
-
-          const evilShipIds = shipToEvilShips.get(userId);
-          if (evilShipIds) {
-            const evilShips = [];
-            for (const id of evilShipIds) {
-              const evilShip = ships.get(id);
-              if (!evilShip) {
-                console.log("Could not find evil ship")
-                continue;
-              }
-              // make evil ship go towards ship
-              if (degChanged) {
-                // adding 90 b/c the ship image starts rotated 90 deg counter-clockwise from the x-axis
-                // and so when the image is drawn, we subtract 90 degrees
-                const deg = getDegBetweenObjects(evilShip, matchingShip) + 90;
-                evilShip.deg = deg;
-              }
-
-              const [x, y] = evilShip.getNextPosition();
-              evilShip.x = x;
-              evilShip.y = y;
-              evilShips.push(evilShip.toDTO());
-              socket.broadcast.emit(GameEventType.ShipMoved, evilShip.toDTO());
-            }
-            onShipsMoved(evilShips);
-          }
         }
       });
       socket.on(GameEventType.LaserMoved, (obj: LaserBeamDTO) => {

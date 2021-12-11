@@ -23,6 +23,7 @@ export class Gem extends GameObject {
           height: this.height,
           width: this.width,
           type: this.type,
+          userControlled: this.userControlled
         };
     }
 }

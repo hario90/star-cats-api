@@ -21,8 +21,9 @@ export abstract class GameObject implements IGameObject {
     height: number;
     width: number;
     radius: number;
+    public readonly userControlled: boolean;
 
-    constructor({id, type, x, y, deg, speed, height, width}: GameObjectDTO) {
+    constructor({id, type, x, y, deg, speed, height, width, userControlled}: GameObjectDTO) {
         this.id = id;
         this.type = type;
         this.x = x;
@@ -32,6 +33,7 @@ export abstract class GameObject implements IGameObject {
         this.height = height;
         this.width = width;
         this.radius = Math.round(this.width / 2);
+        this.userControlled = userControlled;
     }
 
     get minX(): number {
@@ -118,7 +120,7 @@ export abstract class GameObject implements IGameObject {
         } else if (nextY > maxY) {
           nextY = maxY;
         }
-        
+
         return [nextX, nextY];
     }
 }

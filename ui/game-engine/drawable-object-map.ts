@@ -57,6 +57,10 @@ export class DrawableObjectMap<T extends Drawable> {
         return this.map.values();
     }
 
+    public clear = () => {
+        this.map.clear();
+    }
+
     public getObjectsInSection = (sectionKey: string): Set<T> => {
         const objectKeysInSection = this.sectionToObjects.get(sectionKey) || [];
         const objects = new Set<T>();

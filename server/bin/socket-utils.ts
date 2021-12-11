@@ -38,6 +38,7 @@ export function generateRandomShip(ship: Partial<ShipDTO>) {
         width: 2 * halfShipWidth,
         id: uuidV4(),
         points: 0,
+        userControlled: false,
         ...ship,
       });
 }

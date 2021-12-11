@@ -11,8 +11,8 @@ export class Ship extends GameObject {
     public healthPoints: number;
     public lives: number;
 
-    constructor({id, x, y, healthPoints, lives, deg = 0, speed = 1, height = 2 * halfShipHeight, width = 2 * halfShipWidth, name, points}: ShipDTO) {
-        super({id, x, y, deg, speed, height, width, type: GameObjectType.Ship});
+    constructor({id, x, y, healthPoints, lives, deg = 0, speed = 1, height = 2 * halfShipHeight, width = 2 * halfShipWidth, name, points, userControlled}: ShipDTO) {
+        super({id, x, y, deg, speed, height, width, type: GameObjectType.Ship, userControlled});
         this.name = name || "Unnamed Vigilante";
         this.points = points ?? 0;
         this.healthPoints = healthPoints ?? 0;
@@ -46,7 +46,8 @@ export class Ship extends GameObject {
           speed: this.speed,
           type: this.type,
           healthPoints: this.healthPoints,
-          lives: this.lives
+          lives: this.lives,
+          userControlled: this.userControlled
         }
       }
 }

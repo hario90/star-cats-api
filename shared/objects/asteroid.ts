@@ -23,7 +23,8 @@ export class Asteroid extends GameObject {
           height: this.height,
           width: this.width,
           type: this.type,
-          gemPoints: this.gemPoints
+          gemPoints: this.gemPoints,
+          userControlled: this.userControlled
         };
       }
 }

@@ -54,7 +54,8 @@ export class ImageComponent extends Drawable {
       speed: this.speed,
       height: this.height,
       width: this.width,
-      type: this.type
+      type: this.type,
+      userControlled: this.userControlled,
     };
   }
 
