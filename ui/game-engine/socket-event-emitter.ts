@@ -12,6 +12,10 @@ export class SocketEventEmitter {
         this.socket.emit(GameEventType.EmitLaserBeam, laserBeam);
     }
 
+    deleteLaserBeam(id: string) {
+        this.socket.emit(GameEventType.DeleteLaserBeam, id);
+    }
+
     gameObjectMoved(emitType: GameEventType, object: DrawableObject, cb?: (dtos: DrawableObject[]) => void): void {
         if (object.isDead) {
             return;

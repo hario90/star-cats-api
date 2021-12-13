@@ -86,7 +86,7 @@ export enum GameEventType {
     AddGem = "ADD_GEM",
     ShipPickedUpGem = "SHIP_PICKED_UP_GEM",
     AsteroidHit = "ASTEROID_HIT",
-    EvilShipsChange = "EVIL_SHIP_CHANGE"
+    DeleteLaserBeam = "DELETE_LASER_BEAM",
 }
 
 export interface ISection {

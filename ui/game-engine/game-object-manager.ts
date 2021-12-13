@@ -1,5 +1,5 @@
 import { Socket } from "socket.io-client";
-import { MIN_ASTEROID_HEIGHT } from "../../shared/constants";
+import { BOARD_HEIGHT, BOARD_WIDTH, MIN_ASTEROID_HEIGHT } from "../../shared/constants";
 import { Asteroid } from "../../shared/objects/asteroid";
 import { Ship } from "../../shared/objects/ship";
 import { LaserBeamDTO, GemDTO, ShipDTO, AsteroidDTO, GameObjectType, GameEventType } from "../../shared/types";
@@ -202,6 +202,17 @@ export class GameObjectManager {
                 }
             }
         } else if (isDrawableLaserBeam(gameObject)) {
+            const radius = gameObject.getRadius();
+            if (x - radius <= 0 || x + radius >= BOARD_WIDTH || y - radius <= 0 || y + radius >= BOARD_HEIGHT) {
+                gameObject.isDead = true;
+                const laserBeamId = gameObject.id;
+                this.laserBeams.delete(laserBeamId);
+                if (gameObject.fromShipId === this.ship?.id) {
+
+                    this.eventEmitter.deleteLaserBeam(laserBeamId);
+                }
+                return [x, y];
+            }
             const { row, col} = gameObject.section;
             const prevSection = gameObject.prevSection;
             if (prevSection) {
@@ -410,6 +421,7 @@ export class GameObjectManager {
                 }
             },
             (laserBeam: LaserBeamDTO) => {
+                console.log("on fire")
                 this.laserBeams.set(laserBeam.id, this.createLaserBeam(laserBeam));
                 this.eventEmitter.fireLaserBeam(laserBeam);
             },

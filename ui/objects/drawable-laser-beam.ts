@@ -1,7 +1,6 @@
 import { GameObjectDTO, GameObjectType, LaserBeamDTO, ISection } from "../../shared/types";
 import { COL_THICKNESS, isPointOverlappingWithSection, ROW_THICKNESS } from "../../shared/util";
 import { SocketEventEmitter } from "../game-engine/socket-event-emitter";
-import { DrawableObject, isDrawableAsteroid, isDrawableShip} from "../game-engine/types";
 import { getRelativePosition } from "../util";
 import { Drawable } from "./drawable";
 import { Section } from "./section";
