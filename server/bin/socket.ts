@@ -25,32 +25,33 @@ export function createWebSocket(server: HttpServer) {
     // TODO if this becomes a multi-room app, this will probably need to be roomToShipMap or maybe use a hash of room and ship id depending on how we use this structure
 
     io.use((socket: any, next: () => void) => {
-      const { name } = socket.handshake.auth;
-      const userId = socket.id;
-      // TODO don't put ship on asteroids
-      const ship = generateRandomShip({name, id: userId, speed: 1, userControlled: true});
-
-      const evilShipIds = new Set<string>();
-      for (let i = 0; i < 10; i++) {
-        const evilShip = generateRandomShip({
-          name: `Mr. Evil ${i + 1}`
-        });
-        evilShips.add(evilShip.id);
-        ships.set(evilShip.id, evilShip);
-        evilShipIds.add(evilShip.id);
-      }
-
-      shipToEvilShips.set(userId, evilShipIds);
-
-      ships.set(userId, ship);
-      socket.emit(GameEventType.GetInitialObjects, mapToJSONList(ships), mapToJSONList(asteroids), mapToJSONList(laserBeams), mapToJSONList(gems));
-      socket.broadcast.emit(GameEventType.UserJoined, name);
-      console.log(`user ${name}, id ${userId} has joined`);
       next();
     });
     io.on("connection", async (socket: Socket) => {
       const { name } = socket.handshake.auth as SocketAuth;
       const userId = socket.id;
+
+      if (!ships.has(userId)) {
+        // TODO don't put ship on asteroids
+        const ship = generateRandomShip({name, id: userId, speed: 1, userControlled: true});
+
+        const evilShipIds = new Set<string>();
+        for (let i = 0; i < 3; i++) {
+          const evilShip = generateRandomShip({
+            name: `Mr. Evil ${i + 1}`
+          });
+          evilShips.add(evilShip.id);
+          ships.set(evilShip.id, evilShip);
+          evilShipIds.add(evilShip.id);
+        }
+
+        shipToEvilShips.set(userId, evilShipIds);
+
+        ships.set(userId, ship);
+        socket.emit(GameEventType.GetInitialObjects, mapToJSONList(ships), mapToJSONList(asteroids), mapToJSONList(laserBeams), mapToJSONList(gems));
+        socket.broadcast.emit(GameEventType.UserJoined, name);
+        console.log(`user ${name}, id ${userId} has joined`);
+      }
 
       socket.on(GameEventType.ShipMoved, (obj: ShipDTO) => {
         const matchingShip = ships.get(obj.id);
@@ -80,6 +81,9 @@ export function createWebSocket(server: HttpServer) {
       socket.on(GameEventType.EmitLaserBeam, (laserBeam: LaserBeamDTO) => {
         laserBeams.set(laserBeam.id, new LaserBeam(laserBeam));
         socket.broadcast.emit(GameEventType.LaserMoved, laserBeam);
+      });
+      socket.on(GameEventType.DeleteLaserBeam, (id: string) => {
+        laserBeams.delete(id);
       });
       socket.on(GameEventType.ShipDamage, (shipDamageArgs: ShipDamageArgs, onShipDamage: (shipId: string, healthPoints: number, lives: number) => void) => {
         const ship = ships.get(socket.id);
@@ -215,6 +219,10 @@ export function createWebSocket(server: HttpServer) {
       socket.on("disconnect", (reason: string) => {
         console.log(`user ${name}, id ${userId} has disconnected. Reason: ${reason}`);
         ships.delete(userId);
+        for (const evilShipId of evilShips) {
+          ships.delete(evilShipId);
+          shipToEvilShips.delete(userId);
+        }
         socket.broadcast.emit(GameEventType.UserLeft, userId, `${name} has left the game`)
       });
     });
