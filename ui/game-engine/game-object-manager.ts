@@ -29,7 +29,7 @@ const GAME_OBJECT_TYPE_TO_EMIT_TYPE: Map<GameObjectType, GameEventTypes> = new M
         move: GameEventType.ShipMoved,
     }],
 ]);
-const DISTANCE_EVIL_SHIP_STARTS_SHOOTING = 300;
+const DISTANCE_EVIL_SHIP_STARTS_SHOOTING = 150;
 const SHOOTING_FREQUENCY = 30;
 
 export class GameObjectManager {
