@@ -101,7 +101,7 @@ export class GameObjectManager {
     }
 
     public receiveInitialObjects = (ships: Ship[], asteroids: Asteroid[], laserBeams: LaserBeamDTO[], gems: GemDTO[]): void => {
-        console.log("receive initial objects")
+        console.log("receive initial objects", laserBeams)
         this.ships.clear();
         this.asteroids.clear();
         this.laserBeams.clear();
@@ -146,6 +146,11 @@ export class GameObjectManager {
 
     private isEvilShipControlledByMe = (gameObject: DrawableObject) => {
         return isDrawableShip(gameObject) && !gameObject.userControlled && gameObject.targetId === this.ship?.id;
+    }
+
+    private shipIdIsEvilShipControlledByMe = (shipId: string) => {
+        const gameObject = this.ships.get(shipId);
+        return gameObject && isDrawableShip(gameObject) && !gameObject.userControlled && gameObject.targetId === this.ship?.id;
     }
 
     public getObjectNextPositionAndEmit = (gameObject: DrawableObject): [number, number] => {
@@ -213,8 +218,8 @@ export class GameObjectManager {
                 gameObject.isDead = true;
                 const laserBeamId = gameObject.id;
                 this.laserBeams.delete(laserBeamId);
-                if (gameObject.fromShipId === this.ship?.id) {
-
+                if (gameObject.fromShipId === this.ship?.id || this.shipIdIsEvilShipControlledByMe(gameObject.fromShipId)) {
+                    console.log('deleting laser beam')
                     this.eventEmitter.deleteLaserBeam(laserBeamId);
                 }
                 return [x, y];
@@ -300,7 +305,6 @@ export class GameObjectManager {
             const laserBeamFiredByMyEnemyShip = this.isEvilShipControlledByMe(shipThatFiredLaserBeam);
             const laserBeamWasFiredByThisShip = this.ship?.id === laserBeam.fromShipId;
             if (laserBeamWasFiredByThisShip || laserBeamFiredByMyEnemyShip) {
-                console.log("emitting ship damaged")
                 this.eventEmitter.shipDamaged(ship.id, this.handleShipDamage, {laserBeamId: laserBeam.id});
             }
         }
@@ -361,7 +365,6 @@ export class GameObjectManager {
     }
 
     public handleShipDamage = (shipId: string, healthPoints: number, livesLeft: number, evilShipsToRemove: string[]) => {
-        console.log("handle ship damage. hp", healthPoints)
         const ship = this.ships.get(shipId);
         if (ship) {
             ship.lives = livesLeft;
@@ -376,7 +379,6 @@ export class GameObjectManager {
             }
         }
 
-        console.log("evilShipsToRemove", evilShipsToRemove)
         for (const evilShipId of evilShipsToRemove) {
             this.ships.delete(evilShipId);
         }
