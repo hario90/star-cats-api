@@ -1,7 +1,6 @@
 import { RAD } from "../shared/constants";
 import { GameObjectDTO } from "../shared/types";
 import { Coordinate } from "../shared/util";
-import { DrawableObject } from "./game-engine/types";
 import { Drawable, DrawableProps } from "./objects/drawable";
 import { getRelativePosition } from "./util";
 
@@ -20,6 +19,7 @@ export class ImageComponent extends Drawable {
   public loaded = false;
   private srcWidth: number;
   private srcHeight: number;
+  private colorToCanvas: Map<string, HTMLCanvasElement> = new Map();
 
   constructor({ src, srcWidth, srcHeight, frame, frameLocations, ...rest }: ComponentProps) {
     super({...rest});
@@ -34,15 +34,14 @@ export class ImageComponent extends Drawable {
 
   onImageLoaded = () => {
     this.loaded = true;
-
   }
 
-  createTint = (color: string) => {
+  createTint = (color: string): HTMLCanvasElement => {
      // create a fully green version of img
      const c=document.createElement('canvas');
      const cctx=c.getContext('2d');
      if (!cctx) {
-       return;
+       return c;
      }
 
      c.width=this.img.width;
@@ -52,6 +51,8 @@ export class ImageComponent extends Drawable {
      cctx.fillStyle= color;
      cctx.fillRect(0,0,this.img.width,this.img.height);
      cctx.globalCompositeOperation='source-over';
+     this.colorToCanvas.set(color, c);
+     return c;
   }
 
   public update<T extends GameObjectDTO>({x, y, speed, deg, height, width}: T): void {
@@ -78,21 +79,11 @@ export class ImageComponent extends Drawable {
   }
 
   drawTinted = (context: CanvasRenderingContext2D, shipX: number, shipY: number, halfCanvasWidth: number, halfCanvasHeight: number, color: string) => {
-     // create a fully green version of img
-     const c=document.createElement('canvas');
-     const cctx=c.getContext('2d');
-     if (!cctx) {
-       return;
-     }
+    let c = this.colorToCanvas.get(color);
+    if (!c) {
+      c = this.createTint(color);
+    }
 
-     c.width=this.img.width;
-     c.height=this.img.height;
-     cctx.drawImage(this.img,0,0);
-     cctx.globalCompositeOperation='source-atop';
-     cctx.fillStyle= color;
-     cctx.fillRect(0,0,this.img.width,this.img.height);
-     cctx.globalCompositeOperation='source-over';
-     
     context.save();
     const {x, y} = getRelativePosition(halfCanvasWidth, halfCanvasHeight, shipX, shipY, this.x, this.y);
     context.translate(x, y);
