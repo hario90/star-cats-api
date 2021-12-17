@@ -25,15 +25,33 @@ export class ImageComponent extends Drawable {
     super({...rest});
     this.img = new Image();
     this.img.src = src;
-    this.img.onload = () => { this.loaded = true; };
+    this.img.onload = this.onImageLoaded;
     this.frame = frame;
     this.frameLocations = frameLocations;
     this.srcWidth = srcWidth;
     this.srcHeight = srcHeight;
   }
 
-  whenHitBy(object: DrawableObject): void {
-    // todo
+  onImageLoaded = () => {
+    this.loaded = true;
+
+  }
+
+  createTint = (color: string) => {
+     // create a fully green version of img
+     const c=document.createElement('canvas');
+     const cctx=c.getContext('2d');
+     if (!cctx) {
+       return;
+     }
+
+     c.width=this.img.width;
+     c.height=this.img.height;
+     cctx.drawImage(this.img,0,0);
+     cctx.globalCompositeOperation='source-atop';
+     cctx.fillStyle= color;
+     cctx.fillRect(0,0,this.img.width,this.img.height);
+     cctx.globalCompositeOperation='source-over';
   }
 
   public update<T extends GameObjectDTO>({x, y, speed, deg, height, width}: T): void {
@@ -57,6 +75,48 @@ export class ImageComponent extends Drawable {
       type: this.type,
       userControlled: this.userControlled,
     };
+  }
+
+  drawTinted = (context: CanvasRenderingContext2D, shipX: number, shipY: number, halfCanvasWidth: number, halfCanvasHeight: number, color: string) => {
+     // create a fully green version of img
+     const c=document.createElement('canvas');
+     const cctx=c.getContext('2d');
+     if (!cctx) {
+       return;
+     }
+
+     c.width=this.img.width;
+     c.height=this.img.height;
+     cctx.drawImage(this.img,0,0);
+     cctx.globalCompositeOperation='source-atop';
+     cctx.fillStyle= color;
+     cctx.fillRect(0,0,this.img.width,this.img.height);
+     cctx.globalCompositeOperation='source-over';
+     
+    context.save();
+    const {x, y} = getRelativePosition(halfCanvasWidth, halfCanvasHeight, shipX, shipY, this.x, this.y);
+    context.translate(x, y);
+    const frame = this.frameLocations[this.frame];
+
+    // draw the grayscale image onto the canvas
+    if (!this.isDead && frame) {
+      context.rotate(this.deg * RAD);
+      const srcX = frame[0];
+      const srcY = frame[1];
+      context.drawImage(this.img, srcX, srcY, this.srcWidth, this.srcHeight, 0 - this.radius, 0 - this.radius, this.width, this.height);
+
+      // set compositing to color (changes hue with new overwriting colors)
+      context.globalCompositeOperation='color';
+
+      // draw the fully green img on top of the grayscale image
+      // ---- the img is now greenscale ----
+      context.drawImage(c,srcX, srcY, this.srcWidth, this.srcHeight, 0 - this.radius, 0 - this.radius, this.width, this.height);
+    }
+
+    context.restore();
+
+    // Always clean up -- change compositing back to default
+    context.globalCompositeOperation='source-over';
   }
 
   draw(context: CanvasRenderingContext2D, shipX: number, shipY: number, halfCanvasWidth: number, halfCanvasHeight: number) {

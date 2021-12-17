@@ -1,5 +1,4 @@
 import { BOARD_WIDTH, BOARD_HEIGHT } from "../../shared/constants";
-import { COL_THICKNESS, ROW_THICKNESS } from "../../shared/util";
 
 export class Background {
   private img: HTMLImageElement;

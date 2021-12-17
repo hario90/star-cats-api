@@ -74,7 +74,8 @@ export class Renderer {
       this.gameObjects.ships.get(this.gameObjects.ship.id);
         drawStats(this.context, this.halfCanvasWidth, {
         points: this.gameObjects.ship.points,
-        lives: this.gameObjects.ship.lives
+        lives: this.gameObjects.ship.lives,
+        healthPoints: this.gameObjects.ship.healthPoints
       })
     }
   }

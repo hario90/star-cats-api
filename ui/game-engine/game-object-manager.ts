@@ -29,6 +29,8 @@ const GAME_OBJECT_TYPE_TO_EMIT_TYPE: Map<GameObjectType, GameEventTypes> = new M
         move: GameEventType.ShipMoved,
     }],
 ]);
+const DISTANCE_EVIL_SHIP_STARTS_SHOOTING = 300;
+const SHOOTING_FREQUENCY = 30;
 
 export class GameObjectManager {
     public background: Background;
@@ -142,6 +144,10 @@ export class GameObjectManager {
             allObjects.map((c) => c.isLoaded()).some((loaded) => !loaded);
     }
 
+    private isEvilShipControlledByMe = (gameObject: DrawableObject) => {
+        return isDrawableShip(gameObject) && !gameObject.userControlled && gameObject.targetId === this.ship?.id;
+    }
+
     public getObjectNextPositionAndEmit = (gameObject: DrawableObject): [number, number] => {
         let x = gameObject.x;
         let y = gameObject.y;
@@ -150,7 +156,7 @@ export class GameObjectManager {
         }
 
         const prevSections = new Map(gameObject.sections);
-        if (isDrawableShip(gameObject) && !gameObject.userControlled) {
+        if (isDrawableShip(gameObject) && this.isEvilShipControlledByMe(gameObject)) {
             const deg = this.getEvilShipNextDeg(gameObject);
             if (deg !== undefined) {
                 gameObject.deg = deg;
@@ -247,7 +253,7 @@ export class GameObjectManager {
     private handleShipHitAsteroid = (ship: DrawableShip, asteroid: DrawableAsteroid) => {
         ship.explode();
         if (ship.isMainShip) {
-            this.eventEmitter.shipDamaged(this.handleShipDamage, {asteroidId: asteroid.id});
+            this.eventEmitter.shipDamaged(ship.id, this.handleShipDamage, {asteroidId: asteroid.id});
         }
     }
 
@@ -255,9 +261,9 @@ export class GameObjectManager {
         ship1.explode();
         ship2.explode();
         if (ship1.isMainShip) {
-            this.eventEmitter.shipExploded(ship1.id, this.handleShipExploded);
+            this.eventEmitter.shipDamaged(ship1.id, this.handleShipDamage, {shipId: ship2.id});
         } else if (ship2.isMainShip) {
-            this.eventEmitter.shipExploded(ship2.id, this.handleShipExploded);
+            this.eventEmitter.shipDamaged(ship2.id, this.handleShipDamage, {shipId: ship1.id});
         }
     }
 
@@ -284,10 +290,19 @@ export class GameObjectManager {
     }
 
     private handleLaserBeamHitShipAndEmit = (laserBeam: DrawableLaserBeam, ship: DrawableShip): void => {
+        ship.onHit();
+        if (ship.healthPoints === 1) {
+            ship.explode();
+        }
         this.laserBeams.delete(laserBeam.id);
-        const laserBeamWasFiredByThisShip = this.ship?.id === laserBeam.fromShipId;
-        if (laserBeamWasFiredByThisShip) {
-            this.eventEmitter.shipDamaged(this.handleShipDamage, {laserBeamId: laserBeam.id});
+        const shipThatFiredLaserBeam = this.ships.get(laserBeam.fromShipId);
+        if (shipThatFiredLaserBeam) {
+            const laserBeamFiredByMyEnemyShip = this.isEvilShipControlledByMe(shipThatFiredLaserBeam);
+            const laserBeamWasFiredByThisShip = this.ship?.id === laserBeam.fromShipId;
+            if (laserBeamWasFiredByThisShip || laserBeamFiredByMyEnemyShip) {
+                console.log("emitting ship damaged")
+                this.eventEmitter.shipDamaged(ship.id, this.handleShipDamage, {laserBeamId: laserBeam.id});
+            }
         }
     }
 
@@ -319,6 +334,11 @@ export class GameObjectManager {
         if (!this.ship) {
             return;
         }
+
+        const distanceBetweenShips = Math.floor(distanceBetweenObjects(evilShip, this.ship));
+        if (distanceBetweenShips <= DISTANCE_EVIL_SHIP_STARTS_SHOOTING && distanceBetweenShips % SHOOTING_FREQUENCY === 0) {
+            evilShip.shoot();
+        }
         return getDegBetweenObjects(evilShip, this.ship) + 90;
     }
 
@@ -340,7 +360,8 @@ export class GameObjectManager {
         }
     }
 
-    public handleShipDamage = (shipId: string, healthPoints: number, livesLeft: number) => {
+    public handleShipDamage = (shipId: string, healthPoints: number, livesLeft: number, evilShipsToRemove: string[]) => {
+        console.log("handle ship damage. hp", healthPoints)
         const ship = this.ships.get(shipId);
         if (ship) {
             ship.lives = livesLeft;
@@ -348,10 +369,16 @@ export class GameObjectManager {
 
             if (livesLeft <= 0) {
                 this.ships.delete(shipId);
+                this.ship?.handleShipDied();
                 if (ship.userControlled) {
                     this.addAlert(`${ship.name} died!`);
                 }
             }
+        }
+
+        console.log("evilShipsToRemove", evilShipsToRemove)
+        for (const evilShipId of evilShipsToRemove) {
+            this.ships.delete(evilShipId);
         }
     }
 
@@ -404,9 +431,15 @@ export class GameObjectManager {
                 if (dto.userControlled) {
                     this.alerts.push(`${name} died!`);
                 }
-            }
+            },
+            onShoot: this.onShoot,
         });
     }
+
+    private onShoot = (laserBeam: LaserBeamDTO) => {
+        this.laserBeams.set(laserBeam.id, this.createLaserBeam(laserBeam));
+        this.eventEmitter.fireLaserBeam(laserBeam);
+    };
 
     private createPlayerShip = (ship: ShipDTO) => {
         if (!!this.ship) {
@@ -418,12 +451,8 @@ export class GameObjectManager {
                 ...ship,
                 onFinishedExploding: () => {
                     this.alerts.push(`You died!`);
-                }
-            },
-            (laserBeam: LaserBeamDTO) => {
-                console.log("on fire")
-                this.laserBeams.set(laserBeam.id, this.createLaserBeam(laserBeam));
-                this.eventEmitter.fireLaserBeam(laserBeam);
+                },
+                onShoot: this.onShoot
             },
         );
 

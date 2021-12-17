@@ -34,4 +34,5 @@ export interface Alert {
 export interface Stats {
   points: number;
   lives: number;
+  healthPoints: number;
 }

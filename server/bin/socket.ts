@@ -24,9 +24,15 @@ export function createWebSocket(server: HttpServer) {
     const gems = new Map<string, Gem>();
     // TODO if this becomes a multi-room app, this will probably need to be roomToShipMap or maybe use a hash of room and ship id depending on how we use this structure
 
-    io.use((socket: any, next: () => void) => {
-      next();
-    });
+    const handleShipDied = (socket: Socket, userId: string, name: string) => {
+      ships.delete(userId);
+      for (const evilShipId of evilShips) {
+        ships.delete(evilShipId);
+        shipToEvilShips.delete(userId);
+      }
+      socket.broadcast.emit(GameEventType.UserLeft, userId, `${name} has left the game`)
+    };
+
     io.on("connection", async (socket: Socket) => {
       const { name } = socket.handshake.auth as SocketAuth;
       const userId = socket.id;
@@ -38,7 +44,8 @@ export function createWebSocket(server: HttpServer) {
         const evilShipIds = new Set<string>();
         for (let i = 0; i < 3; i++) {
           const evilShip = generateRandomShip({
-            name: `Mr. Evil ${i + 1}`
+            name: `Mr. Evil ${i + 1}`,
+            targetId: userId,
           });
           evilShips.add(evilShip.id);
           ships.set(evilShip.id, evilShip);
@@ -85,25 +92,20 @@ export function createWebSocket(server: HttpServer) {
       socket.on(GameEventType.DeleteLaserBeam, (id: string) => {
         laserBeams.delete(id);
       });
-      socket.on(GameEventType.ShipDamage, (shipDamageArgs: ShipDamageArgs, onShipDamage: (shipId: string, healthPoints: number, lives: number) => void) => {
-        const ship = ships.get(socket.id);
+      socket.on(GameEventType.ShipDamage, (shipIdThatGotHit: string, shipDamageArgs: ShipDamageArgs, onShipDamage: (shipId: string, healthPoints: number, lives: number, evilShipsToRemove: string[]) => void) => {
+        const ship = ships.get(shipIdThatGotHit);
         if (!ship) {
           return;
         }
 
-        const {laserBeamId, asteroidId, shipId} = shipDamageArgs;
+        const {laserBeamId, asteroidId, shipId: otherShipId} = shipDamageArgs;
 
         let reduceBy = 0;
         if (laserBeamId) {
           laserBeams.delete(laserBeamId);
           reduceBy = 1;
-        } else if (asteroidId) {
+        } else if (asteroidId || otherShipId) {
           reduceBy = ship.healthPoints;
-        } else if (shipId) {
-          const matchingShip = ships.get(shipId);
-          if (matchingShip) {
-            reduceBy = Math.round(matchingShip.width / 10);
-          }
         }
 
         if (!onShipDamage) {
@@ -116,15 +118,18 @@ export function createWebSocket(server: HttpServer) {
         if (ship && reduceBy && onShipDamage) {
           console.log("reducing ships health points by " + reduceBy)
           ship.reduceHealthPoints(reduceBy);
-          onShipDamage(socket.id, ship.healthPoints, ship.lives);
-          socket.broadcast.emit(GameEventType.ShipDamage, socket.id, ship.healthPoints, ship.lives)
-          if (ship.healthPoints <= 0) {
-            ships.delete(socket.id);
+          let evilShipsToRemove: string[] = [];
+
+          if (ship.lives <= 0) {
+            console.log("no more lives left")
+            evilShipsToRemove = Array.from(shipToEvilShips.get(ship.id) ?? []) ;
+            handleShipDied(socket, userId, name);
             // TODO disconnect because game over
           }
+
+          onShipDamage(shipIdThatGotHit, ship.healthPoints, ship.lives, evilShipsToRemove);
+          socket.broadcast.emit(GameEventType.ShipDamage, shipIdThatGotHit, ship.healthPoints, ship.lives, evilShipsToRemove)
         }
-
-
       });
       socket.on(GameEventType.AsteroidExploded, (asteroid: AsteroidDTO, laserBeamId: string, addGem: (gem: GemDTO) => void) => {
         console.log("asteroid exploded")
@@ -218,12 +223,7 @@ export function createWebSocket(server: HttpServer) {
       })
       socket.on("disconnect", (reason: string) => {
         console.log(`user ${name}, id ${userId} has disconnected. Reason: ${reason}`);
-        ships.delete(userId);
-        for (const evilShipId of evilShips) {
-          ships.delete(evilShipId);
-          shipToEvilShips.delete(userId);
-        }
-        socket.broadcast.emit(GameEventType.UserLeft, userId, `${name} has left the game`)
+        handleShipDied(socket, userId, name);
       });
     });
 }

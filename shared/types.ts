@@ -40,6 +40,7 @@ export interface ShipDTO extends GameObjectDTO {
     points?: number;
     healthPoints?: number;
     lives?: number;
+    targetId?: string;
 }
 
 export interface LaserBeamDTO extends GameObjectDTO {

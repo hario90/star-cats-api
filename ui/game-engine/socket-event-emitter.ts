@@ -24,8 +24,8 @@ export class SocketEventEmitter {
         this.socket.emit(emitType, object.toDTO(), cb);
     }
 
-    shipDamaged(onShipDamage: (shipId: string, healthPoints: number, lives: number) => void, shipDamageArgs: ShipDamageArgs) {
-        this.socket.emit(GameEventType.ShipDamage, shipDamageArgs, onShipDamage);
+    shipDamaged(shipId: string, onShipDamage: (shipId: string, healthPoints: number, lives: number, evilShipsToRemove: string[]) => void, shipDamageArgs: ShipDamageArgs) {
+        this.socket.emit(GameEventType.ShipDamage, shipId, shipDamageArgs, onShipDamage);
     }
 
     shipExploded(shipId: string, shipExploded: (shipId: string, lives: number, laserBeamId?: string) => void, laserBeamId?: string) {

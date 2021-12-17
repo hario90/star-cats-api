@@ -1,13 +1,13 @@
+import { v4 as uuid } from "uuid";
 import { BattleShipFrame } from "../types";
 import explosionImg from "../../assets/explosion.png";
 import shipImg from "../../assets/ship.png";
 import { getRelativePosition, getSectionsMap } from "../util";
 import { Drawable } from "./drawable";
 import { BOARD_HEIGHT, BOARD_WIDTH, halfShipHeight, halfShipWidth } from "../../shared/constants";
-import { GameObjectDTO, ShipDTO } from "../../shared/types";
+import { GameObjectDTO, GameObjectType, LaserBeamDTO, ShipDTO } from "../../shared/types";
 import { Coordinate } from "../../shared/util";
 import { EXPLOSION_LOCATIONS, SRC_EXPLOSION_WIDTH } from "../constants";
-import { DrawableObject, isDrawableAsteroid, isDrawableGem, isDrawableLaserBeam, isDrawableShip } from "../game-engine/types";
 import { ImageComponent } from "../component";
 
 const frameToLocation = new Map([
@@ -35,10 +35,12 @@ const speedToFrame = new Map([
 ]);
 
 const DEGREE_OF_SHIP_NOSE_FROM_POS_X_AXIS = 90;
+const MAX_HIT_ANIMATION_DURATION = 10 ;
 export const MAX_SPEED = 5;
 
 export interface DrawableShipProps extends ShipDTO {
   onFinishedExploding: (name: string) => void;
+  onShoot: (laserBeam: LaserBeamDTO) => void;
   isMainShip?: boolean;
 }
 
@@ -54,7 +56,10 @@ export class DrawableShip extends Drawable {
   private explosionImg: ImageComponent;
   private explosionIndex = -1; // if not exploding. otherwise 0 to 13.
   private onFinishedExploding: (name: string) => void;
+  private onShoot: (laserBeam: LaserBeamDTO) => void;
+  private hit = 0;
   public isMainShip = false;
+  public targetId?: string;
 
   public name: string;
   public lives: number = MAX_NUM_LIVES;
@@ -70,6 +75,7 @@ export class DrawableShip extends Drawable {
 
   constructor(props: DrawableShipProps) {
     super(props);
+    this.targetId = props.targetId;
     this.isMainShip = props.isMainShip ?? false;
     this.speed = Math.max(props.speed ?? 1, 1);
     this.name = props.name ?? "Unnamed Vigilante";
@@ -96,6 +102,7 @@ export class DrawableShip extends Drawable {
     })
 
     this.onFinishedExploding = props.onFinishedExploding;
+    this.onShoot = props.onShoot;
     this.sections = getSectionsMap(this);
 
     this.getPosition = this.getPosition.bind(this);
@@ -134,6 +141,7 @@ export class DrawableShip extends Drawable {
       lives: this.lives,
       healthPoints: this.healthPoints,
       userControlled: this.userControlled,
+      targetId: this.targetId
     }
   }
 
@@ -152,6 +160,28 @@ export class DrawableShip extends Drawable {
   explode = () => {
     this.isDead = true;
     this.explosionIndex = 0;
+  }
+
+  public onHit() {
+    this.hit = MAX_HIT_ANIMATION_DURATION;
+  }
+
+  public shoot() {
+    const [x, y] = this.getNextPosition(Math.round(this.height / 2))
+    const laserBeam: LaserBeamDTO = {
+      x,
+      y,
+      type: GameObjectType.LaserBeam,
+      // deg represents the angle going clockwise down from the positive x-axis
+      deg: this.deg - 90,
+      speed: 20,
+      height: 30,
+      width: 10,
+      id: uuid(),
+      fromShipId: this.id,
+      userControlled: false
+    }
+    this.onShoot(laserBeam);
   }
 
   get isExploding() {
@@ -247,7 +277,15 @@ export class DrawableShip extends Drawable {
 
       if (!this.isDead || (this.isComingBackToLife && this.showShip)) {
         this.shipImg.frame = this.speed - 1;
-        this.shipImg.draw(context, shipX, shipY, halfCanvasWidth, halfCanvasHeight);
+
+        if (this.hit > 0) {
+          this.shipImg.drawTinted(context, shipX, shipY, halfCanvasWidth, halfCanvasHeight, "red");
+          this.hit--;
+        } else if (!this.userControlled) {
+          this.shipImg.drawTinted(context, shipX, shipY, halfCanvasWidth, halfCanvasHeight, "green");
+        } else {
+          this.shipImg.draw(context, shipX, shipY, halfCanvasWidth, halfCanvasHeight);
+        }
       }
 
       if (this.isComingBackToLife) {
