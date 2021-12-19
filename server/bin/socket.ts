@@ -6,7 +6,6 @@ import { Ship } from "../../shared/objects/ship";
 import { Asteroid } from "../../shared/objects/asteroid";
 import { LaserBeam } from "../../shared/objects/laser-beam";
 import { Gem } from "../../shared/objects/gem";
-import { getDegBetweenObjects } from "../../shared/util";
 import { createInitialObjects, generateRandomShip, mapToJSONList } from "./socket-utils";
 
 export function createWebSocket(server: HttpServer) {

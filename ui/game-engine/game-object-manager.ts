@@ -3,7 +3,7 @@ import { BOARD_HEIGHT, BOARD_WIDTH, MIN_ASTEROID_HEIGHT } from "../../shared/con
 import { Asteroid } from "../../shared/objects/asteroid";
 import { Ship } from "../../shared/objects/ship";
 import { LaserBeamDTO, GemDTO, ShipDTO, AsteroidDTO, GameObjectType, GameEventType } from "../../shared/types";
-import { distanceBetweenObjects, getDegBetweenObjects, isOverlapping } from "../../shared/util";
+import { distanceBetweenObjects, getDegBetweenPoints, isOverlapping } from "../../shared/util";
 import { Alerts } from "../objects/alerts";
 import { Background } from "../objects/background";
 import { Drawable } from "../objects/drawable";
@@ -343,7 +343,7 @@ export class GameObjectManager {
         if (distanceBetweenShips <= DISTANCE_EVIL_SHIP_STARTS_SHOOTING && distanceBetweenShips % SHOOTING_FREQUENCY === 0) {
             evilShip.shoot();
         }
-        return getDegBetweenObjects(evilShip, this.ship) + 90;
+        return getDegBetweenPoints([evilShip.x, evilShip.y], [this.ship.x, this.ship.y]) + 90;
     }
 
     public moveAsteroid = (object: AsteroidDTO) => {
