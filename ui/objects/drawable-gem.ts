@@ -3,17 +3,19 @@ import gemImg2 from "../../assets/gem2.png";
 import gemImg3 from "../../assets/gem3.png";
 import gemImg4 from "../../assets/gem4.png";
 import gemImg5 from "../../assets/gem5.png";
-import { getRelativePosition, getSectionsMap } from "../util";
+import { getSectionsMap } from "../util";
 import { GemDTO, GameObjectDTO, GameObjectType } from "../../shared/types";
 import { Drawable } from "./drawable";
 import { SocketEventEmitter } from "../game-engine/socket-event-emitter";
 import { ImageComponent } from "../component";
+import { Canvas } from "../game-engine/canvas";
 
 export const ASTEROID_HEIGHT = 32;
 export const ASTEROID_WIDTH = 32;
 
 export interface DrawableGemProps extends GemDTO {
     eventEmitter: SocketEventEmitter;
+    canvas: Canvas;
 }
 
 export class DrawableGem extends Drawable {
@@ -59,14 +61,14 @@ export class DrawableGem extends Drawable {
     return this.gemImg.loaded;
   }
 
-  draw(context: CanvasRenderingContext2D, shipX: number, shipY: number, halfCanvasWidth: number, halfCanvasHeight: number) {
+  draw(context: CanvasRenderingContext2D, shipX: number, shipY: number) {
     if (!this.loaded) {
       console.error("This image has not loaded yet");
       return;
     }
 
     if (!this.isDead) {
-      this.gemImg.draw(context, shipX, shipY, halfCanvasWidth, halfCanvasHeight)
+      this.gemImg.draw(context, shipX, shipY)
     }
   }
 

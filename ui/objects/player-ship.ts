@@ -1,4 +1,5 @@
-import { LaserBeamDTO } from "../../shared/types";
+import { getDegBetweenPoints } from "../../shared/util";
+import { getRelativePosition } from "../util";
 import { DrawableShip, DrawableShipProps } from "./drawable-ship";
 
 export const halfShipWidth = 16;
@@ -15,6 +16,8 @@ export const MAX_SPEED = 5;
 // TODO decide on where to place each ship initially
 export class PlayerShip extends DrawableShip {
   public readonly userControlled = true;
+  private halfCanvasWidth: number = 0;
+  private halfCanvasHeight: number = 0;
   constructor(props: DrawableShipProps) {
     super({
       ...props,
@@ -26,13 +29,22 @@ export class PlayerShip extends DrawableShip {
   }
 
   registerKeydownHandler() {
-    document.addEventListener("keydown", this.handleKeydown)
+    document.addEventListener("keydown", this.handleKeydown);
+    document.addEventListener("mousemove", this.handleMousemove);
   }
 
   handleShipDied = () => {
     document.removeEventListener("keydown", this.handleKeydown);
+    document.removeEventListener("mousemove", this.handleMousemove);
     this.isDead = true;
     this.speed = 0;
+  }
+
+  handleMousemove = (e: MouseEvent) => {
+    const {clientX, clientY} = e;
+    console.log(`${e.clientX},${e.clientY}`);
+    const {x, y} = getRelativePosition(this.halfCanvasWidth, this.halfCanvasHeight, clientX, clientY, this.x, this.y);
+    this.deg = getDegBetweenPoints([x, y], [this.x, this.y]) + 90;
   }
 
   handleKeydown(e: KeyboardEvent) {

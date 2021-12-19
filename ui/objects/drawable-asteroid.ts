@@ -5,10 +5,9 @@ import explosionImg from "../../assets/explosion.png";
 import { getSectionsMap } from "../util";
 import { AsteroidDTO, GameObjectDTO } from "../../shared/types";
 import { EXPLOSION_LOCATIONS, SRC_EXPLOSION_WIDTH } from "../constants";
-import { MIN_ASTEROID_HEIGHT } from "../../shared/constants";
 import { SocketEventEmitter } from "../game-engine/socket-event-emitter";
-import { DrawableObject, isDrawableAsteroid, isDrawableLaserBeam } from "../game-engine/types";
 import { Drawable } from "./drawable";
+import { Canvas } from "../game-engine/canvas";
 
 export const ASTEROID_HEIGHT = 32;
 export const ASTEROID_WIDTH = 32;
@@ -17,6 +16,7 @@ export const EXPLOSION_WIDTH = 96;
 export interface DrawableAsteroidProps extends AsteroidDTO {
   onFinishedExploding: (self: DrawableAsteroid) => void;
   eventEmitter: SocketEventEmitter;
+  canvas: Canvas;
 }
 
 export class DrawableAsteroid extends Drawable {
@@ -65,9 +65,9 @@ export class DrawableAsteroid extends Drawable {
     return this.asteroidImg.loaded && this.explosionImg.loaded;
   }
 
-  private drawExplosion(context: CanvasRenderingContext2D, shipX: number, shipY: number, halfCanvasWidth: number, halfCanvasHeight: number) {
+  private drawExplosion(context: CanvasRenderingContext2D, shipX: number, shipY: number) {
     this.explosionImg.frame = this.getThrottledExplosionIndex()
-    this.explosionImg.draw(context, shipX, shipY, halfCanvasWidth, halfCanvasHeight);
+    this.explosionImg.draw(context, shipX, shipY);
 
     this.explosionIndex++;
 
@@ -80,16 +80,16 @@ export class DrawableAsteroid extends Drawable {
     return Math.floor(this.explosionIndex / 2);
   }
 
-  draw(context: CanvasRenderingContext2D, shipX: number, shipY: number, halfCanvasWidth: number, halfCanvasHeight: number) {
+  draw(context: CanvasRenderingContext2D, shipX: number, shipY: number) {
     if (!this.isLoaded()) {
       console.error("This image has not loaded yet");
       return;
     }
 
     if (this.isDead && this.getThrottledExplosionIndex() < EXPLOSION_LOCATIONS.length) {
-      this.drawExplosion(context, shipX, shipY, halfCanvasWidth, halfCanvasHeight);
+      this.drawExplosion(context, shipX, shipY);
     } else if (!this.isDead) {
-      this.asteroidImg.draw(context, shipX, shipY, halfCanvasWidth, halfCanvasHeight);
+      this.asteroidImg.draw(context, shipX, shipY);
     }
   }
 

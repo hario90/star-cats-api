@@ -13,6 +13,7 @@ import { DrawableLaserBeam } from "../objects/drawable-laser-beam";
 import { DrawableShip } from "../objects/drawable-ship";
 import { PlayerShip } from "../objects/player-ship";
 import { Section } from "../objects/section";
+import { Canvas } from "./canvas";
 import { DrawableObjectMap } from "./drawable-object-map";
 import { SocketEventEmitter } from "./socket-event-emitter";
 import { DrawableObject, isDrawableShip, isDrawableAsteroid, isDrawableGem, isDrawableLaserBeam } from "./types";
@@ -39,13 +40,12 @@ export class GameObjectManager {
     public asteroids: DrawableObjectMap<DrawableAsteroid> = new DrawableObjectMap();
     public laserBeams: DrawableObjectMap<DrawableLaserBeam> = new DrawableObjectMap();
     public gems: DrawableObjectMap<DrawableGem> = new DrawableObjectMap();
-    public alerts: Alerts = new Alerts();
+    public alerts: Alerts;
     private eventEmitter: SocketEventEmitter;
-    private socket: Socket;
     private evilShips: Set<string> = new Set();
 
-    constructor(socket: Socket) {
-        this.socket = socket;
+    constructor(private socket: Socket, private canvas: Canvas) {
+        this.alerts = new Alerts(this.canvas);
         this.eventEmitter = new SocketEventEmitter(socket);
         this.background = new Background();
         // use another canvas to create and render the background
@@ -435,6 +435,7 @@ export class GameObjectManager {
                 }
             },
             onShoot: this.onShoot,
+            canvas: this.canvas
         });
     }
 
@@ -454,7 +455,8 @@ export class GameObjectManager {
                 onFinishedExploding: () => {
                     this.alerts.push(`You died!`);
                 },
-                onShoot: this.onShoot
+                onShoot: this.onShoot,
+                canvas: this.canvas
             },
         );
 
@@ -468,6 +470,7 @@ export class GameObjectManager {
             ...dto,
             eventEmitter: this.eventEmitter,
             onFinishedExploding: this.onAsteroidFinishedExploding,
+            canvas: this.canvas
         });
     }
 
@@ -475,6 +478,7 @@ export class GameObjectManager {
         return new DrawableGem({
             ...dto,
             eventEmitter: this.eventEmitter,
+            canvas: this.canvas
         });
     }
 
@@ -482,6 +486,7 @@ export class GameObjectManager {
         return new DrawableLaserBeam({
             ...dto,
             eventEmitter: this.eventEmitter,
+            canvas: this.canvas
         });
     }
  }

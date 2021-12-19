@@ -9,6 +9,7 @@ import { GameObjectDTO, GameObjectType, LaserBeamDTO, ShipDTO } from "../../shar
 import { Coordinate } from "../../shared/util";
 import { EXPLOSION_LOCATIONS, SRC_EXPLOSION_WIDTH } from "../constants";
 import { ImageComponent } from "../component";
+import { Canvas } from "../game-engine/canvas";
 
 const frameToLocation = new Map([
   [BattleShipFrame.NORMAL, [0, 0]],
@@ -42,6 +43,7 @@ export interface DrawableShipProps extends ShipDTO {
   onFinishedExploding: (name: string) => void;
   onShoot: (laserBeam: LaserBeamDTO) => void;
   isMainShip?: boolean;
+  canvas: Canvas;
 }
 
 const MAX_NUM_LIVES = 5;
@@ -191,7 +193,7 @@ export class DrawableShip extends Drawable {
 
   private drawExplosion =(context: CanvasRenderingContext2D, shipX: number, shipY: number, halfCanvasWidth: number, halfCanvasHeight: number) => {
     this.explosionImg.frame = this.getThrottledExplosionIndex();
-    this.explosionImg.draw(context, shipX, shipY, halfCanvasWidth, halfCanvasHeight)
+    this.explosionImg.draw(context, shipX, shipY)
     this.explosionIndex++;
 
     if (this.getThrottledExplosionIndex() >= EXPLOSION_LOCATIONS.length) {
@@ -243,12 +245,14 @@ export class DrawableShip extends Drawable {
     return this.shipImg.loaded && this.explosionImg.loaded;
   }
 
-  draw = (context: CanvasRenderingContext2D, shipX: number, shipY: number,
-    halfCanvasWidth: number, halfCanvasHeight: number): void => {
+  draw = (context: CanvasRenderingContext2D, shipX: number, shipY: number): void => {
     if (!this.isLoaded()) {
       console.error("Image has not loaded yet");
       return;
     }
+
+    const halfCanvasWidth = this.canvas.halfWidth;
+    const halfCanvasHeight = this.canvas.halfHeight;
 
     context.save();
     // always render ship at center of screen
@@ -279,12 +283,12 @@ export class DrawableShip extends Drawable {
         this.shipImg.frame = this.speed - 1;
 
         if (this.hit > 0) {
-          this.shipImg.drawTinted(context, shipX, shipY, halfCanvasWidth, halfCanvasHeight, "red");
+          this.shipImg.drawTinted(context, shipX, shipY, "red");
           this.hit--;
         } else if (!this.userControlled) {
-          this.shipImg.drawTinted(context, shipX, shipY, halfCanvasWidth, halfCanvasHeight, "green");
+          this.shipImg.drawTinted(context, shipX, shipY, "green");
         } else {
-          this.shipImg.draw(context, shipX, shipY, halfCanvasWidth, halfCanvasHeight);
+          this.shipImg.draw(context, shipX, shipY);
         }
       }
 

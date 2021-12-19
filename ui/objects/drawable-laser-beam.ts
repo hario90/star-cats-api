@@ -1,5 +1,6 @@
 import { GameObjectDTO, GameObjectType, LaserBeamDTO, ISection } from "../../shared/types";
 import { COL_THICKNESS, isPointOverlappingWithSection, ROW_THICKNESS } from "../../shared/util";
+import { Canvas } from "../game-engine/canvas";
 import { SocketEventEmitter } from "../game-engine/socket-event-emitter";
 import { getRelativePosition } from "../util";
 import { Drawable } from "./drawable";
@@ -7,6 +8,7 @@ import { Section } from "./section";
 
 export interface DrawableLaserBeamProps extends LaserBeamDTO {
     eventEmitter: SocketEventEmitter;
+    canvas: Canvas;
 }
 export class DrawableLaserBeam extends Drawable {
     public prevSection: Section | undefined;
@@ -41,7 +43,9 @@ export class DrawableLaserBeam extends Drawable {
         return isPointOverlappingWithSection(endpoint, section);
     }
 
-    draw(context: CanvasRenderingContext2D, shipX: number, shipY: number, halfCanvasWidth: number, halfCanvasHeight: number): void {
+    draw(context: CanvasRenderingContext2D, shipX: number, shipY: number): void {
+        const halfCanvasWidth = this.canvas.halfWidth;
+        const halfCanvasHeight = this.canvas.halfHeight;
         if (!this.isDead) {
             const [endX, endY] = this.getEndpoint();
             const {x, y} = getRelativePosition(halfCanvasWidth, halfCanvasHeight, shipX, shipY, this.x, this.y);

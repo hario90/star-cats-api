@@ -78,7 +78,9 @@ export class ImageComponent extends Drawable {
     };
   }
 
-  drawTinted = (context: CanvasRenderingContext2D, shipX: number, shipY: number, halfCanvasWidth: number, halfCanvasHeight: number, color: string) => {
+  drawTinted = (context: CanvasRenderingContext2D, shipX: number, shipY: number, color: string) => {
+    const halfCanvasWidth = this.canvas.halfWidth;
+    const halfCanvasHeight = this.canvas.halfHeight;
     let c = this.colorToCanvas.get(color);
     if (!c) {
       c = this.createTint(color);
@@ -110,11 +112,14 @@ export class ImageComponent extends Drawable {
     context.globalCompositeOperation='source-over';
   }
 
-  draw(context: CanvasRenderingContext2D, shipX: number, shipY: number, halfCanvasWidth: number, halfCanvasHeight: number) {
+  draw(context: CanvasRenderingContext2D, shipX: number, shipY: number) {
     if (!this.loaded) {
       console.error("This image has not loaded yet");
       return;
     }
+
+    const halfCanvasWidth = this.canvas.halfWidth;
+    const halfCanvasHeight = this.canvas.halfHeight;
 
     context.save();
     const {x, y} = getRelativePosition(halfCanvasWidth, halfCanvasHeight, shipX, shipY, this.x, this.y);

@@ -1,11 +1,11 @@
 import { GameObject } from "../../shared/objects/game-object";
 import { GameObjectDTO } from "../../shared/types";
 import { ROW_THICKNESS, COL_THICKNESS, NUM_ROWS, NUM_COLUMNS } from "../../shared/util";
-import { SocketEventEmitter } from "../game-engine/socket-event-emitter";
-import { DrawableObject } from "../game-engine/types";
+import { Canvas } from "../game-engine/canvas";
 import { Section } from "./section";
 
 export interface DrawableProps extends GameObjectDTO {
+  canvas: Canvas;
 }
 
 export abstract class Drawable extends GameObject {
@@ -14,9 +14,11 @@ export abstract class Drawable extends GameObject {
     public userId: string | undefined = undefined;
     public isDead: boolean | undefined = false;
     public sections: Map<string, Section> = new Map();
+    protected canvas: Canvas;
 
     constructor(props: DrawableProps) {
         super(props);
+        this.canvas = props.canvas;
     }
 
     abstract update<T extends GameObject>(ship: T): void;
@@ -70,9 +72,11 @@ export abstract class Drawable extends GameObject {
         return Math.round(this.width / 2);
     }
 
-  abstract draw(context: CanvasRenderingContext2D, shipX: number, shipY: number, halfCanvasWidth: number, halfCanvasHeight: number): void;
+  abstract draw(context: CanvasRenderingContext2D, shipX: number, shipY: number): void;
 
-  isInFrame(halfCanvasWidth: number, halfCanvasHeight: number): boolean {
+  isInFrame(): boolean {
+    const halfCanvasWidth = this.canvas.halfWidth;
+    const halfCanvasHeight = this.canvas.halfHeight;
     const [x, y] = this.getPosition();
     const minX = x - halfCanvasWidth;
     const maxX = x + halfCanvasWidth;

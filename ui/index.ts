@@ -16,7 +16,7 @@ const startGame = async (nickName: string) => {
     transports: ["websocket"]
   });
 
-  const renderer = new Renderer(appEl, socket, nickName);
+  const renderer = new Renderer(appEl, socket);
   await renderer.pollUntilReady();
   renderer.animate();
 };
