@@ -60,8 +60,10 @@ export class DrawableShip extends Drawable {
   private onFinishedExploding: (name: string) => void;
   private onShoot: (laserBeam: LaserBeamDTO) => void;
   private hit = 0;
+  public currentKeysDown: Set<string> = new Set();
   public isMainShip = false;
   public targetId?: string;
+  public shootDeg = 0;
 
   public name: string;
   public lives: number = MAX_NUM_LIVES;
@@ -77,6 +79,7 @@ export class DrawableShip extends Drawable {
 
   constructor(props: DrawableShipProps) {
     super(props);
+    this.shootDeg = props.deg;
     this.targetId = props.targetId;
     this.isMainShip = props.isMainShip ?? false;
     this.speed = Math.max(props.speed ?? 1, 1);
@@ -143,7 +146,8 @@ export class DrawableShip extends Drawable {
       lives: this.lives,
       healthPoints: this.healthPoints,
       userControlled: this.userControlled,
-      targetId: this.targetId
+      targetId: this.targetId,
+      shootDeg: this.shootDeg,
     }
   }
 
@@ -169,13 +173,13 @@ export class DrawableShip extends Drawable {
   }
 
   public shoot() {
-    const [x, y] = this.getNextPosition(Math.round(this.height / 2))
+    const [x, y] = this.getNextPosition(Math.round(this.height / 2), this.shootDeg)
     const laserBeam: LaserBeamDTO = {
       x,
       y,
       type: GameObjectType.LaserBeam,
       // deg represents the angle going clockwise down from the positive x-axis
-      deg: this.deg - 90,
+      deg: this.shootDeg,
       speed: 20,
       height: 30,
       width: 10,
@@ -280,6 +284,20 @@ export class DrawableShip extends Drawable {
       }
 
       if (!this.isDead || (this.isComingBackToLife && this.showShip)) {
+        if (this.currentKeysDown.has("Shift")) {
+          context.beginPath();
+          context.strokeStyle = "#33fff8";
+          context.arc(x, y, this.width, 0, 2 * Math.PI);
+          context.stroke();
+          context.beginPath();
+          context.setLineDash([5,5,5,5,5,5])
+          context.moveTo(x, y);
+          const lineEndPoint = this.getNextPosition(100, this.shootDeg);
+          const relativeLineEndPoint = getRelativePosition(halfCanvasWidth, halfCanvasHeight, shipX, shipY, lineEndPoint[0], lineEndPoint[1]);
+          context.lineTo(relativeLineEndPoint.x, relativeLineEndPoint.y);
+          context.stroke();
+          context.setLineDash([]);
+        }
         this.shipImg.frame = this.speed - 1;
 
         if (this.hit > 0) {

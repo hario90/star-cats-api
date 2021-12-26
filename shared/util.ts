@@ -102,5 +102,5 @@ export function getDegBetweenPoints(o1: [number, number], o2: [number, number]):
     result = (360 - normalDeg);
   }
 
-  return result;
+  return result % 360;
 }

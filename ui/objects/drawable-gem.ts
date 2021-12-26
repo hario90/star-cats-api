@@ -30,6 +30,7 @@ export class DrawableGem extends Drawable {
     this.width = 30;
     this.radius = 15;
     this.height = 30;
+    this.speed = 0;
     let src = gemImg1;
     switch(this.points) {
       case 2:
@@ -47,6 +48,7 @@ export class DrawableGem extends Drawable {
     }
     this.gemImg = new ImageComponent({
       ...gem,
+      speed: 0,
       height: this.height,
       width: this.width,
       src,
@@ -68,11 +70,12 @@ export class DrawableGem extends Drawable {
     }
 
     if (!this.isDead) {
-      this.gemImg.draw(context, shipX, shipY)
+      this.gemImg.draw(context, shipX, shipY);
     }
   }
 
-  public update<T extends GameObjectDTO>({x, y, speed, deg, height, width}: T): void {
+  public update<T extends GameObjectDTO>(dto: T): void {
+    const {x, y, speed, deg, height, width} = dto;
     this.speed = speed;
     this.deg = deg;
     this.height = height;
@@ -80,6 +83,7 @@ export class DrawableGem extends Drawable {
     this.x = x;
     this.y = y;
     this.sections = this.getCurrentSections();
+    this.gemImg.update(dto);
   }
 
   public toDTO(): GemDTO {

@@ -72,7 +72,7 @@ export abstract class GameObject implements IGameObject {
         if (heading < 0) {
           heading = 360 + heading;
         }
-        let deg = heading;
+        let deg = Math.round(heading);
         const minX = this.getRadius();
         const maxX = BOARD_WIDTH - this.getRadius();
         const minY = this.getRadius();

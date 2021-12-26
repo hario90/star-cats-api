@@ -219,7 +219,6 @@ export class GameObjectManager {
                 const laserBeamId = gameObject.id;
                 this.laserBeams.delete(laserBeamId);
                 if (gameObject.fromShipId === this.ship?.id || this.shipIdIsEvilShipControlledByMe(gameObject.fromShipId)) {
-                    console.log('deleting laser beam')
                     this.eventEmitter.deleteLaserBeam(laserBeamId);
                 }
                 return [x, y];
@@ -341,6 +340,7 @@ export class GameObjectManager {
 
         const distanceBetweenShips = Math.floor(distanceBetweenObjects(evilShip, this.ship));
         if (distanceBetweenShips <= DISTANCE_EVIL_SHIP_STARTS_SHOOTING && distanceBetweenShips % SHOOTING_FREQUENCY === 0) {
+            evilShip.shootDeg = getDegBetweenPoints([evilShip.x, evilShip.y], [this.ship.x, this.ship.y]);
             evilShip.shoot();
         }
         return getDegBetweenPoints([evilShip.x, evilShip.y], [this.ship.x, this.ship.y]) + 90;

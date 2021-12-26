@@ -34,6 +34,7 @@ export function generateRandomShip(ship: Partial<ShipDTO>) {
         y: Math.random() * BOARD_HEIGHT,
         speed: Math.floor(1 + Math.random() * 4),
         deg: 0,
+        shootDeg: 0,
         height: 2 * halfShipHeight,
         width: 2 * halfShipWidth,
         id: uuidV4(),

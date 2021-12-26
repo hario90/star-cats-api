@@ -33,6 +33,7 @@ export interface GameObjectDTO extends PositionInfoDTO {
     id: string;
     type: GameObjectType;
     userControlled: boolean;
+    shootDeg?: number;
 }
 
 export interface ShipDTO extends GameObjectDTO {
