@@ -20,7 +20,7 @@ export enum GameObjectType {
     Ship = "SHIP",
     Asteroid = "ASTEROID",
     LaserBeam = "LASER_BEAM",
-    Gem = "GEM"
+    Gem = "GEM",
 }
 
 export interface IGameObject extends PositionInfo {
@@ -64,9 +64,12 @@ export interface GemDTO extends GameObjectDTO {
     points?: number;
 }
 
-export const isShipDTO = (obj: GameObjectDTO): obj is ShipDTO => obj.type === GameObjectType.Ship;
-export const isLaserBeamDTO = (obj: GameObjectDTO): obj is LaserBeamDTO => obj.type === GameObjectType.LaserBeam;
-export const isAsteroidDTO = (obj: GameObjectDTO): obj is AsteroidDTO => obj.type === GameObjectType.Asteroid
+export const isShipDTO = (obj: GameObjectDTO): obj is ShipDTO =>
+    obj.type === GameObjectType.Ship;
+export const isLaserBeamDTO = (obj: GameObjectDTO): obj is LaserBeamDTO =>
+    obj.type === GameObjectType.LaserBeam;
+export const isAsteroidDTO = (obj: GameObjectDTO): obj is AsteroidDTO =>
+    obj.type === GameObjectType.Asteroid;
 
 export interface SocketAuth {
     name: string;
@@ -103,5 +106,5 @@ export interface ISection {
 export interface ShipDamageArgs {
     laserBeamId?: string;
     shipId?: string;
-    asteroidId?: string
+    asteroidId?: string;
 }

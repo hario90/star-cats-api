@@ -1,5 +1,11 @@
 import { Socket } from "socket.io-client";
-import { AsteroidDTO, GameEventType, GemDTO, LaserBeamDTO, ShipDamageArgs } from "../../shared/types";
+import {
+    AsteroidDTO,
+    GameEventType,
+    GemDTO,
+    LaserBeamDTO,
+    ShipDamageArgs,
+} from "../../shared/types";
 import { DrawableObject } from "./types";
 
 export class SocketEventEmitter {
@@ -16,7 +22,11 @@ export class SocketEventEmitter {
         this.socket.emit(GameEventType.DeleteLaserBeam, id);
     }
 
-    gameObjectMoved(emitType: GameEventType, object: DrawableObject, cb?: (dtos: DrawableObject[]) => void): void {
+    gameObjectMoved(
+        emitType: GameEventType,
+        object: DrawableObject,
+        cb?: (dtos: DrawableObject[]) => void
+    ): void {
         if (object.isDead) {
             return;
         }
@@ -24,23 +34,75 @@ export class SocketEventEmitter {
         this.socket.emit(emitType, object.toDTO(), cb);
     }
 
-    shipDamaged(shipId: string, onShipDamage: (shipId: string, healthPoints: number, lives: number, evilShipsToRemove: string[]) => void, shipDamageArgs: ShipDamageArgs) {
-        this.socket.emit(GameEventType.ShipDamage, shipId, shipDamageArgs, onShipDamage);
+    shipDamaged(
+        shipId: string,
+        onShipDamage: (
+            shipId: string,
+            healthPoints: number,
+            lives: number,
+            evilShipsToRemove: string[]
+        ) => void,
+        shipDamageArgs: ShipDamageArgs
+    ) {
+        this.socket.emit(
+            GameEventType.ShipDamage,
+            shipId,
+            shipDamageArgs,
+            onShipDamage
+        );
     }
 
-    shipExploded(shipId: string, shipExploded: (shipId: string, lives: number, laserBeamId?: string) => void, laserBeamId?: string) {
-        this.socket.emit(GameEventType.ShipExploded, shipId, laserBeamId, shipExploded);
+    shipExploded(
+        shipId: string,
+        shipExploded: (
+            shipId: string,
+            lives: number,
+            laserBeamId?: string
+        ) => void,
+        laserBeamId?: string
+    ) {
+        this.socket.emit(
+            GameEventType.ShipExploded,
+            shipId,
+            laserBeamId,
+            shipExploded
+        );
     }
 
-    asteroidHitByLaserBeam(asteroid: AsteroidDTO, laserBeamId: string, asteroidHit: (asteroidDTO1: AsteroidDTO, asteroidDTO2: AsteroidDTO) => void) {
-        this.socket.emit(GameEventType.AsteroidHit, asteroid, laserBeamId, asteroidHit);
+    asteroidHitByLaserBeam(
+        asteroid: AsteroidDTO,
+        laserBeamId: string,
+        asteroidHit: (
+            asteroidDTO1: AsteroidDTO,
+            asteroidDTO2: AsteroidDTO
+        ) => void
+    ) {
+        this.socket.emit(
+            GameEventType.AsteroidHit,
+            asteroid,
+            laserBeamId,
+            asteroidHit
+        );
     }
 
-    asteroidExploded(asteroidDTO: AsteroidDTO, laserBeamId: string, addGem: (gem: GemDTO) => void) {
-        this.socket.emit(GameEventType.AsteroidExploded, asteroidDTO, laserBeamId, addGem);
+    asteroidExploded(
+        asteroidDTO: AsteroidDTO,
+        laserBeamId: string,
+        addGem: (gem: GemDTO) => void
+    ) {
+        this.socket.emit(
+            GameEventType.AsteroidExploded,
+            asteroidDTO,
+            laserBeamId,
+            addGem
+        );
     }
 
-    shipPickedUpGem(shipId: string, gemId: string, cb: (shipId: string, gemId: string, shipPoints: number) => void) {
+    shipPickedUpGem(
+        shipId: string,
+        gemId: string,
+        cb: (shipId: string, gemId: string, shipPoints: number) => void
+    ) {
         this.socket.emit(GameEventType.ShipPickedUpGem, shipId, gemId, cb);
     }
 }

@@ -8,7 +8,7 @@ export class Canvas {
         appEl.appendChild(this._canvasEl);
         const context = this._canvasEl.getContext("2d");
         if (!context) {
-          throw new Error("no context");
+            throw new Error("no context");
         }
         this._context = context;
         window.addEventListener("resize", this.setHeightWidth);
@@ -17,7 +17,7 @@ export class Canvas {
 
     public makeVisible = () => {
         this._canvasEl.className = "visible";
-    }
+    };
 
     public get canvasEl() {
         return this._canvasEl;
@@ -50,7 +50,7 @@ export class Canvas {
             this._halfWidth = Math.floor(this._canvasEl.width / 2);
             this._halfHeight = Math.floor(this._canvasEl.height / 2);
         } else {
-            throw new Error("Canvas not defined!")
+            throw new Error("Canvas not defined!");
         }
-    }
+    };
 }

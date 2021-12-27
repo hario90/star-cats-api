@@ -13,8 +13,33 @@ export class Ship extends GameObject {
     public targetId?: string;
     public shootDeg?: number;
 
-    constructor({id, x, y, healthPoints, lives, shootDeg, deg = 0, speed = 1, height = 2 * halfShipHeight, width = 2 * halfShipWidth, name, points, userControlled, targetId}: ShipDTO) {
-        super({id, x, y, deg, speed, height, width, type: GameObjectType.Ship, userControlled});
+    constructor({
+        id,
+        x,
+        y,
+        healthPoints,
+        lives,
+        shootDeg,
+        deg = 0,
+        speed = 1,
+        height = 2 * halfShipHeight,
+        width = 2 * halfShipWidth,
+        name,
+        points,
+        userControlled,
+        targetId,
+    }: ShipDTO) {
+        super({
+            id,
+            x,
+            y,
+            deg,
+            speed,
+            height,
+            width,
+            type: GameObjectType.Ship,
+            userControlled,
+        });
         this.name = name || "Unnamed Vigilante";
         this.points = points ?? 0;
         this.healthPoints = healthPoints ?? 0;
@@ -25,36 +50,36 @@ export class Ship extends GameObject {
     }
 
     getHeading(): number {
-      return this.deg - 90;
+        return this.deg - 90;
     }
 
     reduceHealthPoints(reduceBy: number) {
-      this.healthPoints -= reduceBy;
-      if (this.healthPoints <= 0) {
-        this.lives--;
-        if (this.lives > 0) {
-          this.healthPoints = MAX_HEALTH_POINTS;
+        this.healthPoints -= reduceBy;
+        if (this.healthPoints <= 0) {
+            this.lives--;
+            if (this.lives > 0) {
+                this.healthPoints = MAX_HEALTH_POINTS;
+            }
         }
-      }
     }
 
     public toDTO(): ShipDTO {
         return {
-          x: this.x,
-          y: this.y,
-          height: this.height,
-          width: this.width,
-          name: this.name,
-          id: this.id,
-          points: this.points,
-          deg: this.deg,
-          shootDeg: this.shootDeg,
-          speed: this.speed,
-          type: this.type,
-          healthPoints: this.healthPoints,
-          lives: this.lives,
-          userControlled: this.userControlled,
-          targetId: this.targetId,
-        }
-      }
+            x: this.x,
+            y: this.y,
+            height: this.height,
+            width: this.width,
+            name: this.name,
+            id: this.id,
+            points: this.points,
+            deg: this.deg,
+            shootDeg: this.shootDeg,
+            speed: this.speed,
+            type: this.type,
+            healthPoints: this.healthPoints,
+            lives: this.lives,
+            userControlled: this.userControlled,
+            targetId: this.targetId,
+        };
+    }
 }

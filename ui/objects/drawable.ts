@@ -1,11 +1,16 @@
 import { GameObject } from "../../shared/objects/game-object";
 import { GameObjectDTO } from "../../shared/types";
-import { ROW_THICKNESS, COL_THICKNESS, NUM_ROWS, NUM_COLUMNS } from "../../shared/util";
+import {
+    ROW_THICKNESS,
+    COL_THICKNESS,
+    NUM_ROWS,
+    NUM_COLUMNS,
+} from "../../shared/util";
 import { Canvas } from "../game-engine/canvas";
 import { Section } from "./section";
 
 export interface DrawableProps extends GameObjectDTO {
-  canvas: Canvas;
+    canvas: Canvas;
 }
 
 export abstract class Drawable extends GameObject {
@@ -72,49 +77,53 @@ export abstract class Drawable extends GameObject {
         return Math.round(this.width / 2);
     }
 
-  abstract draw(context: CanvasRenderingContext2D, shipX: number, shipY: number): void;
+    abstract draw(
+        context: CanvasRenderingContext2D,
+        shipX: number,
+        shipY: number
+    ): void;
 
-  isInFrame(): boolean {
-    const halfCanvasWidth = this.canvas.halfWidth;
-    const halfCanvasHeight = this.canvas.halfHeight;
-    const [x, y] = this.getPosition();
-    const minX = x - halfCanvasWidth;
-    const maxX = x + halfCanvasWidth;
-    const minY = y - halfCanvasHeight;
-    const maxY = y + halfCanvasHeight;
-    return x >= minX && x <= maxX && y >= minY && y <= maxY;
-  }
-
-  getCurrentSections() {
-    const currSections = new Map<string, Section>();
-    const row = Math.floor(this.y / ROW_THICKNESS);
-    const col = Math.floor(this.x / COL_THICKNESS);
-
-    // what section is the top point in?
-    const topPointRow = Math.floor(this.minY / ROW_THICKNESS);
-    if (topPointRow < NUM_ROWS && topPointRow >= 0) {
-      const topSection = new Section(topPointRow, col);
-      currSections.set(topSection.key, topSection);
+    isInFrame(): boolean {
+        const halfCanvasWidth = this.canvas.halfWidth;
+        const halfCanvasHeight = this.canvas.halfHeight;
+        const [x, y] = this.getPosition();
+        const minX = x - halfCanvasWidth;
+        const maxX = x + halfCanvasWidth;
+        const minY = y - halfCanvasHeight;
+        const maxY = y + halfCanvasHeight;
+        return x >= minX && x <= maxX && y >= minY && y <= maxY;
     }
 
-    const rightPointCol = Math.floor(this.maxX / COL_THICKNESS);
-    if (rightPointCol < NUM_COLUMNS && rightPointCol >= 0) {
-      const rightSection = new Section(row, rightPointCol);
-      currSections.set(rightSection.key, rightSection);
-    }
+    getCurrentSections() {
+        const currSections = new Map<string, Section>();
+        const row = Math.floor(this.y / ROW_THICKNESS);
+        const col = Math.floor(this.x / COL_THICKNESS);
 
-    const bottomPointRow = Math.floor(this.maxY / ROW_THICKNESS);
-    if (bottomPointRow < NUM_ROWS && bottomPointRow >= 0) {
-      const bottomSection = new Section(bottomPointRow, col);
-      currSections.set(bottomSection.key, bottomSection);
-    }
+        // what section is the top point in?
+        const topPointRow = Math.floor(this.minY / ROW_THICKNESS);
+        if (topPointRow < NUM_ROWS && topPointRow >= 0) {
+            const topSection = new Section(topPointRow, col);
+            currSections.set(topSection.key, topSection);
+        }
 
-    const leftPointCol = Math.floor(this.minX / COL_THICKNESS);
-    if (leftPointCol < NUM_COLUMNS && leftPointCol >= 0) {
-      const leftSection = new Section(row, leftPointCol);
-      currSections.set(leftSection.key, leftSection);
-    }
+        const rightPointCol = Math.floor(this.maxX / COL_THICKNESS);
+        if (rightPointCol < NUM_COLUMNS && rightPointCol >= 0) {
+            const rightSection = new Section(row, rightPointCol);
+            currSections.set(rightSection.key, rightSection);
+        }
 
-    return currSections;
-  }
+        const bottomPointRow = Math.floor(this.maxY / ROW_THICKNESS);
+        if (bottomPointRow < NUM_ROWS && bottomPointRow >= 0) {
+            const bottomSection = new Section(bottomPointRow, col);
+            currSections.set(bottomSection.key, bottomSection);
+        }
+
+        const leftPointCol = Math.floor(this.minX / COL_THICKNESS);
+        if (leftPointCol < NUM_COLUMNS && leftPointCol >= 0) {
+            const leftSection = new Section(row, leftPointCol);
+            currSections.set(leftSection.key, leftSection);
+        }
+
+        return currSections;
+    }
 }

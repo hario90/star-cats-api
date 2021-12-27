@@ -1,5 +1,14 @@
-import { GameObjectDTO, GameObjectType, LaserBeamDTO, ISection } from "../../shared/types";
-import { COL_THICKNESS, isPointOverlappingWithSection, ROW_THICKNESS } from "../../shared/util";
+import {
+    GameObjectDTO,
+    GameObjectType,
+    LaserBeamDTO,
+    ISection,
+} from "../../shared/types";
+import {
+    COL_THICKNESS,
+    isPointOverlappingWithSection,
+    ROW_THICKNESS,
+} from "../../shared/util";
 import { Canvas } from "../game-engine/canvas";
 import { SocketEventEmitter } from "../game-engine/socket-event-emitter";
 import { getRelativePosition } from "../util";
@@ -14,8 +23,8 @@ export class DrawableLaserBeam extends Drawable {
     public prevSection: Section | undefined;
     public readonly fromShipId: string;
 
-    constructor({color, fromShipId, ...rest}: DrawableLaserBeamProps) {
-        super({...rest, type:GameObjectType.LaserBeam});
+    constructor({ color, fromShipId, ...rest }: DrawableLaserBeamProps) {
+        super({ ...rest, type: GameObjectType.LaserBeam });
         this.radius = 0;
         this.sections.set(this.section.key, this.section);
         this.fromShipId = fromShipId || "unknown";
@@ -24,7 +33,7 @@ export class DrawableLaserBeam extends Drawable {
     get section(): Section {
         const row = Math.floor(this.y / ROW_THICKNESS);
         const col = Math.floor(this.x / COL_THICKNESS);
-        const section =  new Section(row, col);
+        const section = new Section(row, col);
         return section;
     }
 
@@ -43,13 +52,31 @@ export class DrawableLaserBeam extends Drawable {
         return isPointOverlappingWithSection(endpoint, section);
     }
 
-    draw(context: CanvasRenderingContext2D, shipX: number, shipY: number): void {
+    draw(
+        context: CanvasRenderingContext2D,
+        shipX: number,
+        shipY: number
+    ): void {
         const halfCanvasWidth = this.canvas.halfWidth;
         const halfCanvasHeight = this.canvas.halfHeight;
         if (!this.isDead) {
             const [endX, endY] = this.getEndpoint();
-            const {x, y} = getRelativePosition(halfCanvasWidth, halfCanvasHeight, shipX, shipY, this.x, this.y);
-            const {x: relativeEndX, y: relativeEndY} = getRelativePosition(halfCanvasWidth, halfCanvasHeight, shipX, shipY, endX, endY);
+            const { x, y } = getRelativePosition(
+                halfCanvasWidth,
+                halfCanvasHeight,
+                shipX,
+                shipY,
+                this.x,
+                this.y
+            );
+            const { x: relativeEndX, y: relativeEndY } = getRelativePosition(
+                halfCanvasWidth,
+                halfCanvasHeight,
+                shipX,
+                shipY,
+                endX,
+                endY
+            );
             context.strokeStyle = "#03fcdf";
             context.beginPath();
             context.moveTo(x, y);
@@ -68,15 +95,15 @@ export class DrawableLaserBeam extends Drawable {
 
     public toDTO(): LaserBeamDTO {
         return {
-          id: this.id,
-          x: this.x,
-          y: this.y,
-          deg: this.deg,
-          speed: this.speed,
-          height: this.height,
-          width: this.width,
-          type: this.type,
-          userControlled: this.userControlled,
+            id: this.id,
+            x: this.x,
+            y: this.y,
+            deg: this.deg,
+            speed: this.speed,
+            height: this.height,
+            width: this.width,
+            type: this.type,
+            userControlled: this.userControlled,
         };
     }
 }

@@ -3,7 +3,7 @@ import { GameObjectDTO, GameObjectType, IGameObject } from "../types";
 import { Coordinate } from "../util";
 
 export interface GameObjectProps extends GameObjectDTO {
-  sections: Set<Coordinate>;
+    sections: Set<Coordinate>;
 }
 // each object keeps track of their sections as they are moved.
 // to determine collision, first we check to see if they occupy the same section.
@@ -23,7 +23,17 @@ export abstract class GameObject implements IGameObject {
     radius: number;
     public readonly userControlled: boolean;
 
-    constructor({id, type, x, y, deg, speed, height, width, userControlled}: GameObjectDTO) {
+    constructor({
+        id,
+        type,
+        x,
+        y,
+        deg,
+        speed,
+        height,
+        width,
+        userControlled,
+    }: GameObjectDTO) {
         this.id = id;
         this.type = type;
         this.x = x;
@@ -37,27 +47,27 @@ export abstract class GameObject implements IGameObject {
     }
 
     get minX(): number {
-        return this.x - (0.5 * this.width);
+        return this.x - 0.5 * this.width;
     }
 
     get minY(): number {
-        return this.y - (0.5 * this.height);
+        return this.y - 0.5 * this.height;
     }
 
     get maxX(): number {
-        return this.x + (0.5 * this.width);
+        return this.x + 0.5 * this.width;
     }
 
     get maxY(): number {
-        return this.y + (0.5 * this.height);
+        return this.y + 0.5 * this.height;
     }
 
     move(positionInfo: GameObjectDTO) {
-      const { x, y, deg, speed } = positionInfo;
-      this.x = x;
-      this.y = y;
-      this.deg = deg;
-      this.speed = speed;
+        const { x, y, deg, speed } = positionInfo;
+        this.x = x;
+        this.y = y;
+        this.deg = deg;
+        this.speed = speed;
     }
 
     abstract toDTO(): GameObjectDTO;
@@ -70,7 +80,7 @@ export abstract class GameObject implements IGameObject {
         speed = speed ?? this.speed;
         heading = heading ?? this.getHeading();
         if (heading < 0) {
-          heading = 360 + heading;
+            heading = 360 + heading;
         }
         let deg = Math.round(heading);
         const minX = this.getRadius();
@@ -80,45 +90,45 @@ export abstract class GameObject implements IGameObject {
         let nextX = x;
         let nextY = y;
         if (heading < 90) {
-          const adjacent = Math.cos(deg * RAD) * speed;
-          const opposite = Math.sin(deg * RAD) * speed;
-          nextX = x + adjacent;
-          nextY = y + opposite;
+            const adjacent = Math.cos(deg * RAD) * speed;
+            const opposite = Math.sin(deg * RAD) * speed;
+            nextX = x + adjacent;
+            nextY = y + opposite;
         } else if (heading === 90) {
-          nextY = y + speed;
+            nextY = y + speed;
         } else if (heading < 180) {
-          deg = 180 - heading;
-          const adjacent = Math.cos(deg * RAD) * speed;
-          const opposite = Math.sin(deg * RAD) * speed;
-          nextX = x - adjacent;
-          nextY = y + opposite;
+            deg = 180 - heading;
+            const adjacent = Math.cos(deg * RAD) * speed;
+            const opposite = Math.sin(deg * RAD) * speed;
+            nextX = x - adjacent;
+            nextY = y + opposite;
         } else if (heading === 180) {
-          nextX = x - speed;
+            nextX = x - speed;
         } else if (heading < 270) {
-          deg = heading - 180;
-          const adjacent = Math.cos(deg * RAD) * speed;
-          const opposite = Math.sin(deg * RAD) * speed;
-          nextX = x - adjacent;
-          nextY = y - opposite;
+            deg = heading - 180;
+            const adjacent = Math.cos(deg * RAD) * speed;
+            const opposite = Math.sin(deg * RAD) * speed;
+            nextX = x - adjacent;
+            nextY = y - opposite;
         } else if (heading === 270) {
-          nextY = y - speed;
+            nextY = y - speed;
         } else {
-          deg = 360 - heading;
-          const adjacent = Math.cos(deg * RAD) * speed;
-          const opposite = Math.sin(deg * RAD) * speed;
-          nextX = x + adjacent;
-          nextY = y - opposite;
+            deg = 360 - heading;
+            const adjacent = Math.cos(deg * RAD) * speed;
+            const opposite = Math.sin(deg * RAD) * speed;
+            nextX = x + adjacent;
+            nextY = y - opposite;
         }
 
         if (nextX < minX) {
-          nextX = minX;
+            nextX = minX;
         } else if (nextX > maxX) {
-          nextX = maxX;
+            nextX = maxX;
         }
         if (nextY < minY) {
-          nextY = minY;
+            nextY = minY;
         } else if (nextY > maxY) {
-          nextY = maxY;
+            nextY = maxY;
         }
 
         return [nextX, nextY];

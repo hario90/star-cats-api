@@ -1,6 +1,11 @@
 import { v4 as uuidV4 } from "uuid";
 
-import { BOARD_WIDTH, BOARD_HEIGHT, halfShipHeight, halfShipWidth } from "../../shared/constants";
+import {
+    BOARD_WIDTH,
+    BOARD_HEIGHT,
+    halfShipHeight,
+    halfShipWidth,
+} from "../../shared/constants";
 import { Asteroid } from "../../shared/objects/asteroid";
 import { GameObject } from "../../shared/objects/game-object";
 import { Ship } from "../../shared/objects/ship";
@@ -11,18 +16,18 @@ export function createInitialObjects() {
     const asteroids = new Map<string, Asteroid>();
     const asteroidGenerator = new AsteroidGenerator();
     for (let i = 0; i < 20; i++) {
-      const asteroid = asteroidGenerator.random(false, asteroids.values());
-      if (asteroid) {
-        asteroids.set(asteroid.id, asteroid);
-      }
+        const asteroid = asteroidGenerator.random(false, asteroids.values());
+        if (asteroid) {
+            asteroids.set(asteroid.id, asteroid);
+        }
     }
-    return {asteroids};
-  }
+    return { asteroids };
+}
 
 export function mapToJSONList(map: Map<string, GameObject>): GameObjectDTO[] {
     const values: GameObjectDTO[] = [];
     for (const value of map.values()) {
-        values.push(value.toDTO())
+        values.push(value.toDTO());
     }
     return values;
 }
@@ -41,5 +46,5 @@ export function generateRandomShip(ship: Partial<ShipDTO>) {
         points: 0,
         userControlled: false,
         ...ship,
-      });
+    });
 }

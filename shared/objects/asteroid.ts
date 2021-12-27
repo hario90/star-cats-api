@@ -10,21 +10,21 @@ export class Asteroid extends GameObject {
     }
 
     getHeading() {
-      return this.deg;
+        return this.deg;
     }
 
     public toDTO(): AsteroidDTO {
         return {
-          id: this.id,
-          x: this.x,
-          y: this.y,
-          deg: this.deg,
-          speed: this.speed,
-          height: this.height,
-          width: this.width,
-          type: this.type,
-          gemPoints: this.gemPoints,
-          userControlled: this.userControlled
+            id: this.id,
+            x: this.x,
+            y: this.y,
+            deg: this.deg,
+            speed: this.speed,
+            height: this.height,
+            width: this.width,
+            type: this.type,
+            gemPoints: this.gemPoints,
+            userControlled: this.userControlled,
         };
-      }
+    }
 }

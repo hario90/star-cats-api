@@ -9,7 +9,7 @@
         "compile": "yarn build-ui && yarn build-server",
         "start": "node ./dist/server.js",
         "dev": "yarn build-ui && nodemon --exec \"yarn build-server && node ./dist/server.js\" -e ts --watch server",
-        "dev-ui": "webpack-dev-server --open",
+        "dev-ui": "webpack-dev-server --open"
     },
     "repository": {
         "type": "git",

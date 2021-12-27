@@ -1,4 +1,7 @@
-export const createForm = (parentEl: HTMLDivElement, setName: (name: string) => void) => {
+export const createForm = (
+    parentEl: HTMLDivElement,
+    setName: (name: string) => void
+) => {
     const formContainer = document.createElement("div");
     formContainer.className = "name-form";
     const title = document.createElement("h1");
@@ -16,7 +19,7 @@ export const createForm = (parentEl: HTMLDivElement, setName: (name: string) => 
             }
             parentEl.removeChild(formContainer);
         }
-    })
+    });
     const hint = document.createElement("p");
     hint.appendChild(document.createTextNode("[Press Enter to play]"));
     formContainer.appendChild(title);
