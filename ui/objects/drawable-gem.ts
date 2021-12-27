@@ -5,7 +5,7 @@ import gemImg4 from "../../assets/gem4.png";
 import gemImg5 from "../../assets/gem5.png";
 import { getSectionsMap } from "../util";
 import { GemDTO, GameObjectDTO, GameObjectType } from "../../shared/types";
-import { Drawable } from "./drawable";
+import { Drawable } from './drawable';
 import { SocketEventEmitter } from "../game-engine/socket-event-emitter";
 import { ImageComponent } from "../component";
 import { Canvas } from "../game-engine/canvas";
