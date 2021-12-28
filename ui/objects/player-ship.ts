@@ -1,5 +1,6 @@
+import { throttle } from "lodash";
 import { getDegBetweenPoints } from "../../shared/util";
-import { getRelativePosition } from "../util";
+import { getRelativePosition, timeout } from "../util";
 import { DrawableShip, DrawableShipProps } from "./drawable-ship";
 
 export const halfShipWidth = 16;
@@ -16,6 +17,7 @@ export const MAX_SPEED = 5;
 
 // TODO decide on where to place each ship initially
 export class PlayerShip extends DrawableShip {
+    private slowDownAnimationOn = false;
     public readonly userControlled = true;
     public currentKeysDown: Set<string> = new Set();
     constructor(props: DrawableShipProps) {
@@ -68,10 +70,13 @@ export class PlayerShip extends DrawableShip {
         } else {
             this.deg = (nextDeg + 90) % 360;
             this.shootDeg = this.deg;
+            if (!this.slowDownAnimationOn) {
+                this.slowDownAndSpeedUp(this.speed);
+            }
         }
     };
 
-    handleKeydown(e: KeyboardEvent) {
+    async handleKeydown(e: KeyboardEvent) {
         this.currentKeysDown.add(e.key);
         switch (e.key) {
             case UP:
@@ -101,6 +106,9 @@ export class PlayerShip extends DrawableShip {
                     this.shootDeg = nextDeg;
                 } else {
                     this.deg = nextDeg;
+                    if (!this.slowDownAnimationOn) {
+                        this.slowDownAndSpeedUp(this.speed);
+                    }
                 }
 
                 break;
@@ -110,6 +118,9 @@ export class PlayerShip extends DrawableShip {
                     this.shootDeg = (this.shootDeg + DEGREE_INCREMENT) % 360;
                 } else {
                     this.deg = (this.deg + DEGREE_INCREMENT) % 360;
+                    if (!this.slowDownAnimationOn) {
+                        this.slowDownAndSpeedUp(this.speed);
+                    }
                 }
 
                 break;
@@ -121,6 +132,14 @@ export class PlayerShip extends DrawableShip {
                 this.shoot();
                 break;
         }
+    }
+
+    slowDownAndSpeedUp = async (originalSpeed: number) => {
+        this.slowDownAnimationOn = true;
+        this.speed = Math.max(originalSpeed - 1, 1);
+        await timeout(500);
+        this.speed = originalSpeed;
+        this.slowDownAnimationOn = false;
     }
 
     handleKeyup = (e: KeyboardEvent) => {
