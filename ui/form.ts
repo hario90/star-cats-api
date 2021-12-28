@@ -1,3 +1,5 @@
+const NICKNAME = "star-cats-nickname";
+const DEFAULT_NICKNAME = "Unknown Vigilante";
 export const createForm = (
     parentEl: HTMLDivElement,
     setName: (name: string) => void
@@ -10,16 +12,26 @@ export const createForm = (
     const input = document.createElement("input");
     input.id = "name-input";
     input.setAttribute("placeholder", "Type a nickname");
-    input.addEventListener("keydown", (e: KeyboardEvent) => {
+    const nickName = localStorage.getItem(NICKNAME);
+    if (input && nickName) {
+        input.value = nickName;
+    }
+    const keydownListener = (e: KeyboardEvent) => {
         if (e.code.toLowerCase() === "enter") {
+            let name;
             if (e.target && (<HTMLInputElement>e.target).value) {
-                setName((<HTMLInputElement>e.target).value);
+                name = (<HTMLInputElement>e.target).value;
             } else {
-                setName("Unknown Vigilante");
+                name = DEFAULT_NICKNAME;
             }
+            if (name !== DEFAULT_NICKNAME)
+            localStorage.setItem(NICKNAME, name)
+            setName(name);
             parentEl.removeChild(formContainer);
+            document.removeEventListener("keydown", keydownListener);
         }
-    });
+    };
+    document.addEventListener("keydown", keydownListener);
     const hint = document.createElement("p");
     hint.appendChild(document.createTextNode("[Press Enter to play]"));
     formContainer.appendChild(title);
