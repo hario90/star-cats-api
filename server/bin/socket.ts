@@ -30,7 +30,7 @@ export function createWebSocket(server: HttpServer) {
     const ships = new Map<string, Ship>();
     const evilShips = new Set<string>();
     const shipToEvilShips = new Map<string, Set<string>>();
-    const { asteroids } = createInitialObjects();
+    const { asteroids, planets } = createInitialObjects();
     const laserBeams = new Map<string, LaserBeam>();
     const gems = new Map<string, Gem>();
     // TODO if this becomes a multi-room app, this will probably need to be roomToShipMap or maybe use a hash of room and ship id depending on how we use this structure
@@ -62,7 +62,7 @@ export function createWebSocket(server: HttpServer) {
             });
 
             const evilShipIds = new Set<string>();
-            for (let i = 0; i < 3; i++) {
+            for (let i = 0; i < 0; i++) {
                 const evilShip = generateRandomShip({
                     name: `Mr. Evil ${i + 1}`,
                     targetId: userId,
@@ -80,7 +80,8 @@ export function createWebSocket(server: HttpServer) {
                 mapToJSONList(ships),
                 mapToJSONList(asteroids),
                 mapToJSONList(laserBeams),
-                mapToJSONList(gems)
+                mapToJSONList(gems),
+                mapToJSONList(planets)
             );
             socket.broadcast.emit(GameEventType.UserJoined, name);
             console.log(`user ${name}, id ${userId} has joined`);

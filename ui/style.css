@@ -1,6 +1,12 @@
+@font-face {
+    font-family: "Ken";
+    src: url("../assets/kenvector_future.ttf") format("truetype");
+}
+
 html,
 body,
 #app {
+    font-family: "Ken";
     padding: 0;
     margin: 0;
     overflow: hidden;

@@ -296,7 +296,7 @@ export class DrawableShip extends Drawable {
             this.y
         );
         context.translate(x, y);
-        context.font = "14px Arial";
+        context.font = "14px ken";
         context.fillStyle = "white";
 
         if (!this.isDead) {

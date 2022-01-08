@@ -12,7 +12,7 @@ export function drawStats(
     const { points, lives, healthPoints } = stats;
     let y = padding;
     const canvasWidth = 2 * halfCanvasWidth;
-    context.font = `${pointsFontSize}px Arial`;
+    context.font = `${pointsFontSize}px Ken`;
     context.fillStyle = "white";
     const pointsMessage = `Points: ${points}`;
     context.fillText(

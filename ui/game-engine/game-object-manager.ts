@@ -13,6 +13,7 @@ import {
     AsteroidDTO,
     GameObjectType,
     GameEventType,
+    PlanetDTO,
 } from "../../shared/types";
 import {
     distanceBetweenObjects,
@@ -25,6 +26,7 @@ import { Drawable } from "../objects/drawable";
 import { DrawableAsteroid } from "../objects/drawable-asteroid";
 import { DrawableGem } from "../objects/drawable-gem";
 import { DrawableLaserBeam } from "../objects/drawable-laser-beam";
+import { DrawablePlanet } from "../objects/drawable-planet";
 import { DrawableShip } from "../objects/drawable-ship";
 import { PlayerShip } from "../objects/player-ship";
 import { Section } from "../objects/section";
@@ -37,6 +39,7 @@ import {
     isDrawableAsteroid,
     isDrawableGem,
     isDrawableLaserBeam,
+    isDrawablePlanet,
 } from "./types";
 
 const ALERT_MESSAGE_DURATION = 8;
@@ -68,6 +71,7 @@ export class GameObjectManager {
     public laserBeams: DrawableObjectMap<DrawableLaserBeam> =
         new DrawableObjectMap();
     public gems: DrawableObjectMap<DrawableGem> = new DrawableObjectMap();
+    public planets: DrawableObjectMap<DrawablePlanet> = new DrawableObjectMap();
     public alerts: Alerts;
     private eventEmitter: SocketEventEmitter;
     private evilShips: Set<string> = new Set();
@@ -116,6 +120,8 @@ export class GameObjectManager {
             objects = this.gems;
         } else if (isDrawableLaserBeam(object)) {
             objects = this.laserBeams;
+        } else if (isDrawablePlanet(object)) {
+            objects = this.planets;
         } else {
             throw new Error(`Object is not supported`);
         }
@@ -139,13 +145,14 @@ export class GameObjectManager {
         ships: Ship[],
         asteroids: Asteroid[],
         laserBeams: LaserBeamDTO[],
-        gems: GemDTO[]
+        gems: GemDTO[],
+        planets: PlanetDTO[],
     ): void => {
-        console.log("receive initial objects", laserBeams);
         this.ships.clear();
         this.asteroids.clear();
         this.laserBeams.clear();
         this.gems.clear();
+        this.planets.clear();
         const playerShipDTO = ships.find((s) => s.id === this.socket.id);
         if (playerShipDTO) {
             this.ship = this.createPlayerShip(playerShipDTO);
@@ -167,6 +174,7 @@ export class GameObjectManager {
         this.registerObjects(asteroids, this.asteroids, this.createAsteroid);
         this.registerObjects(laserBeams, this.laserBeams, this.createLaserBeam);
         this.registerObjects(gems, this.gems, this.createGem);
+        this.registerObjects(planets, this.planets, this.createPlanet);
     };
 
     public getAllObjects = () => {
@@ -175,6 +183,7 @@ export class GameObjectManager {
             ...this.asteroids.values(),
             ...this.laserBeams.values(),
             ...this.gems.values(),
+            ...this.planets.values(),
         ];
     };
 
@@ -643,4 +652,14 @@ export class GameObjectManager {
             canvas: this.canvas,
         });
     };
+
+    private createPlanet = (dto: PlanetDTO) => {
+        return new DrawablePlanet({
+            ...dto,
+            x: 100,
+            y: 100,
+            eventEmitter: this.eventEmitter,
+            canvas: this.canvas
+        });
+    }
 }

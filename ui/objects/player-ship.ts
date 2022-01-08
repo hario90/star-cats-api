@@ -1,4 +1,3 @@
-import { throttle } from "lodash";
 import { getDegBetweenPoints } from "../../shared/util";
 import { getRelativePosition, timeout } from "../util";
 import { DrawableShip, DrawableShipProps } from "./drawable-ship";
@@ -70,9 +69,6 @@ export class PlayerShip extends DrawableShip {
         } else {
             this.deg = (nextDeg + 90) % 360;
             this.shootDeg = this.deg;
-            if (!this.slowDownAnimationOn) {
-                this.slowDownAndSpeedUp(this.speed);
-            }
         }
     };
 
@@ -106,9 +102,6 @@ export class PlayerShip extends DrawableShip {
                     this.shootDeg = nextDeg;
                 } else {
                     this.deg = nextDeg;
-                    if (!this.slowDownAnimationOn) {
-                        this.slowDownAndSpeedUp(this.speed);
-                    }
                 }
 
                 break;
@@ -118,9 +111,6 @@ export class PlayerShip extends DrawableShip {
                     this.shootDeg = (this.shootDeg + DEGREE_INCREMENT) % 360;
                 } else {
                     this.deg = (this.deg + DEGREE_INCREMENT) % 360;
-                    if (!this.slowDownAnimationOn) {
-                        this.slowDownAndSpeedUp(this.speed);
-                    }
                 }
 
                 break;
@@ -132,14 +122,6 @@ export class PlayerShip extends DrawableShip {
                 this.shoot();
                 break;
         }
-    }
-
-    slowDownAndSpeedUp = async (originalSpeed: number) => {
-        this.slowDownAnimationOn = true;
-        this.speed = Math.max(originalSpeed - 1, 1);
-        await timeout(500);
-        this.speed = originalSpeed;
-        this.slowDownAnimationOn = false;
     }
 
     handleKeyup = (e: KeyboardEvent) => {

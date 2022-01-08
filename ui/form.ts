@@ -19,8 +19,9 @@ export const createForm = (
     const keydownListener = (e: KeyboardEvent) => {
         if (e.code.toLowerCase() === "enter") {
             let name;
-            if (e.target && (<HTMLInputElement>e.target).value) {
-                name = (<HTMLInputElement>e.target).value;
+
+            if (input.value) {
+                name = input.value;
             } else {
                 name = DEFAULT_NICKNAME;
             }
