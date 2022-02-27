@@ -146,7 +146,7 @@ export class GameObjectManager {
         asteroids: Asteroid[],
         laserBeams: LaserBeamDTO[],
         gems: GemDTO[],
-        planets: PlanetDTO[],
+        planets: PlanetDTO[]
     ): void => {
         this.ships.clear();
         this.asteroids.clear();
@@ -452,7 +452,9 @@ export class GameObjectManager {
     public moveShip = (object: ShipDTO) => {
         const mapShip = this.ships.get(object.id);
         if (mapShip) {
+            const prevSections = mapShip.sections;
             mapShip.update(object);
+            this.ships.sync(mapShip, prevSections);
         } else {
             console.log("ship doesn't exist. creating new ship", object);
             this.ships.set(object.id, this.createShip(object));
@@ -492,7 +494,9 @@ export class GameObjectManager {
     public moveAsteroid = (object: AsteroidDTO) => {
         const mapAsteroid = this.asteroids.get(object.id);
         if (mapAsteroid) {
+            const prevSections = mapAsteroid.sections;
             mapAsteroid.update(object);
+            this.asteroids.sync(mapAsteroid, prevSections);
         } else {
             this.asteroids.set(object.id, this.createAsteroid(object));
         }
@@ -501,7 +505,9 @@ export class GameObjectManager {
     public moveLaserBeam = (object: LaserBeamDTO) => {
         const mapLaserBeam = this.laserBeams.get(object.id);
         if (mapLaserBeam) {
+            const prevSections = mapLaserBeam.sections;
             mapLaserBeam.update(object);
+            this.laserBeams.sync(mapLaserBeam, prevSections);
         } else {
             this.laserBeams.set(object.id, this.createLaserBeam(object));
         }
@@ -583,7 +589,6 @@ export class GameObjectManager {
     };
 
     public addGem = (gem: GemDTO) => {
-        console.log("add gem");
         this.registerObjects([gem], this.gems, this.createGem);
     };
 
@@ -659,7 +664,7 @@ export class GameObjectManager {
             x: 100,
             y: 100,
             eventEmitter: this.eventEmitter,
-            canvas: this.canvas
+            canvas: this.canvas,
         });
-    }
+    };
 }

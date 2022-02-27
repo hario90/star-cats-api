@@ -13,7 +13,7 @@ const startGame = async (nickName: string) => {
         auth: {
             name: nickName,
         },
-        transports: ["websocket"],
+        // transports: ["websocket"],
     });
 
     const renderer = new Renderer(appEl, socket);
