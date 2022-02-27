@@ -41,11 +41,8 @@ export function createWebSocket(server: HttpServer) {
             ships.delete(evilShipId);
             shipToEvilShips.delete(userId);
         }
-        socket.broadcast.emit(
-            GameEventType.UserLeft,
-            userId,
-            `${name} has left the game`
-        );
+        const message = `${name} ran out of lives!`;
+        socket.broadcast.emit(GameEventType.UserLeft, userId, message);
     };
 
     io.on("connection", async (socket: Socket) => {
@@ -163,7 +160,6 @@ export function createWebSocket(server: HttpServer) {
                     console.log("onShipDamage not defined");
                 }
 
-                console.log("ship? " + !!ship);
                 console.log("reduceBy " + reduceBy);
 
                 if (ship && reduceBy && onShipDamage) {
@@ -172,11 +168,14 @@ export function createWebSocket(server: HttpServer) {
                     let evilShipsToRemove: string[] = [];
 
                     if (ship.lives <= 0) {
-                        console.log("no more lives left");
+                        console.log(
+                            "no more lives left",
+                            socket.id + " " + ship.id
+                        );
                         evilShipsToRemove = Array.from(
                             shipToEvilShips.get(ship.id) ?? []
                         );
-                        handleShipDied(socket, userId, name);
+                        handleShipDied(socket, ship.id, ship.name);
                         // TODO disconnect because game over
                     }
 

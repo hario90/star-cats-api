@@ -6,8 +6,12 @@ const dotenv = require("dotenv");
 const CircularDependencyPlugin = require("circular-dependency-plugin");
 
 module.exports = (env) => {
-    dotenv.config();
     const isProduction = process.env.NODE_ENV === "production";
+    if (isProduction) {
+        dotenv.config({path: path.resolve(process.cwd(), "deploy.env")});
+    } else {
+        dotenv.config();
+    }
     const host = process.env.HOST || "localhost";
     const protocol = process.env.PROTOCOL || "http";
     const port = process.env.PORT;

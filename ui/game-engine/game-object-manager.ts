@@ -526,9 +526,9 @@ export class GameObjectManager {
 
             if (livesLeft <= 0) {
                 this.ships.delete(shipId);
-                this.ship?.handleShipDied();
-                if (ship.userControlled) {
-                    this.addAlert(`${ship.name} died!`);
+                if (shipId === this.ship?.id) {
+                    this.ship?.handleShipDied();
+                    this.addAlert("Game over!");
                 }
             }
         }
