@@ -30,8 +30,12 @@ module.exports = (env) => {
                 },
                 {
                     test: /\.(jpe?g|gif|png|svg|woff|ttf|wav|mp3)$/,
-                    use: "file-loader",
+                    use: "file-loader"
                 },
+                {
+                    test: /\.xml$/,
+                    type: "asset/source"
+                }
             ],
         },
         mode: isProduction ? "production" : "development",
@@ -43,8 +47,10 @@ module.exports = (env) => {
             path: path.resolve(__dirname, "dist"),
         },
         devServer: {
-            contentBase: path.resolve(__dirname, "."),
-            hot: true,
+            static: {
+                directory: path.resolve(__dirname, "."),
+            },
+            hot: "only",
         },
         plugins: [
             new CleanWebpackPlugin(),
