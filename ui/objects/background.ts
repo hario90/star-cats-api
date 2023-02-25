@@ -46,25 +46,11 @@ export class Background {
                 context.fillRect(x, y, starDiameter, starDiameter);
             }
         }
-        // for (let i = 0; i < BOARD_WIDTH; i += COL_THICKNESS) {
-        //   context.beginPath();
-        //   context.strokeStyle =  "white"
-        //   context.moveTo(i, 0);
-        //   context.lineTo(i, BOARD_HEIGHT);
-        //   context.stroke();
-        // }
-        // for (let i = 0; i < BOARD_HEIGHT; i += ROW_THICKNESS) {
-        //   context.beginPath();
-        //   context.moveTo(0, i);
-        //   context.lineTo(BOARD_WIDTH, i);
-        //   context.stroke();
-        // }
     }
 
     create(context: CanvasRenderingContext2D, canvas: HTMLCanvasElement) {
-        context.fillStyle = "black";
+        context.fillStyle = "#161938";
         context.fillRect(0, 0, BOARD_WIDTH, BOARD_HEIGHT);
-        this.createQuadrants(context);
         this.createStars(context);
         this.img.src = canvas.toDataURL();
     }
