@@ -107,7 +107,6 @@ export class DrawableShip extends Drawable {
         this.color = props.color;
         this.modelNum = props.modelNum;
         const xmlDoc = this.parser.parseFromString(assetsXML, "text/xml");
-        console.log("color", props.color, " modelNum", props.modelNum);
         let xmlElementMatches = xmlDoc.getElementsByName(
             `playerShip${props.modelNum}_${props.color}.png`
         );
@@ -119,8 +118,6 @@ export class DrawableShip extends Drawable {
                 `enemy${color}${props.modelNum}.png`
             );
         }
-        console.log(xmlElementMatches[0]);
-        console.log(xmlElementMatches[0].getAttribute("x"));
         if (xmlElementMatches.length) {
             const ship = xmlElementMatches[0];
             const xStr = ship.getAttribute("x");
