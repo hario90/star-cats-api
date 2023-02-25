@@ -126,3 +126,9 @@ export function getDegBetweenPoints(
 
     return result % 360;
 }
+
+export function getRandomInt(min: number, max: number): number {
+    const diff = Math.floor(max) - Math.floor(min);
+    const rand = Math.random();
+    return Math.floor(rand * diff) + Math.floor(min);
+}

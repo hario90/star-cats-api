@@ -21,7 +21,7 @@ export enum GameObjectType {
     Asteroid = "ASTEROID",
     LaserBeam = "LASER_BEAM",
     Gem = "GEM",
-    Planet = "PLANET"
+    Planet = "PLANET",
 }
 
 export interface IGameObject extends PositionInfo {
@@ -43,6 +43,8 @@ export interface ShipDTO extends GameObjectDTO {
     healthPoints?: number;
     lives?: number;
     targetId?: string;
+    color: ShipColor;
+    modelNum: ShipModelNum;
 }
 
 export interface LaserBeamDTO extends GameObjectDTO {
@@ -61,9 +63,7 @@ export interface AsteroidDTO extends GameObjectDTO {
     asteroidId2?: string;
 }
 
-export interface PlanetDTO extends GameObjectDTO {
-
-}
+export interface PlanetDTO extends GameObjectDTO {}
 
 export interface GemDTO extends GameObjectDTO {
     points?: number;
@@ -81,6 +81,9 @@ export const isPlanetDTO = (obj: GameObjectDTO): obj is PlanetDTO =>
 export interface SocketAuth {
     name: string;
     userId: string;
+    shipColor: ShipColor;
+    modelNum: ShipModelNum;
+    allowRobots?: boolean;
 }
 
 export enum GameEventType {
@@ -114,4 +117,26 @@ export interface ShipDamageArgs {
     laserBeamId?: string;
     shipId?: string;
     asteroidId?: string;
+}
+
+export enum PlayerShipColor {
+    Green = "green",
+    Orange = "orange",
+    Red = "red",
+    Blue = "blue",
+}
+
+export enum EnemyShipColor {
+    Black = "black",
+    Blue = "blue",
+    Green = "green",
+    Red = "red",
+}
+
+export type ShipColor = PlayerShipColor | EnemyShipColor;
+
+export enum ShipModelNum {
+    One = 1,
+    Two = 2,
+    Three = 3,
 }

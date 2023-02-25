@@ -1,5 +1,5 @@
 import { halfShipHeight, halfShipWidth } from "../constants";
-import { GameObjectType, ShipDTO } from "../types";
+import { GameObjectType, ShipColor, ShipDTO, ShipModelNum } from "../types";
 import { GameObject } from "./game-object";
 
 const MAX_HEALTH_POINTS = 10;
@@ -12,6 +12,8 @@ export class Ship extends GameObject {
     public lives: number;
     public targetId?: string;
     public shootDeg?: number;
+    public color: ShipColor;
+    public modelNum: ShipModelNum;
 
     constructor({
         id,
@@ -28,6 +30,8 @@ export class Ship extends GameObject {
         points,
         userControlled,
         targetId,
+        color,
+        modelNum,
     }: ShipDTO) {
         super({
             id,
@@ -47,6 +51,8 @@ export class Ship extends GameObject {
         this.healthPoints = healthPoints ?? MAX_HEALTH_POINTS;
         this.targetId = targetId;
         this.shootDeg = shootDeg;
+        this.color = color;
+        this.modelNum = modelNum;
     }
 
     getHeading(): number {
@@ -80,6 +86,8 @@ export class Ship extends GameObject {
             lives: this.lives,
             userControlled: this.userControlled,
             targetId: this.targetId,
+            color: this.color,
+            modelNum: this.modelNum,
         };
     }
 }

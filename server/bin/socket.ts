@@ -3,11 +3,13 @@ import { Server, Socket } from "socket.io";
 import { v4 as uuidV4 } from "uuid";
 import {
     AsteroidDTO,
+    EnemyShipColor,
     GameEventType,
     GemDTO,
     LaserBeamDTO,
     ShipDamageArgs,
     ShipDTO,
+    ShipModelNum,
     SocketAuth,
 } from "../../shared/types";
 import { Ship } from "../../shared/objects/ship";
@@ -46,7 +48,8 @@ export function createWebSocket(server: HttpServer) {
     };
 
     io.on("connection", async (socket: Socket) => {
-        const { name } = socket.handshake.auth as SocketAuth;
+        const { name, shipColor, modelNum, allowRobots = true } = socket.handshake
+            .auth as SocketAuth;
         const userId = socket.id;
 
         if (!ships.has(userId)) {
@@ -56,17 +59,23 @@ export function createWebSocket(server: HttpServer) {
                 id: userId,
                 speed: 1,
                 userControlled: true,
+                modelNum,
+                color: shipColor,
             });
 
             const evilShipIds = new Set<string>();
-            for (let i = 0; i < 0; i++) {
-                const evilShip = generateRandomShip({
-                    name: `Mr. Evil ${i + 1}`,
-                    targetId: userId,
-                });
-                evilShips.add(evilShip.id);
-                ships.set(evilShip.id, evilShip);
-                evilShipIds.add(evilShip.id);
+            if (allowRobots) {
+                for (let i = 0; i < 8; i++) {
+                    const evilShip = generateRandomShip({
+                        name: `Mr. Evil ${i + 1}`,
+                        targetId: userId,
+                        modelNum: ShipModelNum.One, // todo randomize
+                        color: EnemyShipColor.Black, // todo randomize
+                    });
+                    evilShips.add(evilShip.id);
+                    ships.set(evilShip.id, evilShip);
+                    evilShipIds.add(evilShip.id);
+                }
             }
 
             shipToEvilShips.set(userId, evilShipIds);

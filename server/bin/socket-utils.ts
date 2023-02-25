@@ -10,7 +10,13 @@ import { Asteroid } from "../../shared/objects/asteroid";
 import { GameObject } from "../../shared/objects/game-object";
 import { Planet } from "../../shared/objects/planet";
 import { Ship } from "../../shared/objects/ship";
-import { GameObjectDTO, GameObjectType, ShipDTO } from "../../shared/types";
+import {
+    EnemyShipColor,
+    GameObjectDTO,
+    GameObjectType,
+    ShipDTO,
+    ShipModelNum,
+} from "../../shared/types";
 import { ObjectGenerator } from "../asteroid-generator";
 
 export function createInitialObjects() {
@@ -53,6 +59,8 @@ export function generateRandomShip(ship: Partial<ShipDTO>) {
         id: uuidV4(),
         points: 0,
         userControlled: false,
+        color: ship.color ?? EnemyShipColor.Blue,
+        modelNum: ship.modelNum ?? ShipModelNum.One,
         ...ship,
     });
 }

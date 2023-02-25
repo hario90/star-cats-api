@@ -115,7 +115,12 @@ export class ImageComponent extends Drawable {
             this.y
         );
         context.translate(x, y);
-        const frame = this.frameLocations[this.frame];
+
+        let frame = this.frameLocations[0];
+        if (this.frame < this.frameLocations.length && this.frame >= 0) {
+            frame = this.frameLocations[this.frame];
+        }
+        console.log("frame", this.frame);
 
         // draw the grayscale image onto the canvas
         if (!this.isDead && frame) {

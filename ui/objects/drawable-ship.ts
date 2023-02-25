@@ -1,6 +1,8 @@
 import { v4 as uuid } from "uuid";
 import { BattleShipFrame } from "../types";
 import explosionImg from "../../assets/explosion.png";
+import allAssets from "../../assets/sheet.png";
+import * as assetsXML from "../../assets/sheet.xml";
 import shipImg from "../../assets/ship.png";
 import { getRelativePosition, getSectionsMap } from "../util";
 import { Drawable } from "./drawable";
@@ -14,7 +16,9 @@ import {
     GameObjectDTO,
     GameObjectType,
     LaserBeamDTO,
+    ShipColor,
     ShipDTO,
+    ShipModelNum,
 } from "../../shared/types";
 import { Coordinate } from "../../shared/util";
 import { EXPLOSION_LOCATIONS, SRC_EXPLOSION_WIDTH } from "../constants";
@@ -86,6 +90,9 @@ export class DrawableShip extends Drawable {
     public isDead = false;
     public speed: number = 1;
     public radius = 0;
+    public color: ShipColor;
+    public modelNum: ShipModelNum;
+    private changeFrameOnSpeed = false;
 
     constructor(props: DrawableShipProps) {
         super(props);
@@ -97,14 +104,63 @@ export class DrawableShip extends Drawable {
         this.points = props.points ?? 0;
         this.lives = props.lives || MAX_NUM_LIVES;
         this.healthPoints = props.healthPoints || MAX_HEALTH_POINTS;
-        this.shipImg = new ImageComponent({
-            ...props,
-            src: shipImg,
-            srcWidth: 2 * halfShipWidth,
-            srcHeight: 2 * halfShipHeight,
-            frame: 0,
-            frameLocations: shipFrameLocations,
-        });
+        this.color = props.color;
+        this.modelNum = props.modelNum;
+        const xmlDoc = this.parser.parseFromString(assetsXML, "text/xml");
+        console.log("color", props.color, " modelNum", props.modelNum);
+        let xmlElementMatches = xmlDoc.getElementsByName(
+            `playerShip${props.modelNum}_${props.color}.png`
+        );
+        if (!xmlElementMatches.length) {
+            const color = `${props.color[0].toUpperCase()}${props.color.substring(
+                1
+            )}`;
+            xmlElementMatches = xmlDoc.getElementsByName(
+                `enemy${color}${props.modelNum}.png`
+            );
+        }
+        console.log(xmlElementMatches[0]);
+        console.log(xmlElementMatches[0].getAttribute("x"));
+        if (xmlElementMatches.length) {
+            const ship = xmlElementMatches[0];
+            const xStr = ship.getAttribute("x");
+            const yStr = ship.getAttribute("y");
+            const heightStr = ship.getAttribute("height");
+            const widthStr = ship.getAttribute("width");
+            if (heightStr && widthStr && xStr && yStr) {
+                const height = parseInt(heightStr, 10);
+                const width = parseInt(widthStr, 10);
+                const x = parseInt(xStr, 10);
+                const y = parseInt(yStr, 10);
+                this.shipImg = new ImageComponent({
+                    ...props,
+                    src: allAssets,
+                    srcWidth: width,
+                    srcHeight: height,
+                    frame: 0,
+                    frameLocations: [[x, y]],
+                });
+            } else {
+                this.shipImg = new ImageComponent({
+                    ...props,
+                    src: shipImg,
+                    srcWidth: 2 * halfShipWidth,
+                    srcHeight: 2 * halfShipHeight,
+                    frame: 0,
+                    frameLocations: shipFrameLocations,
+                });
+            }
+        } else {
+            this.shipImg = new ImageComponent({
+                ...props,
+                src: shipImg,
+                srcWidth: 2 * halfShipWidth,
+                srcHeight: 2 * halfShipHeight,
+                frame: 0,
+                frameLocations: shipFrameLocations,
+            });
+        }
+
         this.explosionImg = new ImageComponent({
             ...props,
             height: EXPLOSION_WIDTH,
@@ -158,6 +214,8 @@ export class DrawableShip extends Drawable {
             userControlled: this.userControlled,
             targetId: this.targetId,
             shootDeg: this.shootDeg,
+            color: this.color,
+            modelNum: this.modelNum,
         };
     };
 
@@ -314,8 +372,9 @@ export class DrawableShip extends Drawable {
                 halfCanvasHeight
             );
         } else if (!this.isDead || this.isComingBackToLife) {
-            const frame =
-                speedToFrame.get(this.speed) || BattleShipFrame.NORMAL;
+            const frame = this.changeFrameOnSpeed
+                ? speedToFrame.get(this.speed) ?? BattleShipFrame.NORMAL
+                : BattleShipFrame.NORMAL;
             const srcLocation = frameToLocation.get(frame);
             if (!srcLocation) {
                 throw new Error(
@@ -355,7 +414,10 @@ export class DrawableShip extends Drawable {
                     context.stroke();
                     context.setLineDash([]);
                 }
-                this.shipImg.frame = this.speed - 1;
+
+                if (this.changeFrameOnSpeed) {
+                    this.shipImg.frame = this.speed - 1;
+                }
 
                 if (this.hit > 0) {
                     this.shipImg.drawTinted(context, shipX, shipY, "red");

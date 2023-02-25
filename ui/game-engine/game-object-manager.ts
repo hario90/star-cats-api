@@ -14,6 +14,7 @@ import {
     GameObjectType,
     GameEventType,
     PlanetDTO,
+    GameObjectDTO,
 } from "../../shared/types";
 import {
     distanceBetweenObjects,
@@ -129,10 +130,10 @@ export class GameObjectManager {
         return objects;
     };
 
-    public registerObjects = <T extends Drawable>(
-        dto: DTO[],
+    public registerObjects = <D extends GameObjectDTO, T extends Drawable>(
+        dto: D[],
         objectMap: DrawableObjectMap<T>,
-        createDrawable: (dto: DTO) => T,
+        createDrawable: (dto: D) => T,
         prevSections?: Map<string, Section>
     ) => {
         for (const object of dto) {
