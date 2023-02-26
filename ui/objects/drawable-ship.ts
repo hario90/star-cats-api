@@ -24,6 +24,7 @@ import { Coordinate } from "../../shared/util";
 import { EXPLOSION_LOCATIONS, SRC_EXPLOSION_WIDTH } from "../constants";
 import { ImageComponent } from "../component";
 import { Canvas } from "../game-engine/canvas";
+import { getImageComponentFromXML } from "./xml-drawing-utils";
 
 const frameToLocation = new Map([
     [BattleShipFrame.NORMAL, [0, 0]],
@@ -106,47 +107,14 @@ export class DrawableShip extends Drawable {
         this.healthPoints = props.healthPoints || MAX_HEALTH_POINTS;
         this.color = props.color;
         this.modelNum = props.modelNum;
-        const xmlDoc = this.parser.parseFromString(assetsXML, "text/xml");
-        let xmlElementMatches = xmlDoc.getElementsByName(
-            `playerShip${props.modelNum}_${props.color}.png`
-        );
-        if (!xmlElementMatches.length) {
-            const color = `${props.color[0].toUpperCase()}${props.color.substring(
-                1
-            )}`;
-            xmlElementMatches = xmlDoc.getElementsByName(
-                `enemy${color}${props.modelNum}.png`
-            );
-        }
-        if (xmlElementMatches.length) {
-            const ship = xmlElementMatches[0];
-            const xStr = ship.getAttribute("x");
-            const yStr = ship.getAttribute("y");
-            const heightStr = ship.getAttribute("height");
-            const widthStr = ship.getAttribute("width");
-            if (heightStr && widthStr && xStr && yStr) {
-                const height = parseInt(heightStr, 10);
-                const width = parseInt(widthStr, 10);
-                const x = parseInt(xStr, 10);
-                const y = parseInt(yStr, 10);
-                this.shipImg = new ImageComponent({
-                    ...props,
-                    src: allAssets,
-                    srcWidth: width,
-                    srcHeight: height,
-                    frame: 0,
-                    frameLocations: [[x, y]],
-                });
-            } else {
-                this.shipImg = new ImageComponent({
-                    ...props,
-                    src: shipImg,
-                    srcWidth: 2 * halfShipWidth,
-                    srcHeight: 2 * halfShipHeight,
-                    frame: 0,
-                    frameLocations: shipFrameLocations,
-                });
-            }
+        const color = `${props.color[0].toUpperCase()}${props.color.substring(
+            1
+        )}`;
+        const objectName = this.userControlled ? `playerShip${props.modelNum}_${props.color}.png` :  `enemy${color}${props.modelNum}.png`;
+        const imageComponent = getImageComponentFromXML(allAssets, assetsXML, objectName, props)
+
+        if (imageComponent) {
+           this.shipImg = imageComponent;
         } else {
             this.shipImg = new ImageComponent({
                 ...props,

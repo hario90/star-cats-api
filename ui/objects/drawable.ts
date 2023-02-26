@@ -20,7 +20,6 @@ export abstract class Drawable extends GameObject {
     public isDead: boolean | undefined = false;
     public sections: Map<string, Section> = new Map();
     protected canvas: Canvas;
-    protected parser = new DOMParser();
 
     constructor(props: DrawableProps) {
         super(props);
