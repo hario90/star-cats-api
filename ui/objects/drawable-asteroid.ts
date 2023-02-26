@@ -1,13 +1,14 @@
-import { v4 as uuidV4 } from "uuid";
 import { ImageComponent } from "../component";
-import asteroidImg from "../../assets/asteroid.png";
 import explosionImg from "../../assets/explosion.png";
+import allAssets from "../../assets/sheet.png";
+import * as assetsXML from "../../assets/sheet.xml";
 import { getSectionsMap } from "../util";
 import { AsteroidDTO, GameObjectDTO } from "../../shared/types";
 import { EXPLOSION_LOCATIONS, SRC_EXPLOSION_WIDTH } from "../constants";
 import { SocketEventEmitter } from "../game-engine/socket-event-emitter";
 import { Drawable } from "./drawable";
 import { Canvas } from "../game-engine/canvas";
+import { getImageComponentFromXML } from "./xml-drawing-utils";
 
 export const ASTEROID_HEIGHT = 32;
 export const ASTEROID_WIDTH = 32;
@@ -29,17 +30,19 @@ export class DrawableAsteroid extends Drawable {
     constructor(asteroid: DrawableAsteroidProps) {
         super(asteroid);
         this.gemPoints = asteroid.gemPoints || 1;
-        this.asteroidImg = new ImageComponent({
-            ...asteroid,
-            src: asteroidImg,
-            srcWidth: ASTEROID_WIDTH,
-            srcHeight: ASTEROID_HEIGHT,
-            frame: 0,
-            frameLocations: [
-                [0, 0],
-                [ASTEROID_WIDTH, 0],
-            ],
-        });
+        const objectName = "meteorBrown_big1.png";
+        const imageComponentFromXML = getImageComponentFromXML(
+            allAssets,
+            assetsXML,
+            objectName,
+            asteroid
+        );
+        if (imageComponentFromXML) {
+            this.asteroidImg = imageComponentFromXML;
+        } else {
+            throw new Error("Couldn't find asteroid image!");
+        }
+
         this.onFinishedExploding = asteroid.onFinishedExploding;
         this.explosionImg = new ImageComponent({
             ...asteroid,

@@ -1,5 +1,5 @@
 import { GameObjectDTO } from "../../shared/types";
-import { ComponentProps, ImageComponent } from "../component";
+import { ImageComponent } from "../component";
 import { Canvas } from "../game-engine/canvas";
 
 const parser = new DOMParser();
