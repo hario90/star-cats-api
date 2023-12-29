@@ -110,11 +110,18 @@ export class DrawableShip extends Drawable {
         const color = `${props.color[0].toUpperCase()}${props.color.substring(
             1
         )}`;
-        const objectName = this.userControlled ? `playerShip${props.modelNum}_${props.color}.png` :  `enemy${color}${props.modelNum}.png`;
-        const imageComponent = getImageComponentFromXML(allAssets, assetsXML, objectName, props)
+        const objectName = this.userControlled
+            ? `playerShip${props.modelNum}_${props.color}.png`
+            : `enemy${color}${props.modelNum}.png`;
+        const imageComponent = getImageComponentFromXML(
+            allAssets,
+            assetsXML,
+            objectName,
+            props
+        );
 
         if (imageComponent) {
-           this.shipImg = imageComponent;
+            this.shipImg = imageComponent;
         } else {
             this.shipImg = new ImageComponent({
                 ...props,

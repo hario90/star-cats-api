@@ -10,8 +10,6 @@ import { Drawable } from "./drawable";
 import { Canvas } from "../game-engine/canvas";
 import { getImageComponentFromXML } from "./xml-drawing-utils";
 
-export const ASTEROID_HEIGHT = 32;
-export const ASTEROID_WIDTH = 32;
 export const EXPLOSION_WIDTH = 96;
 
 export interface DrawableAsteroidProps extends AsteroidDTO {
