@@ -77,6 +77,7 @@ export class DrawableLaserBeam extends Drawable {
                 endX,
                 endY
             );
+            context.lineWidth = 4;
             context.strokeStyle = "#03fcdf";
             context.beginPath();
             context.moveTo(x, y);
