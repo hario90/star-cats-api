@@ -3,6 +3,7 @@ import {
     GameObjectType,
     LaserBeamDTO,
     ISection,
+    PlayerShipColor,
 } from "../../shared/types";
 import {
     COL_THICKNESS,
@@ -22,12 +23,14 @@ export interface DrawableLaserBeamProps extends LaserBeamDTO {
 export class DrawableLaserBeam extends Drawable {
     public prevSection: Section | undefined;
     public readonly fromShipId: string;
+    private color: string;
 
     constructor({ color, fromShipId, ...rest }: DrawableLaserBeamProps) {
         super({ ...rest, type: GameObjectType.LaserBeam });
         this.radius = 0;
         this.sections.set(this.section.key, this.section);
         this.fromShipId = fromShipId || "unknown";
+        this.color = color;
     }
 
     get section(): Section {
@@ -78,7 +81,7 @@ export class DrawableLaserBeam extends Drawable {
                 endY
             );
             context.lineWidth = 4;
-            context.strokeStyle = "#03fcdf";
+            context.strokeStyle = this.color;
             context.beginPath();
             context.moveTo(x, y);
             context.lineTo(relativeEndX, relativeEndY);
@@ -100,6 +103,7 @@ export class DrawableLaserBeam extends Drawable {
             x: this.x,
             y: this.y,
             deg: this.deg,
+            color: this.color,
             speed: this.speed,
             height: this.height,
             width: this.width,

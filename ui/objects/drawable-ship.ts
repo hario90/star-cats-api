@@ -16,6 +16,7 @@ import {
     GameObjectDTO,
     GameObjectType,
     LaserBeamDTO,
+    PlayerShipColor,
     ShipColor,
     ShipDTO,
     ShipModelNum,
@@ -228,9 +229,29 @@ export class DrawableShip extends Drawable {
             width: 10,
             id: uuid(),
             fromShipId: this.id,
+            color: this.color,
             userControlled: false,
         };
         this.onShoot(laserBeam);
+    }
+
+    get laserColor(): string {
+        if (!this.color) {
+            return "#03fcdf";
+        }
+
+        switch (this.color) {
+            case PlayerShipColor.Red:
+                return "red";
+            case PlayerShipColor.Green:
+                return "green";
+            case PlayerShipColor.Blue:
+                return "blue";
+            case PlayerShipColor.Orange:
+                return "orange";
+            default:
+                return "#03fcdf";
+        }
     }
 
     get isExploding() {

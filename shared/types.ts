@@ -48,7 +48,7 @@ export interface ShipDTO extends GameObjectDTO {
 }
 
 export interface LaserBeamDTO extends GameObjectDTO {
-    color?: string;
+    color: string;
     fromShipId?: string;
 }
 
