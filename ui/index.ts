@@ -36,7 +36,7 @@ const appEl =
     (document.getElementById("app") as HTMLDivElement) ||
     document.createElement("div");
 
-const startGame = async (nickName: string, shipColor: PlayerShipColor, allowRobots = true) => {
+const startGame = async (nickName: string, allowRobots = true) => {
     const socket = io(SERVER_URL, {
         auth: {
             name: nickName,

@@ -92,6 +92,7 @@ export class GameObjectManager {
             this.background.create(backgroundCtx, backgroundCanvas);
         }
 
+        socket.on("roomId", (roomId) => console.log("Received roomId", roomId));
         socket.on(GameEventType.Announce, this.addAlert);
         socket.on(GameEventType.GetInitialObjects, this.receiveInitialObjects);
         socket.on(GameEventType.ShipMoved, this.moveShip);

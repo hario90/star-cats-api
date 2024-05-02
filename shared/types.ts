@@ -84,6 +84,7 @@ export interface SocketAuth {
     shipColor: ShipColor;
     modelNum: ShipModelNum;
     allowRobots?: boolean;
+    roomId?: string;
 }
 
 export enum GameEventType {

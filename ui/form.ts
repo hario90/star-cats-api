@@ -2,22 +2,38 @@ import { PlayerShipColor } from "../shared/types";
 
 const NICKNAME = "star-cats-nickname";
 const DEFAULT_NICKNAME = "Unknown Vigilante";
+
+const createLabelledInput = (label: string, required: boolean, placeholder?: string): { label: HTMLLabelElement, input: HTMLInputElement } => {
+    const inputLabel = document.createElement("label");
+    inputLabel.appendChild(document.createTextNode(label));
+    const input = document.createElement("input");
+    input.setAttribute("required", `${required}`);
+    if (placeholder) {
+        input.setAttribute("placeholder", placeholder);
+
+    }
+    inputLabel.appendChild(input);
+    return { input, label: inputLabel }
+};
+
 export const createForm = (
     parentEl: HTMLDivElement,
-    startGame: (name: string, shipColor: PlayerShipColor, useRobots?: boolean) => void
+    startGame: (name: string, useRobots?: boolean) => void
 ) => {
     const formContainer = document.createElement("div");
     formContainer.className = "name-form";
     const title = document.createElement("h1");
     const titleText = document.createTextNode("Star Cats");
     title.appendChild(titleText);
-    const input = document.createElement("input");
-    input.id = "name-input";
-    input.setAttribute("placeholder", "Type a nickname");
+
+    // Name input
+    const { label: nameInputLabel, input: nameInput } = createLabelledInput("Name", true, "Type a nickname");
+
     const nickName = localStorage.getItem(NICKNAME);
-    if (input && nickName) {
-        input.value = nickName;
+    if (nameInput && nickName) {
+        nameInput.value = nickName;
     }
+
     // checkbox
     const checkbox = document.createElement("input");
     checkbox.setAttribute("type", "checkbox");
@@ -29,15 +45,9 @@ export const createForm = (
 
     const keydownListener = (e: KeyboardEvent) => {
         if (e.code.toLowerCase() === "enter") {
-            let name;
-
-            if (input.value) {
-                name = input.value;
-            } else {
-                name = DEFAULT_NICKNAME;
-            }
+            const name = nameInput.value ?? DEFAULT_NICKNAME;
             if (name !== DEFAULT_NICKNAME) localStorage.setItem(NICKNAME, name);
-            startGame(name, PlayerShipColor.Blue, checkbox.checked);
+            startGame(name, checkbox.checked);
             parentEl.removeChild(formContainer);
             document.removeEventListener("keydown", keydownListener);
         }
@@ -45,7 +55,8 @@ export const createForm = (
     document.addEventListener("keydown", keydownListener);
     const hint = document.createElement("p");
     hint.appendChild(document.createTextNode("[Press Enter to play]"));
-    const formElements = [title, input, hint, checkbox, checkboxLabel];
+    
+    const formElements = [title, nameInputLabel, checkbox, checkboxLabel, hint];
     for (const el of formElements) {
         formContainer.appendChild(el);
     }
