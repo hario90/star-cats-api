@@ -2,10 +2,10 @@ import { Socket } from "socket.io";
 import { Ship } from "../../shared/objects/ship";
 import { generateRandomShip } from "../utils/game-object-utils";
 import { SocketAuth, ShipModelNum, EnemyShipColor, ShipDTO, GameEventType, ShipDamageArgs } from "../../shared/types";
-import { GameObjectTracker } from "./game-object-tracker";
+import { GameObjectManager } from "./game-object-manager";
 
 // TODO: reducer?
-export class ShipManager extends GameObjectTracker<Ship, ShipDTO> {
+export class ShipManager extends GameObjectManager<Ship, ShipDTO> {
     private evilShips = new Set<string>();
     private shipToEvilShips = new Map<string, Set<string>>();
 

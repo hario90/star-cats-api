@@ -2,7 +2,7 @@ import { Socket } from "socket.io";
 import { GameEventType, GameObjectDTO } from "../../shared/types";
 import { GameObject } from "../../shared/objects/game-object";
 
-export abstract class GameObjectTracker<T extends GameObject, DTO extends GameObjectDTO> {
+export abstract class GameObjectManager<T extends GameObject, DTO extends GameObjectDTO> {
     protected objects = new Map<string, T>();
 
     constructor(protected roomId: string) {
