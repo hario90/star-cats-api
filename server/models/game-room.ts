@@ -1,22 +1,20 @@
 import { Socket } from "socket.io";
 import { v4 as uuidV4 } from "uuid";
 
-import { createInitialObjects, generateRandomShip, mapToJSONList } from "../utils/game-object-utils";
+import { createInitialObjects, mapToJSONList } from "../utils/game-object-utils";
 import { Asteroid } from "../../shared/objects/asteroid";
-import { Ship } from "../../shared/objects/ship";
 import { LaserBeam } from "../../shared/objects/laser-beam";
 import { Gem } from "../../shared/objects/gem";
 import { ErrorCode } from "../constants";
-import { AsteroidDTO, EnemyShipColor, GameEventType, GemDTO, LaserBeamDTO, ShipDTO, ShipDamageArgs, ShipModelNum, SocketAuth } from "../../shared/types";
+import { AsteroidDTO, GameEventType, GemDTO, LaserBeamDTO, ShipDTO, ShipDamageArgs, ShipModelNum, SocketAuth } from "../../shared/types";
 import { Planet } from "../../shared/objects/planet";
+import { ShipManager } from "./ship-manager";
 
 const MAX_TEAM_SIZE = 3;
 const MAX_NUM_TEAMS = 4;
 const MAX_ROOM_SIZE = MAX_NUM_TEAMS * MAX_TEAM_SIZE;
 export class GameRoom {
-    private ships = new Map<string, Ship>();
-    private evilShips = new Set<string>();
-    private shipToEvilShips = new Map<string, Set<string>>();
+    private shipManager: ShipManager = new ShipManager(this.roomId);
     private asteroids: Map<string, Asteroid>;
     private laserBeams = new Map<string, LaserBeam>();
     private gems = new Map<string, Gem>();
@@ -27,10 +25,8 @@ export class GameRoom {
         const { asteroids } = createInitialObjects();
         this.asteroids = asteroids;
         this.addPlayer = this.addPlayer.bind(this);
-        this.setUpEvilShips = this.setUpEvilShips.bind(this);
         this.setUpGameObjects = this.setUpGameObjects.bind(this);
         this.setUpSocketEvents = this.setUpSocketEvents.bind(this);
-        this.handleShipDied = this.handleShipDied.bind(this);
     }
 
     public addPlayer(socket: Socket): void {
@@ -50,45 +46,15 @@ export class GameRoom {
         this.setUpSocketEvents(socket);
     }
     
-    private setUpEvilShips(socket: Socket): void {
-        const { allowRobots = false } = socket.handshake.auth as SocketAuth;
-        const evilShipIds = new Set<string>();
-        if (allowRobots) {
-            for (let i = 0; i < 8; i++) {
-                const evilShip = generateRandomShip({
-                    name: `Mr. Evil ${i + 1}`,
-                    targetId: socket.id,
-                    modelNum: ShipModelNum.One, // todo randomize
-                    color: EnemyShipColor.Black, // todo randomize
-                });
-                this.evilShips.add(evilShip.id);
-                this.ships.set(evilShip.id, evilShip);
-                evilShipIds.add(evilShip.id);
-            }
-        }
-
-        this.shipToEvilShips.set(socket.id, evilShipIds);
-    }
-
     private setUpGameObjects(socket: Socket): void {
         const userId = socket.id;
-        const { name, shipColor, modelNum, allowRobots = true } = socket.handshake.auth as SocketAuth;
+        const { name } = socket.handshake.auth as SocketAuth;
 
-        // TODO don't put ship on asteroids
-        const ship = generateRandomShip({
-            name,
-            id: userId,
-            speed: 1,
-            userControlled: true,
-            modelNum,
-            color: shipColor,
-        });
-
-        this.setUpEvilShips(socket);
-        this.ships.set(userId, ship);
+        this.shipManager.setUpShips(socket);
+        
         socket.emit(
             GameEventType.GetInitialObjects,
-            mapToJSONList(this.ships),
+            mapToJSONList(this.shipManager.getObjects()),
             mapToJSONList(this.asteroids),
             mapToJSONList(this.laserBeams),
             mapToJSONList(this.gems),
@@ -100,14 +66,7 @@ export class GameRoom {
 
     private setUpSocketEvents(socket: Socket): void {
         socket.on(GameEventType.ShipMoved, (obj: ShipDTO) => {
-            const matchingShip = this.ships.get(obj.id);
-            if (matchingShip) {
-                matchingShip.move(obj);
-                socket.to(this.roomId).emit(
-                    GameEventType.ShipMoved,
-                    matchingShip.toDTO()
-                );
-            }
+            this.shipManager.handleObjectMoved(socket, obj);
         });
         socket.on(GameEventType.LaserMoved, (obj: LaserBeamDTO) => {
             const matchingLaserBeam = this.laserBeams.get(obj.id);
@@ -152,7 +111,7 @@ export class GameRoom {
                     evilShipsToRemove: string[]
                 ) => void
             ) => {
-                const ship = this.ships.get(shipIdThatGotHit);
+                const ship = this.shipManager.getShipById(shipIdThatGotHit);
                 if (!ship) {
                     return;
                 }
@@ -171,43 +130,14 @@ export class GameRoom {
                     reduceBy = ship.healthPoints;
                 }
 
-                if (!onShipDamage) {
-                    console.log("onShipDamage not defined");
-                }
-
                 console.log("reduceBy " + reduceBy);
 
-                if (ship && reduceBy && onShipDamage) {
-                    console.log("reducing ships health points by " + reduceBy);
-                    ship.reduceHealthPoints(reduceBy);
-                    let evilShipsToRemove: string[] = [];
-
-                    if (ship.lives <= 0) {
-                        console.log(
-                            "no more lives left",
-                            socket.id + " " + ship.id
-                        );
-                        evilShipsToRemove = Array.from(
-                            this.shipToEvilShips.get(ship.id) ?? []
-                        );
-                        this.handleShipDied(socket, ship.id, ship.name);
-                        // TODO disconnect because game over
-                    }
-
-                    onShipDamage(
-                        shipIdThatGotHit,
-                        ship.healthPoints,
-                        ship.lives,
-                        evilShipsToRemove
-                    );
-                    socket.to(this.roomId).emit(
-                        GameEventType.ShipDamage,
-                        shipIdThatGotHit,
-                        ship.healthPoints,
-                        ship.lives,
-                        evilShipsToRemove
-                    );
+                if (!onShipDamage) {
+                    console.error("onShipDamage not defined");
+                    return;
                 }
+
+                this.shipManager.handleShipDamaged(socket, reduceBy, shipIdThatGotHit, onShipDamage);
             }
         );
         socket.on(
@@ -250,23 +180,7 @@ export class GameRoom {
                     laserBeamId?: string
                 ) => void
             ) => {
-                console.log(`Ship ${shipId} exploded.`);
-                const ship = this.ships.get(shipId);
-                if (ship) {
-                    ship.lives--;
-                    if (ship.lives <= 0) {
-                        this.ships.delete(shipId);
-                    }
-
-                    shipExploded(shipId, ship.lives, laserBeamId);
-                    socket.to(this.roomId).emit(
-                        GameEventType.ShipExploded,
-                        shipId,
-                        ship.lives,
-                        laserBeamId
-                    );
-                }
-
+                this.shipManager.handleShipExploded(socket, shipId, laserBeamId, shipExploded)
                 this.laserBeams.delete(laserBeamId);
             }
         );
@@ -278,21 +192,11 @@ export class GameRoom {
                 cb: (shipId: string, gemId: string, shipPoints: number) => void
             ) => {
                 console.log("ship picked up gem");
-                const matchingShip = this.ships.get(shipId);
                 const matchingGem = this.gems.get(gemId);
-                console.log("matching ship", matchingShip);
                 console.log("matching gem", matchingGem);
-                if (matchingShip && matchingGem) {
-                    console.log("found matches");
-                    matchingShip.points += matchingGem.points;
+                if (matchingGem) {
+                    this.shipManager.handleShipPickedUpGem(socket, shipId, gemId, matchingGem.points, cb);
                     this.gems.delete(gemId);
-                    cb(shipId, gemId, matchingShip.points);
-                    socket.to(this.roomId).emit(
-                        GameEventType.ShipPickedUpGem,
-                        shipId,
-                        gemId,
-                        matchingShip.points
-                    );
                 }
             }
         );
@@ -355,17 +259,8 @@ export class GameRoom {
             console.log(
                 `user ${name}, id ${socket.id} has disconnected. Reason: ${reason}`
             );
-            this.handleShipDied(socket, socket.id, name);
+            this.shipManager.handleShipDied(socket, socket.id, name);
         });
     }
 
-    private handleShipDied(socket: Socket, userId: string, name: string) {
-        this.ships.delete(userId);
-        for (const evilShipId of this.evilShips) {
-            this.ships.delete(evilShipId);
-            this.shipToEvilShips.delete(userId);
-        }
-        const message = `${name} ran out of lives!`;
-        socket.to(this.roomId).emit(GameEventType.UserLeft, userId, message);
-    };
 }
