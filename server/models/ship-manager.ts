@@ -10,7 +10,7 @@ export class ShipManager extends GameObjectManager<Ship, ShipDTO> {
     private shipToEvilShips = new Map<string, Set<string>>();
 
     constructor(roomId: string) {
-        super(roomId)
+        super(roomId, GameEventType.ShipMoved);
         this.setUpShips = this.setUpShips.bind(this);
         this.setUpEvilShips = this.setUpEvilShips.bind(this);
         this.getShipById = this.getShipById.bind(this);
