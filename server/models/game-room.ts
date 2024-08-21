@@ -9,21 +9,24 @@ import { ErrorCode } from "../constants";
 import { AsteroidDTO, GameEventType, GemDTO, LaserBeamDTO, ShipDTO, ShipDamageArgs, ShipModelNum, SocketAuth } from "../../shared/types";
 import { Planet } from "../../shared/objects/planet";
 import { ShipManager } from "./ship-manager";
+import { LaserBeamManager } from "./laser-manager";
+import { AsteroidManager } from "./asteroid-manager";
 
 const MAX_TEAM_SIZE = 3;
 const MAX_NUM_TEAMS = 4;
 const MAX_ROOM_SIZE = MAX_NUM_TEAMS * MAX_TEAM_SIZE;
 export class GameRoom {
     private shipManager: ShipManager = new ShipManager(this.roomId);
-    private asteroids: Map<string, Asteroid>;
-    private laserBeams = new Map<string, LaserBeam>();
+    private asteroidManager: AsteroidManager = new AsteroidManager(this.roomId);
+    private laserBeamManager = new LaserBeamManager(this.roomId);
     private gems = new Map<string, Gem>();
     private planets = new Map<string, Planet>();
     private players = new Map<string, Socket>();
 
     constructor(private roomId: string) {
+        console.log(`Game room created with id ${roomId}`);
         const { asteroids } = createInitialObjects();
-        this.asteroids = asteroids;
+        this.asteroidManager.initialize(asteroids);
         this.addPlayer = this.addPlayer.bind(this);
         this.setUpGameObjects = this.setUpGameObjects.bind(this);
         this.setUpSocketEvents = this.setUpSocketEvents.bind(this);
@@ -55,8 +58,8 @@ export class GameRoom {
         socket.emit(
             GameEventType.GetInitialObjects,
             mapToJSONList(this.shipManager.getObjects()),
-            mapToJSONList(this.asteroids),
-            mapToJSONList(this.laserBeams),
+            mapToJSONList(this.asteroidManager.getObjects()),
+            mapToJSONList(this.laserBeamManager.getObjects()),
             mapToJSONList(this.gems),
             mapToJSONList(this.planets)
         );
@@ -69,35 +72,16 @@ export class GameRoom {
             this.shipManager.handleObjectMoved(socket, obj);
         });
         socket.on(GameEventType.LaserMoved, (obj: LaserBeamDTO) => {
-            const matchingLaserBeam = this.laserBeams.get(obj.id);
-            if (matchingLaserBeam) {
-                matchingLaserBeam.move(obj);
-                socket.to(this.roomId).emit(
-                    GameEventType.LaserMoved,
-                    matchingLaserBeam.toDTO()
-                );
-            } else {
-                this.laserBeams.set(obj.id, new LaserBeam(obj));
-            }
+            this.laserBeamManager.handleObjectMoved(socket, obj);
         });
         socket.on(GameEventType.AsteroidMoved, (obj: AsteroidDTO) => {
-            const matchingAsteroid = this.asteroids.get(obj.id);
-            if (matchingAsteroid) {
-                matchingAsteroid.move(obj);
-                socket.to(this.roomId).emit(
-                    GameEventType.AsteroidMoved,
-                    matchingAsteroid.toDTO()
-                );
-            } else {
-                this.asteroids.set(obj.id, new Asteroid(obj));
-            }
+            this.asteroidManager.handleObjectMoved(socket, obj);
         });
         socket.on(GameEventType.EmitLaserBeam, (laserBeam: LaserBeamDTO) => {
-            this.laserBeams.set(laserBeam.id, new LaserBeam(laserBeam));
-            socket.to(this.roomId).emit(GameEventType.LaserMoved, laserBeam);
+            this.laserBeamManager.handleLaserBeamEmitted(socket, laserBeam);
         });
         socket.on(GameEventType.DeleteLaserBeam, (id: string) => {
-            this.laserBeams.delete(id);
+            this.laserBeamManager.deleteObjectById(id);
         });
         socket.on(
             GameEventType.ShipDamage,
@@ -124,7 +108,7 @@ export class GameRoom {
 
                 let reduceBy = 0;
                 if (laserBeamId) {
-                    this.laserBeams.delete(laserBeamId);
+                    this.laserBeamManager.deleteObjectById(laserBeamId);
                     reduceBy = 1;
                 } else if (asteroidId || otherShipId) {
                     reduceBy = ship.healthPoints;
@@ -148,20 +132,16 @@ export class GameRoom {
                 addGem: (gem: GemDTO) => void
             ) => {
                 console.log("asteroid exploded");
-                if (!this.asteroids.has(asteroid.id)) {
-                    console.log("asteroid not found");
-                    return;
-                }
 
                 // Gem has same id as asteroid
                 const gem = new Gem({
                     ...asteroid,
                     points: asteroid.gemPoints,
                 });
-                this.asteroids.delete(asteroid.id);
+                this.asteroidManager.deleteObjectById(asteroid.id);
                 this.gems.set(gem.id, gem);
 
-                this.laserBeams.delete(laserBeamId);
+                this.laserBeamManager.deleteObjectById(laserBeamId);
 
                 // Keep event sender in sync with rest of the clients
                 addGem(gem.toDTO());
@@ -181,7 +161,7 @@ export class GameRoom {
                 ) => void
             ) => {
                 this.shipManager.handleShipExploded(socket, shipId, laserBeamId, shipExploded)
-                this.laserBeams.delete(laserBeamId);
+                this.laserBeamManager.deleteObjectById(laserBeamId);
             }
         );
         socket.on(
@@ -207,53 +187,11 @@ export class GameRoom {
                 laserBeamId: string,
                 cb: (a1: AsteroidDTO, a2: AsteroidDTO) => void
             ) => {
-                const matchingAsteroid = this.asteroids.get(asteroid.id);
-                console.log("asteroid hit");
-                if (!matchingAsteroid) {
-                    console.log("could not find matching asteroid");
-                    return;
-                }
-
-                this.asteroids.delete(asteroid.id);
-                this.laserBeams.delete(laserBeamId);
-
-                // split asteroid into 2 asteroids half the original size, 180 deg apart
-                const radius = Math.round(asteroid.width / 2);
-                const nextPos1 = matchingAsteroid.getNextPosition(
-                    Math.floor(radius / 2)
-                );
-                const nextPos2 = matchingAsteroid.getNextPosition(
-                    Math.floor(radius / 2),
-                    asteroid.deg + 180
-                );
-                const speed = 0.5;
-                const a1 = {
-                    ...asteroid,
-                    speed,
-                    id: uuidV4(),
-                    width: radius,
-                    height: radius,
-                    x: nextPos1[0],
-                    y: nextPos1[1],
-                };
-                const a2 = {
-                    ...asteroid,
-                    speed,
-                    id: uuidV4(),
-                    width: radius,
-                    height: radius,
-                    x: nextPos2[0],
-                    y: nextPos2[1],
-                    deg: asteroid.deg + 180,
-                };
-
-                this.asteroids.set(a1.id, new Asteroid(a1));
-                this.asteroids.set(a2.id, new Asteroid(a2));
-
-                cb(a1, a2);
-                socket.to(this.roomId).emit(GameEventType.AsteroidHit, a1, a2);
+                this.laserBeamManager.deleteObjectById(laserBeamId);
+                this.asteroidManager.handleAsteroidHit(socket, asteroid, cb);
             }
         );
+        
         socket.on("disconnect", (reason: string) => {
             const { name } = socket.handshake.auth as SocketAuth;
             console.log(
