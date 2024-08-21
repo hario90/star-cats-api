@@ -1,9 +1,6 @@
 import { Socket } from "socket.io";
-import { v4 as uuidV4 } from "uuid";
 
 import { createInitialObjects, mapToJSONList } from "../utils/game-object-utils";
-import { Asteroid } from "../../shared/objects/asteroid";
-import { LaserBeam } from "../../shared/objects/laser-beam";
 import { Gem } from "../../shared/objects/gem";
 import { ErrorCode } from "../constants";
 import { AsteroidDTO, GameEventType, GemDTO, LaserBeamDTO, ShipDTO, ShipDamageArgs, ShipModelNum, SocketAuth } from "../../shared/types";
