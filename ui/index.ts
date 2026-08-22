@@ -5,6 +5,8 @@ import { createForm } from "./form";
 import { SERVER_URL } from "./constants";
 import { PlayerShipColor, ShipModelNum } from "../shared/types";
 import { getRandomInt } from "../shared/util";
+import { ManagerOptions } from "socket.io-client";
+import { SocketOptions } from "socket.io-client";
 
 const getRandomColor = (): PlayerShipColor => {
     const num = getRandomInt(1, 4);
@@ -37,7 +39,7 @@ const appEl =
     document.createElement("div");
 
 const startGame = async (nickName: string, allowRobots = true) => {
-    const socket = io(SERVER_URL, {
+    const socketOptions: Partial<ManagerOptions & SocketOptions> = {
         auth: {
             name: nickName,
             shipColor: getRandomColor(),
@@ -45,7 +47,10 @@ const startGame = async (nickName: string, allowRobots = true) => {
             allowRobots
         },
         transports: ["websocket"],
-    });
+    };
+    console.log(SERVER_URL);
+    console.log(process.env.NODE_ENV)
+    const socket = process.env.NODE_ENV === "production" ? io(socketOptions) : io(SERVER_URL, socketOptions);
 
     const renderer = new Renderer(appEl, socket);
     await renderer.pollUntilReady();

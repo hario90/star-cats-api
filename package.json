@@ -6,10 +6,10 @@
     "scripts": {
         "build-ui": "webpack --config webpack.config.js",
         "build-server": "webpack --config webpack.node.config.js",
-        "compile": "yarn build-ui && yarn build-server",
-        "deploy-compile": "export NODE_ENV=production && yarn compile",
+        "compile": "npm run build-ui && npm run build-server",
+        "deploy-compile": "export NODE_ENV=production && npm run compile",
         "start": "node ./dist/server.js",
-        "dev": "yarn build-ui && nodemon --exec \"yarn build-server && node ./dist/server.js\" -e ts --watch server",
+        "dev": "npm run build-ui && nodemon --exec \"npm run build-server && node ./dist/server.js\" -e ts --watch server",
         "dev-ui": "webpack-dev-server --open"
     },
     "repository": {

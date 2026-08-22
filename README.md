@@ -12,7 +12,7 @@ It's comprised of a NodeJS backend and a Vanilla JavaScript frontend that uses H
 ## Setup
 
 1. Clone this repo.
-2. Run `yarn`
+2. Run `npm i`
 3. Create .env file at root of the repo with the contents
 
 ```.env
@@ -23,6 +23,7 @@ PROTOCOL=http
 
 ## Development
 
+In development, you can run the app and server on separate ports.
 In your terminal, run the following to build and run the server (on port 3000):
 
 ```zsh
@@ -33,4 +34,13 @@ In another terminal, run the following to run a dev server for the frontend (on 
 
 ```zsh
 yarn dev-ui
+```
+
+### Docker
+
+To simulate running this in prod, run the server and app in one container.
+
+```zsh
+docker build -t star-cats-api:latest .
+docker run -p 3000:3000 --rm star-cats-api
 ```
