@@ -27,13 +27,13 @@ In development, you can run the app and server on separate ports.
 In your terminal, run the following to build and run the server (on port 3000):
 
 ```zsh
-yarn build-server && yarn start
+npm run build-server && npm run start
 ```
 
 In another terminal, run the following to run a dev server for the frontend (on port 8080):
 
 ```zsh
-yarn dev-ui
+npm run dev-ui
 ```
 
 ### Docker
