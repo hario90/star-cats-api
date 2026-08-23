@@ -30,7 +30,7 @@ export const addSocketToRoom = (socket: Socket) => {
     try {
         openRoom.addPlayer(socket);
     } catch (e) {
-        if (e.message === ErrorCode.ROOM_FULL) {
+        if (e instanceof Error && e.message === ErrorCode.ROOM_FULL) {
             if (Object.keys(rooms).length >= MAX_NUM_ROOMS) {
                 console.error(`${ERROR}, no more rooms.`)
                 throw new Error(ErrorCode.NO_MORE_ROOMS)

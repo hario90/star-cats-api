@@ -7,7 +7,6 @@ It's comprised of a NodeJS backend and a Vanilla JavaScript frontend that uses H
 ## Requirements
 
 - Node 16
-- Yarn 1
 
 ## Setup
 

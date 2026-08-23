@@ -15,7 +15,8 @@ export function createWebSocket(server: HttpServer) {
             const roomId = addSocketToRoom(socket);
             socket.emit("roomId", roomId);
         } catch (e) {
-            console.error(`Disconnecting socket ${socket.id} due to error ${e?.message}`);
+            if (e instanceof Error)
+                console.error(`Disconnecting socket ${socket.id} due to error ${e?.message}`);
             socket.disconnect();
         }
     });
