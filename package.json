@@ -23,8 +23,6 @@
     },
     "homepage": "https://github.com/hario90/star-cats-api#readme",
     "dependencies": {
-        "@nodable/compact-builder": "^2.0.0",
-        "@nodable/flexible-xml-parser": "^1.11.3",
         "@types/axios": "^0.14.0",
         "axios": "^0.21.0",
         "circular-dependency-plugin": "^5.2.2",
