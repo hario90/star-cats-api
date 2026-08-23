@@ -48,8 +48,6 @@ const startGame = async (nickName: string, allowRobots = true) => {
         },
         transports: ["websocket"],
     };
-    console.log(SERVER_URL);
-    console.log(process.env.NODE_ENV)
     const socket = process.env.NODE_ENV === "production" ? io(socketOptions) : io(SERVER_URL, socketOptions);
 
     const renderer = new Renderer(appEl, socket);
