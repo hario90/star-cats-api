@@ -2,6 +2,7 @@ import * as express from "express";
 import * as path from "path";
 
 var indexRouter = require("./routes/index");
+var healthRouter = require("./routes/health");
 
 var app = express();
 
@@ -11,6 +12,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname)));
 
 app.use("/", indexRouter);
+app.use("/health", healthRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req: any, res: any, next: any) {
