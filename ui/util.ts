@@ -109,3 +109,8 @@ export function getSections<T extends GameObject>(positionInfo: T): string[] {
     }
     return sections;
 }
+
+export function pickRandomElement<T>(elements: T[]): T {
+    const index = Math.floor(Math.random() * elements.length);
+    return elements[index];
+}

@@ -2,7 +2,7 @@ import { ImageComponent } from "../component";
 import explosionImg from "../../assets/explosion.png";
 import allAssets from "../../assets/sheet.png";
 import * as assetsXML from "../../assets/sheet.xml";
-import { getSectionsMap } from "../util";
+import { getSectionsMap, pickRandomElement } from "../util";
 import { AsteroidDTO, GameObjectDTO } from "../../shared/types";
 import { EXPLOSION_LOCATIONS, SRC_EXPLOSION_WIDTH } from "../constants";
 import { SocketEventEmitter } from "../game-engine/socket-event-emitter";
@@ -18,6 +18,12 @@ export interface DrawableAsteroidProps extends AsteroidDTO {
     canvas: Canvas;
 }
 
+const ASTEROID_NAMES = [
+    "meteorBrown_big1.png",
+    "meteorBrown_big2.png",
+    "meteorBrown_big3.png"
+];
+
 export class DrawableAsteroid extends Drawable {
     private asteroidImg: ImageComponent;
     private explosionImg: ImageComponent;
@@ -28,7 +34,8 @@ export class DrawableAsteroid extends Drawable {
     constructor(asteroid: DrawableAsteroidProps) {
         super(asteroid);
         this.gemPoints = asteroid.gemPoints || 1;
-        const objectName = "meteorBrown_big1.png";
+        const objectName = pickRandomElement(ASTEROID_NAMES);
+
         const imageComponentFromXML = getImageComponentFromXML(
             allAssets,
             assetsXML,
